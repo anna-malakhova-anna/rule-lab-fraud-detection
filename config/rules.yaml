@@ -60,3 +60,10 @@ rules:
     params:
       min_prior_payments: 3
       min_amount: 1000
+
+# Structural changes the challenger makes to a rule's scope, on top of re-tuned cutoffs (ADR-009).
+# The champion runs every rule exactly as written above.
+challenger_scope:
+  R1_check_then_fast_out:
+    exclude_txn_types: [payroll]
+    rationale: Deposit-fraud money leaves to new external payees or the owner's account, not through payroll; holding payroll after a check deposit hurts good employers and catches nothing.

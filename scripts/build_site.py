@@ -98,7 +98,7 @@ def ticks(vmax: float) -> list[float]:
     return out
 
 
-def tradeoff_panel(rule_id: str, pts: list[dict]) -> str:
+def tradeoff_panel(rule_id: str, pts: list[dict], title: str | None = None) -> str:
     """One rule's sweep: good businesses flagged (x) vs fraud $ prevented (y), one dot per cutoff."""
     W, H, L, B, T, Rm = 320, 210, 46, 30, 14, 14
     xmax = max(p["good_businesses_flagged"] for p in pts) * 1.05
@@ -133,12 +133,13 @@ def tradeoff_panel(rule_id: str, pts: list[dict]) -> str:
             parts.append(f'<text class="strong" x="{x + dx:.1f}" y="{y + dy:.1f}" text-anchor="{anchor}">'
                          f'{esc(" + ".join(tags))} ({p["comparator"]} {p["cutoff"]:g})</text>')
     parts.append(f'<text x="{(L + W - Rm) / 2}" y="{H - 2}" text-anchor="middle" class="lbl">good businesses flagged</text>')
-    svg = f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(R.RULE_LABELS[rule_id])} trade-off curve">{"".join(parts)}</svg>'
+    title = title or R.RULE_LABELS[rule_id]
+    svg = f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(title)} trade-off curve">{"".join(parts)}</svg>'
     rows = [[f'{p["comparator"]} {p["cutoff"]:g}', R.usd(p["loss_prevented"]), f'{p["cases_detected"]}/{p["cases"]}',
              f'{p["good_businesses_flagged"]:,}', f'{p["payrolls_delayed"]:,}', f'{p["reviews_per_day"]:.1f}']
             for p in sorted(pts, key=lambda p: p["cutoff"])]
     tbl = table(["Cutoff", "Fraud $ prevented", "Cases", "Good businesses", "Payrolls delayed", "Reviews/day"], rows, {1, 2, 3, 4, 5})
-    return (f'<div class="card"><h3>{esc(R.RULE_LABELS[rule_id])}</h3>{svg}'
+    return (f'<div class="card"><h3>{esc(title)}</h3>{svg}'
             f'<details><summary>Table view</summary>{tbl}</details></div>')
 
 
@@ -188,9 +189,15 @@ def page() -> str:
     w, t = R.window(), R.totals()
     head = R.headline_rows()
     sweep = R.sweep("train")
-    panels = "".join(tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid]) for rid in R.RULE_LABELS)
+    scoped = {r["rule_id"]: r["excluded"] for r in R.challenger_thresholds() if r["excluded"]}
+    panels = ""
+    for rid in R.RULE_LABELS:
+        panels += tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid and p["scope"] == "as_written"])
+        if rid in scoped:
+            panels += tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid and p["scope"] == "challenger"],
+                                     f"{R.RULE_LABELS[rid]}, excluding {scoped[rid]} (challenger)")
     thresholds = [[R.RULE_LABELS[r["rule_id"]], r["action"], f'{r["comparator"]} {r["champion_cutoff"]:g}',
-                   f'{r["comparator"]} {r["challenger_cutoff"]:g}' if r["is_kept"] else "retired"] for r in R.challenger_thresholds()]
+                   R.challenger_cell(r)] for r in R.challenger_thresholds()]
     overlap = [[R.RULE_LABELS[o["rule_id"]], o["period"], o["cases_detected"], o["cases_only_this_rule"]] for o in R.overlap("champion")]
     harm = [[h["archetype"].replace("_", " "), f'{h["good_alerts"]:,}', R.usd(h["dollar_days"])] for h in R.harm_by_archetype("champion")]
     typ = [[o["typology"].replace("_", " "), o["variant"].replace("_", " "), f'{o["detected"]} of {o["cases"]}', R.usd(o["loss"]),
@@ -212,7 +219,8 @@ def page() -> str:
 {t["transactions"]:,} transactions. The {t["cases"]} fraud cases were planted with an answer key. No number here is a real-world fraud rate.</div>
 
 <h2>Champion vs challenger, on months the tuning never saw</h2>
-<p>The champion is the rule set as first written. The challenger re-tunes each rule's cutoff on the first 12 months.
+<p>The champion is the rule set as first written. The challenger re-tunes each rule's cutoff on the first 12 months
+and stops R1 from holding payroll.
 Both are graded on months 13 to 18 ({t["test_cases"]} fraud cases). Ranges are 90% bootstrap ranges over businesses.</p>
 <div class="card">{table(["Test months", "Champion", "Challenger"], [list(r) for r in head], {1, 2})}</div>
 <p class="src">Source: backtest.bt_strategy_metrics, analysis.bootstrap_ci</p>

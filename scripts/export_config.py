@@ -37,6 +37,8 @@ def main() -> None:
     _write("cfg_rule_params", ["rule_id", "param", "value"],
            [[rid, k, v] for rid, r in rules["rules"].items() for k, v in r["params"].items()])
     _write("cfg_sweep", ["rule_id", "cutoff"], [[rid, c] for rid, r in rules["rules"].items() for c in r["sweep"]])
+    _write("cfg_challenger_scope", ["rule_id", "excluded_txn_type", "rationale"],
+           [[rid, t, c["rationale"]] for rid, c in rules.get("challenger_scope", {}).items() for t in c["exclude_txn_types"]])
     _write("cfg_actions", ["action", "severity", "prevents", "hold_days", "is_review"],
            [[a, v["severity"], v["prevents"], v["hold_days"], v["review"]] for a, v in bt["actions"].items()])
     _write("cfg_costs", ["cost", "value"], [[k, v] for k, v in bt["costs"].items()])

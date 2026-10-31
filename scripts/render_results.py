@@ -32,9 +32,9 @@ def memo_blocks() -> dict[str, str]:
     thresholds = R.markdown_table(
         ["Rule", "Action", "Champion cutoff", "Challenger cutoff"],
         [(R.RULE_LABELS[r["rule_id"]], r["action"], f"{r['comparator']} {r['champion_cutoff']:g}",
-          (f"{r['comparator']} {r['challenger_cutoff']:g}" if r["is_kept"] else "retired")) for r in R.challenger_thresholds()])
+          R.challenger_cell(r)) for r in R.challenger_thresholds()])
 
-    sweep_test = {(r["rule_id"], r["cutoff"]): r for r in R.sweep("test")}
+    sweep_test = {(r["rule_id"], r["cutoff"]): r for r in R.sweep("test") if r["scope"] == "as_written"}
     per_rule = []
     for r in R.challenger_thresholds():
         champ = sweep_test[(r["rule_id"], r["champion_cutoff"])]

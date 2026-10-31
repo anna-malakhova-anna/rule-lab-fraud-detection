@@ -23,6 +23,14 @@ def _rows(sql: str, params: list | None = None) -> list[dict]:
     return out
 
 
+def challenger_cell(r: dict) -> str:
+    """How the challenger runs a rule: its cutoff, plus any scope change."""
+    if not r["is_kept"]:
+        return "retired"
+    cell = f"{r['comparator']} {r['challenger_cutoff']:g}"
+    return cell + (f", excluding {r['excluded']}" if r["excluded"] else "")
+
+
 def window() -> dict:
     return _rows("select * from config.cfg_window")[0]
 
@@ -38,20 +46,22 @@ def bootstrap() -> dict[tuple[str, str], dict]:
 
 def challenger_thresholds() -> list[dict]:
     return _rows("""
-        select r.rule_id, r.threshold as champion_cutoff, t.challenger_cutoff, t.is_kept, r.comparator, r.action
+        select r.rule_id, r.threshold as champion_cutoff, t.challenger_cutoff, t.is_kept, t.scope, r.comparator, r.action,
+               (select string_agg(excluded_txn_type, ', ') from config.cfg_challenger_scope x where x.rule_id = r.rule_id) as excluded
         from config.cfg_rules r left join backtest.bt_challenger_thresholds t using (rule_id)
         order by r.rule_id""")
 
 
 def sweep(period: str = "train") -> list[dict]:
     return _rows("""
-        select m.*, s.is_champion_cutoff, t.challenger_cutoff = m.cutoff as is_challenger_cutoff, r.comparator
+        select m.*, s.scope, s.is_champion_cutoff,
+               coalesce(t.challenger_cutoff = m.cutoff and t.scope = s.scope, false) as is_challenger_cutoff, r.comparator
         from backtest.bt_sweep_metrics m
         join backtest.bt_sweep_strategies s using (strategy_id)
         join config.cfg_rules r on r.rule_id = m.rule_id
         left join backtest.bt_challenger_thresholds t on t.rule_id = m.rule_id
         where m.period = ?
-        order by m.rule_id, m.cutoff""", [period])
+        order by m.rule_id, s.scope, m.cutoff""", [period])
 
 
 def overlap(strategy: str = "champion") -> list[dict]:

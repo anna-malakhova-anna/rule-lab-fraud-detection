@@ -14,16 +14,16 @@
 <!-- memo-headline:start -->
 | Measure (test months) | Champion (today) | Challenger (proposed) |
 |---|---|---|
-| Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $960K ($457K to $1.55M) |
-| Share of fraud $ prevented | 82% (63% to 95%) | 80% (61% to 93%) |
-| Fraud cases detected | 20 of 27 | 19 of 27 |
-| Alerts that were fraud (precision) | 0.9% | 0.9% |
-| Good businesses flagged | 2,302 | 2,359 |
-| Good businesses with money held | 1,788 | 2,010 |
-| Payrolls delayed | 999 | 999 |
-| Good-customer dollar-days held | $141.73M | $204.28M |
-| Reviews per business day (avg / max) | 52.3 / 126 | 53.6 / 125 |
-| Days over review capacity | 33 of 129 | 33 of 129 |
+| Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $1.03M ($527K to $1.63M) |
+| Share of fraud $ prevented | 82% (63% to 95%) | 86% (73% to 95%) |
+| Fraud cases detected | 20 of 27 | 23 of 27 |
+| Alerts that were fraud (precision) | 0.9% | 1.0% |
+| Good businesses flagged | 2,302 | 2,327 |
+| Good businesses with money held | 1,788 | 1,967 |
+| Payrolls delayed | 999 | 0 |
+| Good-customer dollar-days held | $141.73M | $177.26M |
+| Reviews per business day (avg / max) | 52.3 / 126 | 51.7 / 108 |
+| Days over review capacity | 33 of 129 | 39 of 129 |
 <!-- memo-headline:end -->
 
 ### What changes rule by rule
@@ -31,7 +31,7 @@
 <!-- memo-thresholds:start -->
 | Rule | Action | Champion cutoff | Challenger cutoff |
 |---|---|---|---|
-| R1 Check money out fast | hold | >= 0.6 | >= 0.6 |
+| R1 Check money out fast | hold | >= 0.6 | >= 0.4, excluding payroll |
 | R2 Check far above own baseline | hold | >= 1 | >= 0.5 |
 | R3 Many new check payers | rfi | >= 4 | >= 5 |
 | R4 First payment to changed bank details | hold | <= 14 | <= 7 |

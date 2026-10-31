@@ -18,16 +18,16 @@ Synthetic data: 8,000 businesses, 6,933,736 transactions, 96 planted fraud cases
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $960K ($457K to $1.55M) |
-| Share of fraud $ prevented | 82% (63% to 95%) | 80% (61% to 93%) |
-| Fraud cases detected | 20 of 27 | 19 of 27 |
-| Alerts that were fraud (precision) | 0.9% | 0.9% |
-| Good businesses flagged | 2,302 | 2,359 |
-| Good businesses with money held | 1,788 | 2,010 |
-| Payrolls delayed | 999 | 999 |
-| Good-customer dollar-days held | $141.73M | $204.28M |
-| Reviews per business day (avg / max) | 52.3 / 126 | 53.6 / 125 |
-| Days over review capacity | 33 of 129 | 33 of 129 |
+| Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $1.03M ($527K to $1.63M) |
+| Share of fraud $ prevented | 82% (63% to 95%) | 86% (73% to 95%) |
+| Fraud cases detected | 20 of 27 | 23 of 27 |
+| Alerts that were fraud (precision) | 0.9% | 1.0% |
+| Good businesses flagged | 2,302 | 2,327 |
+| Good businesses with money held | 1,788 | 1,967 |
+| Payrolls delayed | 999 | 0 |
+| Good-customer dollar-days held | $141.73M | $177.26M |
+| Reviews per business day (avg / max) | 52.3 / 126 | 51.7 / 108 |
+| Days over review capacity | 33 of 129 | 39 of 129 |
 <!-- results:end -->
 
 ## What's in it
@@ -54,6 +54,9 @@ Synthetic data: 8,000 businesses, 6,933,736 transactions, 96 planted fraud cases
   outside `models/backtest/` depends on it.
 - **Champion thresholds were set before grading.** I looked at alert volumes (which need no labels), not at
   fraud caught.
+- **Thresholds can't fix a rule that looks at the wrong payments.** R1 held good payrolls at every cutoff,
+  so the challenger also excludes payroll from R1 (ADR-009). The champion keeps R1 as written, so the
+  difference is visible.
 - **Small samples get ranges.** The test months hold only a couple dozen fraud cases, so headline numbers
   carry bootstrap ranges.
 
