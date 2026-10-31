@@ -8,6 +8,8 @@
 #           using only the labels known by then (ADR-002, ADR-013).
 # effective_from_alarm  a rule written in response to a monitoring alarm runs from the alarm date plus the
 #           investigation time, not from day one (ADR-014).
+# escalate   optional stronger action for strong hits: {action, at}. A hit whose score also passes `at` gets that
+#           action instead of the rule's own (ADR-015).
 # A rule fires when score <comparator> cutoff and every gate passes.
 
 rules:
@@ -80,9 +82,10 @@ rules:
     applies_to: approved applications, before the account opens
     score: most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days
     comparator: ">="
-    threshold: 3
+    threshold: 1
     sweep: [1, 2, 3, 4, 5]
-    action: block                    # decline the application
+    action: rfi                      # weak links: ask the applicant for documents before opening
+    escalate: {action: block, at: 3} # strong links (3+ shared attributes, or 2 and newly incorporated): decline
     params:
       young_incorporation_days: 90
 

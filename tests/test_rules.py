@@ -51,3 +51,17 @@ def test_rule_output_contract(con):
 def test_seeds_match_yaml(con):
     seeded = {r[0]: r[1] for r in con.execute("select rule_id, threshold from config.cfg_rules").fetchall()}
     assert seeded == {rid: float(r["threshold"]) for rid, r in RULES.items()}
+
+
+def test_escalation_only_on_strong_hits(con):
+    for rid, r in RULES.items():
+        esc = r.get("escalate")
+        if not esc:
+            continue
+        assert esc["action"] in {"hold", "block"} and esc["action"] != r["action"]
+        op = r["comparator"]
+        bad = con.execute(f"""
+            select count(*) from rules.rule_hits
+            where rule_id = ? and ((action = ? and not (score {op} ?)) or (action <> ? and score {op} ?))""",
+            [rid, esc["action"], esc["at"], esc["action"], esc["at"]]).fetchone()[0]
+        assert bad == 0, rid

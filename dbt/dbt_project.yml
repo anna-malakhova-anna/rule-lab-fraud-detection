@@ -34,7 +34,7 @@ seeds:
     cfg_window:
       +column_types: {window_start: date, train_end: date, window_end: date}
     cfg_rules:
-      +column_types: {threshold: double, tune: boolean, effective_from_alarm: varchar}
+      +column_types: {threshold: double, tune: boolean, effective_from_alarm: varchar, escalate_action: varchar, escalate_at: double}
     cfg_rule_params:
       +column_types: {value: double}
     cfg_sweep:

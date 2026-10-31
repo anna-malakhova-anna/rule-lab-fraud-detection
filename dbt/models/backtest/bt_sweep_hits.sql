@@ -10,7 +10,7 @@ select
     c.event_time,
     c.txn_type,
     c.amount,
-    r.action
+    {{ hit_action('c.score') }} as action
 from {{ ref('rule_candidates') }} as c
 join {{ ref('bt_sweep_strategies') }} as st using (rule_id)
 join {{ ref('cfg_rules') }} as r using (rule_id)

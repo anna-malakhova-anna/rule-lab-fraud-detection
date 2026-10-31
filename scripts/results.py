@@ -47,6 +47,12 @@ def challenger_cell(r: dict) -> str:
     return cell
 
 
+def action_cell(r: dict) -> str:
+    if r["escalate_action"]:
+        return f"{r['action']}; {r['escalate_action']} at {r['comparator']} {r['escalate_at']:g}"
+    return r["action"]
+
+
 def champion_cell(r: dict) -> str:
     return f"{r['comparator']} {r['champion_cutoff']:g}" if r["status"] == "champion" else "not running"
 
@@ -68,7 +74,7 @@ def challenger_thresholds() -> list[dict]:
     return _rows("""
         select r.rule_id, r.status, r.tune, r.threshold as champion_cutoff,
                coalesce(t.challenger_cutoff, r.threshold) as challenger_cutoff, coalesce(t.is_kept, true) as is_kept,
-               r.comparator, r.action, e.effective_from, e.detected_at
+               r.comparator, r.action, r.escalate_action, r.escalate_at, e.effective_from, e.detected_at
         from config.cfg_rules r
         left join backtest.bt_challenger_thresholds t using (rule_id)
         left join monitoring.mon_rule_effective_from e using (rule_id)

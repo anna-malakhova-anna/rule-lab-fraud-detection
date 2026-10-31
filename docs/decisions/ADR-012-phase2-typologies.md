@@ -31,3 +31,5 @@ email and new payees in one week).
 and is used only to choose R6's cutoff. **It drives R6 to its loosest cutoff (any one shared attribute).** At
 that cutoff R6 declines good applicants who merely share a bookkeeper's device or a co-working address. That
 is a cost assumption to revisit, not a property of the data.
+
+**Superseded in part by ADR-015:** R6 now declines only strong links and sends weaker links to an RFI.

@@ -22,7 +22,7 @@ shared_pairs as (
 ),
 
 per_pair as (
-    select application_id, other_id, count(distinct attribute) as n_shared, string_agg(distinct attribute, '+') as shared
+    select application_id, other_id, count(distinct attribute) as n_shared, string_agg(distinct attribute, '+' order by attribute) as shared
     from shared_pairs
     group by application_id, other_id
 ),

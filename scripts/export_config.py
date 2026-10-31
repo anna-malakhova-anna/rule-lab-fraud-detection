@@ -35,10 +35,11 @@ def main() -> None:
     mon = bt["monitoring"]
     _write("cfg_monitoring", ["baseline_weeks", "sigma", "min_count", "investigation_business_days", "precision_maturity_days"],
            [[mon["baseline_weeks"], mon["sigma"], mon["min_count"], mon["investigation_business_days"], mon["precision_maturity_days"]]])
-    _write("cfg_rules", ["rule_id", "status", "tune", "effective_from_alarm", "action", "comparator", "threshold",
-                         "score_description", "rationale"],
-           [[rid, r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"], r["comparator"],
-             r["threshold"], r["score"], r["rationale"]] for rid, r in rules["rules"].items()])
+    _write("cfg_rules", ["rule_id", "status", "tune", "effective_from_alarm", "action", "escalate_action", "escalate_at",
+                         "comparator", "threshold", "score_description", "rationale"],
+           [[rid, r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"],
+             r.get("escalate", {}).get("action", ""), r.get("escalate", {}).get("at", ""),
+             r["comparator"], r["threshold"], r["score"], r["rationale"]] for rid, r in rules["rules"].items()])
     _write("cfg_rule_params", ["rule_id", "param", "value"],
            [[rid, k, v] for rid, r in rules["rules"].items() for k, v in r["params"].items()])
     _write("cfg_sweep", ["rule_id", "cutoff"], [[rid, c] for rid, r in rules["rules"].items() for c in r["sweep"]])

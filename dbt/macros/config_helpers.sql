@@ -15,3 +15,10 @@
 {% macro cost(name) -%}
     (select value from {{ ref('cfg_costs') }} where cost = '{{ name }}')
 {%- endmacro %}
+
+{# The action a hit gets: the rule's own, or its escalation action when the score also passes `escalate_at`
+   (ADR-015). `r` must be the rule's cfg_rules row. #}
+{% macro hit_action(score, r='r') -%}
+    case when {{ r }}.escalate_at is not null and {{ passes(score, r ~ '.comparator', r ~ '.escalate_at') }}
+         then {{ r }}.escalate_action else {{ r }}.action end
+{%- endmacro %}

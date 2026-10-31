@@ -3,7 +3,8 @@
 --   challenger = the champion plus the proposed rules: tuned cutoffs where the rule is tuned, the configured
 --                cutoff otherwise, and only from the date a rule written after an alarm went live (ADR-014).
 with challenger_cutoffs as (
-    select r.rule_id, r.action, r.comparator, coalesce(t.challenger_cutoff, r.threshold) as cutoff
+    select r.rule_id, r.action, r.escalate_action, r.escalate_at, r.comparator,
+           coalesce(t.challenger_cutoff, r.threshold) as cutoff
     from {{ ref('cfg_rules') }} as r
     left join {{ ref('bt_challenger_thresholds') }} as t using (rule_id)
     where r.status = 'champion'
@@ -21,7 +22,7 @@ union all
 
 select
     'challenger', 'challenger', c.rule_id, cc.cutoff,
-    c.txn_id, c.business_id, c.event_time, c.txn_type, c.amount, cc.action
+    c.txn_id, c.business_id, c.event_time, c.txn_type, c.amount, {{ hit_action('c.score', 'cc') }} as action
 from {{ ref('rule_candidates') }} as c
 join challenger_cutoffs as cc using (rule_id)
 left join {{ ref('mon_rule_effective_from') }} as e using (rule_id)

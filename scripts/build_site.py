@@ -233,7 +233,7 @@ def page() -> str:
     sweep = R.sweep("train")
     rules = R.challenger_thresholds()
     panels = "".join(tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid]) for rid in R.RULE_LABELS)
-    thresholds = [[R.RULE_LABELS[r["rule_id"]], r["action"], R.champion_cell(r), R.challenger_cell(r)] for r in rules]
+    thresholds = [[R.RULE_LABELS[r["rule_id"]], R.action_cell(r), R.champion_cell(r), R.challenger_cell(r)] for r in rules]
     overlap = [[R.RULE_LABELS[o["rule_id"]], o["cases_detected"], o["cases_only_this_rule"]]
                for o in R.overlap("challenger") if o["period"] == "test"]
     harm = [[h["archetype"].replace("_", " "), f'{h["good_alerts"]:,}', R.usd(h["dollar_days"])] for h in R.harm_by_archetype("challenger")]
@@ -329,7 +329,7 @@ average, so single days run higher.</p>
 <li>Synthetic data flatters rules. I wrote the fraud, so the rules look for exactly the shapes I planted. Real fraud adapts once it starts getting caught.</li>
 <li>Each fraud type has only 5 to 19 cases in the test months. One case moves a fraud type's numbers a lot.</li>
 <li>Labels are now delayed and sometimes missing (left), but the final grade still uses the full answer key. A real bank never gets that.</li>
-<li>Costs used to pick cutoffs are invented (config/backtest.yaml). In particular, $300 per good applicant declined is what pushes R6 to its loosest cutoff.</li>
+<li>Costs used to pick cutoffs are invented (config/backtest.yaml). R6 declines only applicants with strong links; weaker links get a request for documents, and their cutoff is tuned against those costs.</li>
 <li>Part of the ACH return fraud was caught before R9 by R5, by luck: the money went to the owner's own account at an unusual size.</li>
 </ul>
 
@@ -337,7 +337,7 @@ average, so single days run higher.</p>
 <dl>
 <dt>RFI</dt><dd>Request for information: ask the customer for documents. The payment is not stopped.</dd>
 <dt>Hold</dt><dd>Delay the payment or the deposited funds until reviewed (assumed 2 days for a good customer).</dd>
-<dt>Block</dt><dd>At onboarding: decline the application.</dd>
+<dt>Block</dt><dd>At onboarding: decline the application. R6 declines only strong identity links; weaker links get an RFI.</dd>
 <dt>Precision</dt><dd>Share of alerts that landed on fraud (a fraudulent transaction or a fraudster's account).</dd>
 <dt>Dollar-days held</dt><dd>Good customers' money held × days held. $10,000 held for 2 days is 20,000 dollar-days.</dd>
 <dt>Label delay</dt><dd>The time between a fraud happening and the bank confirming it was fraud.</dd>

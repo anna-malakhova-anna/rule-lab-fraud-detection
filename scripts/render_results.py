@@ -33,7 +33,7 @@ def memo_blocks() -> dict[str, str]:
     rules = R.challenger_thresholds()
     thresholds = R.markdown_table(
         ["Rule", "Action", "Champion", "Challenger"],
-        [(R.RULE_LABELS[r["rule_id"]], r["action"], R.champion_cell(r), R.challenger_cell(r)) for r in rules])
+        [(R.RULE_LABELS[r["rule_id"]], R.action_cell(r), R.champion_cell(r), R.challenger_cell(r)) for r in rules])
 
     # Each rule alone, at the cutoff the challenger runs it at, on the test months.
     sweep_test = {(r["rule_id"], r["cutoff"]): r for r in R.sweep("test")}

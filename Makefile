@@ -22,7 +22,7 @@ config:
 
 # Staging, features and rules (everything that does NOT read the answer key), then the backtest models.
 build: config
-	$(DBT) seed --profiles-dir .
+	$(DBT) seed --profiles-dir . --full-refresh
 	$(DBT) run --profiles-dir . --exclude path:models/backtest
 	$(DBT) run --profiles-dir . --select path:models/backtest
 

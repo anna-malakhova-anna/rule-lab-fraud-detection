@@ -7,7 +7,7 @@ select
     c.rule_id,
     c.txn_id                       as entity_id,
     c.event_time,
-    r.action,
+    {{ hit_action('c.score') }} as action,
     printf('%s: %s = %.2f (cutoff %s %s)', c.rule_id, r.score_description, c.score, r.comparator, cast(r.threshold as varchar))
         || coalesce('; ' || c.detail, '') as reason,
     r.status,
