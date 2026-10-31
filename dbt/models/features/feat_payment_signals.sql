@@ -2,7 +2,8 @@
 --   account takeover: the latest login from a never-seen device in the 7 days before, a contact change since
 --                     then, and whether the payee was added after that login;
 --   mules:            first-time senders paying in over the last 14 days, and how much went back out;
---   ACH debits:       money pulled in by ACH debit in the last 5 days (still returnable).
+--   ACH debits:       money pulled in by ACH debit in the last 5 days (still returnable);
+--   credit draws:     money drawn on the line of credit in the last 72 hours.
 with payments as (
     select * from {{ ref('feat_outbound_payments') }}
 ),
@@ -73,6 +74,17 @@ ach_pulls as (
         and d.txn_time >  p.txn_time - interval 5 day
         and d.txn_time <= p.txn_time
     group by p.txn_id
+),
+
+line_draws as (
+    select p.txn_id, sum(d.amount) as line_draws_prior_72h
+    from payments as p
+    join {{ ref('stg_transactions') }} as d
+        on  d.business_id = p.business_id
+        and d.txn_type = 'loc_draw'
+        and d.txn_time >= p.txn_time - interval 72 hour
+        and d.txn_time <= p.txn_time
+    group by p.txn_id
 )
 
 select
@@ -98,10 +110,14 @@ select
     coalesce(a.ach_debits_prior_5d, 0)                                              as ach_debits_prior_5d,
     p.out_48h_incl_this,
     p.normal_week_outflow,
-    least(1, greatest(0, p.out_48h_incl_this - p.normal_week_outflow) / nullif(a.ach_debits_prior_5d, 0)) as excess_out_48h_vs_ach_debits
+    least(1, greatest(0, p.out_48h_incl_this - p.normal_week_outflow) / nullif(a.ach_debits_prior_5d, 0)) as excess_out_48h_vs_ach_debits,
+    -- Credit draws, measured the same way
+    coalesce(ld.line_draws_prior_72h, 0)                                            as line_draws_prior_72h,
+    least(1, greatest(0, p.out_48h_incl_this - p.normal_week_outflow) / nullif(ld.line_draws_prior_72h, 0)) as excess_out_48h_vs_line_draws
 from payments as p
 left join {{ ref('stg_payees') }} as py using (payee_id)
 left join latest_new_device as n using (txn_id)
 left join contact_change as c using (txn_id)
 left join fan_in as f using (txn_id)
 left join ach_pulls as a using (txn_id)
+left join line_draws as ld using (txn_id)

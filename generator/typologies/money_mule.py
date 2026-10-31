@@ -5,7 +5,7 @@ reimbursement and regulatory cost), counted here as the loss if uncaught. Parame
 config/generation.yaml typologies.money_mule (ADR-012).
 
 Variants
-  recruited_new      an account opened for the purpose, with little genuine activity.
+  opened_for_purpose      an account opened for the purpose, with little genuine activity.
   existing_business  an established small business that lets its account be used.
 
 Signals: many first-time senders in a short span, money out within a day or two, activity unrelated to the

@@ -3,7 +3,7 @@
 -- (converted to calendar days, 5 business days to 7). Rules without an alarm run from the start.
 with first_alarm as (
     select series, min(week_closes_at) as detected_at
-    from {{ ref('mon_return_alarms') }}
+    from {{ ref('mon_weekly_alarms') }}
     where is_alarm and week >= {{ window_value('window_start') }}
     group by series
 )

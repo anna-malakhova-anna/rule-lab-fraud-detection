@@ -62,11 +62,28 @@ def test_alarm_driven_rule_starts_at_its_live_date(con):
         join monitoring.mon_rule_effective_from e using (rule_id)
         where h.strategy_id = 'challenger' and h.event_time < e.effective_from""").fetchone()[0]
     assert early == 0
-    detected, live = con.execute("select detected_at, effective_from from monitoring.mon_rule_effective_from").fetchone()
     start = con.execute("select window_start from config.cfg_window").fetchone()[0]
-    assert detected is not None and live > detected and detected.date() >= start
+    for detected, live in con.execute("select detected_at, effective_from from monitoring.mon_rule_effective_from").fetchall():
+        assert detected is not None and live > detected and detected.date() >= start
 
 
 def test_alarm_is_found_without_labels():
     sql = "".join(p.read_text() for p in (ROOT / "dbt" / "models" / "monitoring").glob("*.sql"))
     assert "answer_key" not in sql and "bt_" not in sql
+
+
+def test_month_12_pattern_still_raises_an_alarm(con):
+    first = con.execute("""
+        select min(week) from monitoring.mon_weekly_alarms
+        where is_alarm and series = 'ach_debit_in:unauthorized'
+          and week >= (select window_start from config.cfg_window)""").fetchone()[0]
+    assert first is not None
+
+
+def test_honest_defaults_are_never_fraud_cases(con):
+    overlap = con.execute("""
+        select count(*) from answer_key.business_profile p
+        join answer_key.fraud_cases c using (business_id) where p.archetype = 'failing_business'""").fetchone()[0]
+    assert overlap == 0
+    sql = (ROOT / "dbt" / "models" / "backtest" / "bt_credit_losses.sql").read_text()
+    assert "loss_prevented" not in sql, "credit losses must not feed fraud prevented"

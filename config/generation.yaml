@@ -158,6 +158,23 @@ events:
   device_change_per_year: 0.4    # a new phone or laptop
   contact_change_per_year: 0.06  # a new email or phone on file
 
+# The revolving line of credit (Phase 3, ADR-016). The bank's own policy, as the generator applies it.
+credit:
+  take_up: 0.35                    # share of eligible businesses that open a line
+  min_history_days: 180            # eligible after six months of account history
+  limit_share_of_monthly_inflow: 0.5
+  limit_min: 2000
+  limit_cap: 150000
+  draw_prob_per_month: 0.35
+  draw_share_of_limit: [0.1, 0.5]
+  repay_share_of_balance: [0.25, 0.6]
+  increase_request_share: 0.15     # lines that ask for one increase; seasonal businesses ask in early spring
+  increase_multiple: 1.5
+  failing_share: 0.05              # honest line holders whose business fails and defaults (not fraud)
+  failing_decline_days: [60, 150]  # revenue falls away over this long; the line is used to survive
+  missed_payment_after_days: 30
+  charge_off_after_days: 120
+
 legit:
   vendor_count: [3, 10]
   vendor_outflow_share: 0.42      # share of revenue paid to vendors
@@ -180,7 +197,7 @@ legit:
 # the bank never confirms (ADR-013).
 typologies:
   check_deposit_fraud:
-    prevalence: 0.0035
+    prevalence: 0.003
     label_delay_days: [0, 3]
     never_labelled: 0.02
     share_new_account: 0.60          # account opened inside the window for the purpose
@@ -196,7 +213,7 @@ typologies:
     return_days: [2, 7]
     return_reasons: {counterfeit: 0.40, account_closed: 0.25, stop_payment: 0.15, nsf: 0.20}
   bec_vendor_change:
-    prevalence: 0.0035
+    prevalence: 0.003
     label_delay_days: [1, 5]
     never_labelled: 0.03
     min_prior_payments: 3
@@ -210,7 +227,7 @@ typologies:
     discovered_after_days: [5, 25]   # the real vendor chases the unpaid invoice; details are reverted
 
   synthetic_shell:
-    prevalence: 0.003
+    prevalence: 0.0025
     label_delay_days: [5, 30]
     never_labelled: 0.10
     variants: {ring: 1.0}
@@ -223,10 +240,10 @@ typologies:
     bust_after_days: [20, 70]            # then a bad-check bust-out (same mechanics as check_deposit_fraud)
     bust_share_of_stated_revenue: 0.15   # bad checks sized against the revenue the shell claimed
   money_mule:
-    prevalence: 0.0035
+    prevalence: 0.003
     label_delay_days: [14, 120]          # victims' banks send recall requests weeks or months later
     never_labelled: 0.20
-    variants: {recruited_new: 0.7, existing_business: 0.3}
+    variants: {opened_for_purpose: 0.7, existing_business: 0.3}
     start_after_open_days: [10, 40]
     active_days: [7, 30]
     n_inbound: [15, 80]
@@ -236,7 +253,7 @@ typologies:
     sweep_share: [0.90, 0.98]
     wire_share_out: 0.5
   account_takeover:
-    prevalence: 0.003
+    prevalence: 0.0025
     label_delay_days: [0, 2]             # the owner reports it once they notice
     never_labelled: 0.02
     variants: {email_and_phone: 0.6, email_only: 0.4}
@@ -263,3 +280,19 @@ typologies:
     n_withdrawals: [1, 3]
     wire_share: 0.5
     return_days: [3, 14]
+
+  credit_bust_out:                       # Phase 3 (ADR-016)
+    prevalence: 0.0035
+    label_delay_days: [150, 180]         # confirmed around charge-off: 30 days to a missed payment + 120 days
+    never_labelled: 0.05
+    variants: {pumped_then_drawn: 1.0}
+    line_before_ramp_days: [60, 200]     # months of clean use first
+    ramp_weeks: [3, 6]                   # inflows pumped up with round-trip money from accounts the owner controls
+    pump_per_week_of_month: [0.5, 1.5]
+    pump_return_days: [1, 3]
+    increase_multiple: [2.0, 3.0]
+    draw_after_increase_days: [1, 10]
+    n_draws: [1, 3]
+    draw_share_of_available: [0.9, 1.0]
+    wire_out_hours: [1, 24]
+    wire_share: 0.6

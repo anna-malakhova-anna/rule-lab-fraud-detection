@@ -8,6 +8,7 @@ fonts, images or logos (scripts/site_check.py refuses them).
 from __future__ import annotations
 
 import html
+import shutil
 from datetime import date
 
 from scripts import results as R
@@ -67,6 +68,8 @@ summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+.nav { font-size: 14px; margin-bottom: 8px; color: var(--muted); }
+a { color: var(--series-1); }
 """
 
 
@@ -101,8 +104,8 @@ def ticks(vmax: float) -> list[float]:
 def tradeoff_panel(rule_id: str, pts: list[dict], title: str | None = None) -> str:
     """One rule's sweep: good businesses flagged (x) vs fraud $ prevented (y), one dot per cutoff."""
     W, H, L, B, T, Rm = 320, 210, 46, 30, 14, 14
-    xmax = max(p["good_businesses_flagged"] for p in pts) * 1.05
-    ymax = max(p["loss_prevented"] for p in pts) * 1.05
+    xmax = max(max(p["good_businesses_flagged"] for p in pts), 4) * 1.05
+    ymax = max(max(p["loss_prevented"] for p in pts), 1000) * 1.05
     sx = lambda v: L + (W - L - Rm) * v / xmax
     sy = lambda v: H - B - (H - B - T) * v / ymax
     parts = []
@@ -185,11 +188,11 @@ def reviews_chart(weeks: list[dict]) -> str:
     return f'<div class="card">{legend}{svg}<details><summary>Table view</summary>{tbl}</details></div>'
 
 
-def returns_chart(weeks: list[dict], detected_at, effective_from) -> str:
-    """Weekly unauthorized ACH-debit returns, with the alarm week and the answering rule's live date marked."""
+def weekly_bars(weeks: list[dict], markers: list[tuple], label: str) -> str:
+    """Weekly event counts for one monitored series, with dated markers (e.g. the first alarm)."""
     W, H, L, B, T, Rm = 720, 220, 34, 28, 28, 12
     n = len(weeks)
-    ymax = ticks(max(w["returns"] for w in weeks) * 1.1)[-1]
+    ymax = ticks(max(max(w["events"] for w in weeks), 1) * 1.1)[-1]
     band = (W - L - Rm) / n
     bw = min(24, band * 0.7)
     sx = lambda i: L + band * i + band / 2
@@ -201,120 +204,127 @@ def returns_chart(weeks: list[dict], detected_at, effective_from) -> str:
     for i, w in enumerate(weeks):
         if w["week"].day <= 7 and w["week"].month % 2 == 1:
             parts.append(f'<text x="{sx(i):.1f}" y="{H - B + 16}" text-anchor="middle">{w["week"]:%b %y}</text>')
-        if w["returns"] > 0:
-            x, y = sx(i) - bw / 2, sy(w["returns"])
-            h = H - B - y
-            r = min(4, h)
+        if w["events"] > 0:
+            x, y = sx(i) - bw / 2, sy(w["events"])
+            r = min(4, H - B - y)
             # 4px rounded top, square at the baseline.
             path = (f'M{x:.1f},{H - B} L{x:.1f},{y + r:.1f} Q{x:.1f},{y:.1f} {x + r:.1f},{y:.1f} '
                     f'L{x + bw - r:.1f},{y:.1f} Q{x + bw:.1f},{y:.1f} {x + bw:.1f},{y + r:.1f} L{x + bw:.1f},{H - B} Z')
-            tip = (f'week of {w["week"]:%d %b %Y}: {w["returns"]} unauthorized returns ({R.usd(w["returned_amount"])}), '
+            tip = (f'week of {w["week"]:%d %b %Y}: {w["events"]} ({R.usd(w["amount"])}), '
                    f'trailing mean {w["baseline_mean"]:.1f}{" - ALARM" if w["is_alarm"] else ""}')
             parts.append(f'<g><title>{esc(tip)}</title><path d="{path}" fill="var(--series-1)"/>'
                          f'<rect x="{sx(i) - band / 2:.1f}" y="{T}" width="{band:.1f}" height="{H - B - T}" fill="transparent"/></g>')
     parts.append(f'<line x1="{L}" x2="{W - Rm}" y1="{H - B}" y2="{H - B}" stroke="var(--axis)"/>')
-    # The alarm label sits left of its line, the go-live label right of its line, so the two never overlap.
-    for d, label, anchor, dx in ((detected_at, "alarm visible", "end", -4), (effective_from, "R9 live", "start", 4)):
+    for k, (d, text) in enumerate(markers):
         idx = next((i for i, w in enumerate(weeks) if w["week"] >= d.date()), None)
         if idx is not None:
             x = L + band * idx
+            anchor, dx = ("end", -4) if k == 0 else ("start", 4)
             parts.append(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="{T - 18}" y2="{H - B}" stroke="var(--ink-2)" stroke-width="1.5"/>')
-            parts.append(f'<text x="{x + dx:.1f}" y="{T - 8}" text-anchor="{anchor}" class="strong">{label} {d:%d %b}</text>')
-    svg = f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="Unauthorized ACH-debit returns per week">{"".join(parts)}</svg>'
-    rows = [[f'{w["week"]:%Y-%m-%d}', w["returns"], R.usd(w["returned_amount"]), R.usd(w["unalerted_amount"]),
-             f'{w["baseline_mean"]:.1f}', "alarm" if w["is_alarm"] else ""] for w in weeks if w["returns"] or w["is_alarm"]]
-    tbl = table(["Week", "Returns", "Returned $", "No champion alert", "Trailing mean", ""], rows, {1, 2, 3, 4})
+            parts.append(f'<text x="{x + dx:.1f}" y="{T - 8}" text-anchor="{anchor}" class="strong">{esc(text)} {d:%d %b}</text>')
+    svg = f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(label)}">{"".join(parts)}</svg>'
+    rows = [[f'{w["week"]:%Y-%m-%d}', w["events"], R.usd(w["amount"]), R.usd(w["unalerted_amount"]),
+             f'{w["baseline_mean"]:.1f}', "alarm" if w["is_alarm"] else ""] for w in weeks if w["events"] or w["is_alarm"]]
+    tbl = table(["Week", "Events", "Amount", "No champion alert", "Trailing mean", ""], rows, {1, 2, 3, 4})
     return f'<div class="card">{svg}<details><summary>Table view</summary>{tbl}</details></div>'
 
 
-def page() -> str:
+TYPOLOGY_TEXT = {
+    "check_deposit_fraud": "Checks that will bounce are deposited by mobile, and most of the money is withdrawn before they come back. Some accounts are opened for it; some are existing customers turning to it.",
+    "bec_vendor_change": "A fraudster posing as a real vendor gets the vendor's bank details changed, and the business pays its next invoice to the fraudster. The victim is a good customer.",
+    "synthetic_shell": "Rings of freshly incorporated businesses applying with shared devices, phones, addresses and email domains. They are funded fast, then bust out with bad checks.",
+    "money_mule": "An account collects many small payments from senders it has never seen and sweeps them out within a day or two.",
+    "account_takeover": "A login from a new device, a change to the email or phone on file, a new payee, and payouts, all within hours. The owner notices days later.",
+    "ach_return_fraud": "Money pulled in by ACH debit from accounts the business doesn't control, sent straight out, and returned as unauthorized days later. It starts in month 12 and was found by monitoring (INV-001).",
+    "credit_bust_out": "Months of clean use of a line of credit, then round-trip money pumped through the account so the limit is raised, then the whole line drawn and wired out within hours.",
+}
+
+NAV = [("index.html", "Overview"), ("tradeoffs.html", "Trade-offs"), ("types.html", "Fraud types"),
+       ("monitoring.html", "Monitoring"), ("limitations.html", "How sure are we"), ("glossary.html", "Glossary")]
+
+
+def shell(title: str, body: str, depth: int = 0) -> str:
+    up = "../" * depth
+    nav = " · ".join(f'<a href="{up}{href}">{esc(name)}</a>' for href, name in NAV)
     w, t = R.window(), R.totals()
-    head = R.headline_rows()
-    sweep = R.sweep("train")
-    rules = R.challenger_thresholds()
-    panels = "".join(tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid]) for rid in R.RULE_LABELS)
-    thresholds = [[R.RULE_LABELS[r["rule_id"]], R.action_cell(r), R.champion_cell(r), R.challenger_cell(r)] for r in rules]
-    overlap = [[R.RULE_LABELS[o["rule_id"]], o["cases_detected"], o["cases_only_this_rule"]]
-               for o in R.overlap("challenger") if o["period"] == "test"]
-    harm = [[h["archetype"].replace("_", " "), f'{h["good_alerts"]:,}', R.usd(h["dollar_days"])] for h in R.harm_by_archetype("challenger")]
-    champ, chall = R.typology_totals("champion"), R.typology_totals("challenger")
-    typ = [[label, champ[k]["cases"], champ[k]["detected"], chall[k]["detected"], R.usd(champ[k]["loss"]),
-            R.usd(champ[k]["prevented"]), R.usd(chall[k]["prevented"])] for k, label in R.TYPOLOGY_LABELS.items() if k in champ]
-    eff = {e["rule_id"]: e for e in R.effective_dates()}["R9_ach_pull_then_fast_out"]
-    ach_weeks = R.weekly_return_series("ach_debit_in:unauthorized")
-    alarms = [[f'{a["week"]:%Y-%m-%d}', a["series"].replace(":", " / ").replace("_", " "), a["returns"], f'{a["baseline_mean"]:.1f}',
-               R.usd(a["returned_amount"])] for a in R.alarms()]
-    gap = [[R.RULE_LABELS[g["rule_id"]], f'{g["cases_known"]} of {g["cases_all"]}', R.usd(g["prevented_known"]), R.usd(g["prevented_all"]),
-            R.pct(g["precision_known"], 1), R.pct(g["precision_all"], 1)] for g in R.label_delay_gap()]
-    prec = {}
-    for m in R.monthly_precision():
-        if m["month"] >= w["train_end"]:
-            a = prec.setdefault(m["rule_id"], [0, 0.0, 0.0])
-            a[0] += m["alerts"]; a[1] += m["precision_at_maturity"] * m["alerts"]; a[2] += m["precision_eventually"] * m["alerts"]
-    prec_rows = [[R.RULE_LABELS[k], f'{v[0]:,}', R.pct(v[1] / v[0], 1), R.pct(v[2] / v[0], 1)] for k, v in sorted(prec.items())]
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SMB Fraud Rule Lab</title>
+<title>{esc(title)} · SMB Fraud Rule Lab</title>
 <style>{CSS}</style>
 </head>
 <body>
 <main>
-<h1>SMB Fraud Rule Lab</h1>
-<p class="question">Which fraud rules should a small-business bank run, at what thresholds, and what does each change cost and save?</p>
+<nav class="nav">{nav}</nav>
 <div class="banner"><strong>All data is synthetic.</strong> {esc(w["bank_name"])} is invented, and so are its {t["businesses"]:,} businesses and
-{t["transactions"]:,} transactions. The {t["cases"]} fraud cases across six fraud types were planted with an answer key. No number here is a real-world fraud rate.</div>
+{t["transactions"]:,} transactions. The {t["cases"]} fraud cases were planted with an answer key. No number here is a real-world fraud rate.</div>
+{body}
+<p class="src">Built {date.today():%Y-%m-%d} from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p>
+</main>
+</body>
+</html>
+"""
+
+
+def overview() -> str:
+    t = R.totals()
+    rules = R.challenger_thresholds()
+    champ, chall = R.typology_totals("champion"), R.typology_totals("challenger")
+    typ = [[label, champ[k]["cases"], champ[k]["detected"], chall[k]["detected"], R.usd(champ[k]["loss"]),
+            R.usd(champ[k]["prevented"]), R.usd(chall[k]["prevented"])] for k, label in R.TYPOLOGY_LABELS.items() if k in champ]
+    cl = R.credit_losses()
+    ch, cc = cl.get(("champion", "test")), cl.get(("challenger", "test"))
+    credit = [["Honest businesses that defaulted", ch["honest_defaults"], cc["honest_defaults"]],
+              ["Balance when they missed a payment", R.usd(ch["balance_at_missed_payment"]), R.usd(cc["balance_at_missed_payment"])],
+              ["Of which flagged by a rule in the 90 days before", R.usd(ch["balance_flagged_before_default"]), R.usd(cc["balance_flagged_before_default"])],
+              ["Holds put on these struggling businesses", ch["holds_on_honest_defaulters"], cc["holds_on_honest_defaulters"]]]
+    thresholds = [[R.RULE_LABELS[r["rule_id"]], R.action_cell(r), R.champion_cell(r), R.challenger_cell(r)] for r in rules]
+    return f"""<h1>SMB Fraud Rule Lab</h1>
+<p class="question">Which fraud rules should a small-business bank run, at what thresholds, and what does each change cost and save?</p>
 
 <h2>Champion vs challenger, on months the tuning never saw</h2>
-<p>The champion is what runs today: five rules for check deposit fraud and vendor bank-detail changes. The
-challenger adds four rules: shell businesses at onboarding (R6), mules (R7), account takeover (R8), and R9, written
-after monitoring caught a new pattern in month 12. New cutoffs were tuned on the first 12 months using only the
-fraud the bank had confirmed by then. Both rule sets are graded on months 13 to 18 ({t["test_cases"]} fraud cases).
+<p>The champion is what runs today: nine rules covering deposits, payments, onboarding, mules, account takeover and ACH
+debits. The challenger adds three rules for the new line of credit. New cutoffs were tuned on the first 12 months
+using only the fraud confirmed by then. Both rule sets are graded on months 13 to 18 ({t["test_cases"]} fraud cases).
 Ranges are 90% bootstrap ranges over businesses.</p>
-<div class="card">{table(["Test months", "Champion", "Challenger"], [list(r) for r in head], {1, 2})}</div>
+<div class="card">{table(["Test months", "Champion", "Challenger"], [list(r) for r in R.headline_rows()], {1, 2})}</div>
 <p class="src">Source: backtest.bt_strategy_metrics, analysis.bootstrap_ci</p>
 
 <h2>By fraud type (test months)</h2>
 <div class="card">{table(["Fraud type", "Cases", "Detected: champion", "Detected: challenger", "Loss at stake", "Prevented: champion", "Prevented: challenger"], typ, {1, 2, 3, 4, 5, 6})}</div>
+<p>One page per fraud type: <a href="types.html">Fraud types</a>.</p>
+
+<h2>Credit losses that are not fraud (test months)</h2>
+<p>Some honest businesses fail and default on their line. That's credit risk, not fraud, so it is never added to
+fraud prevented. Holding a struggling customer's payments still counts as harm.</p>
+<div class="card">{table(["", "Champion", "Challenger"], credit, {1, 2})}</div>
+<p class="src">Source: backtest.bt_credit_losses</p>
 
 <h2>Cutoffs</h2>
 <div class="card">{table(["Rule", "Action", "Champion", "Challenger"], thresholds)}</div>
+"""
 
-<h2>Monitoring caught the month-12 pattern</h2>
-<p>Every week, each kind of returned payment (by rail and return reason) is compared with its own previous 12 weeks.
-No fraud labels are involved: this is what an analyst could see that week. Unauthorized returns on ACH debits
-had been near zero all year, then jumped. The alarm became visible on {eff["detected_at"]:%d %b %Y}. After an
-investigation of 10 business days, R9 went live on {eff["effective_from"]:%d %b %Y}, and the backtest credits it only from then.
-The full write-up is in docs/investigations/INV-001-ach-debit-returns.md.</p>
-<h3>Unauthorized ACH-debit returns per week</h3>
-{returns_chart(ach_weeks, eff["detected_at"], eff["effective_from"])}
-<details><summary>Every alarm in the window (most are bursts of bad checks that the check rules already cover)</summary>
-<div class="card">{table(["Week of", "Series", "Returns", "Trailing mean", "Returned $"], alarms, {2, 3, 4})}</div></details>
-<p class="src">Source: monitoring.mon_return_alarms, monitoring.mon_rule_effective_from</p>
 
-<h2>Labels arrive late</h2>
-<p>When tuning in month 12, the bank only knows the fraud it has confirmed so far. Mule cases take weeks to months
-to confirm, and some never are. The tuned rules were chosen on what the bank could see at the time:</p>
-<div class="card">{table(["Tuned rule (training months)", "Cases the bank knew of", "Prevented, as seen then", "Prevented, all labels", "Precision, as seen then", "Precision, all labels"], gap, {1, 2, 3, 4, 5})}</div>
-<p>Weekly monitoring has the same lag. Precision in the test months, as known 30 days after each week vs eventually:</p>
-<div class="card">{table(["Rule", "Alerts", "Precision at 30 days", "Precision eventually"], prec_rows, {1, 2, 3})}</div>
-<p class="src">Source: backtest.bt_sweep_metrics_known, backtest.bt_monitoring_precision</p>
-
-<h2>The trade-off, rule by rule (tuning months)</h2>
+def tradeoffs() -> str:
+    w = R.window()
+    sweep = R.sweep("train")
+    panels = "".join(tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid]) for rid in R.RULE_LABELS)
+    overlap = [[R.RULE_LABELS[o["rule_id"]], o["cases_detected"], o["cases_only_this_rule"]]
+               for o in R.overlap("challenger") if o["period"] == "test"]
+    harm = [[h["archetype"].replace("_", " "), f'{h["good_alerts"]:,}', R.usd(h["dollar_days"])] for h in R.harm_by_archetype("challenger")]
+    return f"""<h1>Trade-offs</h1>
+<h2>Each rule's cutoffs (tuning months)</h2>
 <p>Each dot is one cutoff. Moving right flags more good businesses; moving up prevents more fraud. A curve that flattens
-early means looser cutoffs only add friction. Hover a dot for reviews per day. R9 has almost no cases in these months
-because its pattern only starts in month 12.</p>
+early means looser cutoffs only add friction. Hover a dot for reviews per day.</p>
 <div class="grid">{panels}</div>
 <p class="src">Source: backtest.bt_sweep_metrics (period = train, all labels)</p>
 
 <h2>Review load against capacity</h2>
 <p>Each alert is a review on the next business day, with at most one review per business per day. Capacity is
-{w["reviews_capacity_per_day"]:g} reviews per business day (2.25 analysts for 12,000 businesses). The line shows the weekly
-average, so single days run higher.</p>
+{w["reviews_capacity_per_day"]:g} reviews per business day (2.25 analysts for 12,000 businesses).</p>
 {reviews_chart(R.weekly_reviews())}
-<p class="src">Source: backtest.bt_daily_reviews</p>
 
 <h2>Which rules earn their alerts (challenger, test months)</h2>
 <p>A case "only this rule touched" would be missed if the rule were turned off.</p>
@@ -323,38 +333,141 @@ average, so single days run higher.</p>
 <h2>Who the false positives are (challenger, test months)</h2>
 <p>Good businesses grouped by the hidden archetype the generator gave them. The bank cannot see these labels; the backtest can.</p>
 <div class="card">{table(["Kind of business", "Alerts on good businesses", "Dollar-days held"], harm, {1, 2})}</div>
-
-<h2>How sure are we?</h2>
-<ul>
-<li>Synthetic data flatters rules. I wrote the fraud, so the rules look for exactly the shapes I planted. Real fraud adapts once it starts getting caught.</li>
-<li>Each fraud type has only 5 to 19 cases in the test months. One case moves a fraud type's numbers a lot.</li>
-<li>Labels are now delayed and sometimes missing (left), but the final grade still uses the full answer key. A real bank never gets that.</li>
-<li>Costs used to pick cutoffs are invented (config/backtest.yaml). R6 declines only applicants with strong links; weaker links get a request for documents, and their cutoff is tuned against those costs.</li>
-<li>Part of the ACH return fraud was caught before R9 by R5, by luck: the money went to the owner's own account at an unusual size.</li>
-</ul>
-
-<h2>Glossary</h2>
-<dl>
-<dt>RFI</dt><dd>Request for information: ask the customer for documents. The payment is not stopped.</dd>
-<dt>Hold</dt><dd>Delay the payment or the deposited funds until reviewed (assumed 2 days for a good customer).</dd>
-<dt>Block</dt><dd>At onboarding: decline the application. R6 declines only strong identity links; weaker links get an RFI.</dd>
-<dt>Precision</dt><dd>Share of alerts that landed on fraud (a fraudulent transaction or a fraudster's account).</dd>
-<dt>Dollar-days held</dt><dd>Good customers' money held × days held. $10,000 held for 2 days is 20,000 dollar-days.</dd>
-<dt>Label delay</dt><dd>The time between a fraud happening and the bank confirming it was fraud.</dd>
-<dt>Alarm</dt><dd>A week where a kind of returned payment is far above its own recent normal.</dd>
-<dt>Champion / challenger</dt><dd>The current rule set and a proposed one, graded on the same held-out months.</dd>
-</dl>
-<p class="src">Built {date.today():%Y-%m-%d} from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p>
-</main>
-</body>
-</html>
 """
 
 
+def types_index() -> str:
+    items = "".join(f'<li><a href="types/{k}.html">{esc(v)}</a>: {esc(TYPOLOGY_TEXT[k])}</li>' for k, v in R.TYPOLOGY_LABELS.items())
+    return f"<h1>Fraud types</h1><ul>{items}</ul>"
+
+
+def type_page(key: str) -> str:
+    rows = []
+    for period in ("test", "train"):
+        a, b = R.typology_totals("champion", period).get(key), R.typology_totals("challenger", period).get(key)
+        if a:
+            rows.append([f"{period} months", a["cases"], a["detected"], b["detected"], R.usd(a["loss"]), R.usd(a["prevented"]), R.usd(b["prevented"])])
+    touch = [[R.RULE_LABELS[r["rule_id"]], r["test_cases"], r["train_cases"]] for r in R.rules_touching(key)]
+    variants = [[o["variant"].replace("_", " "), o["cases"], o["detected"], R.usd(o["loss"]), R.usd(o["prevented"]),
+                 "n/a" if o["median_hours_to_first_hit"] is None else f'{o["median_hours_to_first_hit"]:.1f}']
+                for o in R.typology_outcomes("challenger", "test") if o["typology"] == key]
+    return f"""<h1>{esc(R.TYPOLOGY_LABELS[key])}</h1>
+<p>{esc(TYPOLOGY_TEXT[key])}</p>
+<h2>Outcomes</h2>
+<div class="card">{table(["Period", "Cases", "Detected: champion", "Detected: challenger", "Loss at stake", "Prevented: champion", "Prevented: challenger"], rows, {1, 2, 3, 4, 5, 6})}</div>
+<h2>Rules that touched these cases (challenger)</h2>
+<div class="card">{table(["Rule", "Test cases", "Training cases"], touch, {1, 2})}</div>
+<h2>By variant (challenger, test months)</h2>
+<div class="card">{table(["Variant", "Cases", "Detected", "Loss at stake", "Prevented", "Median hours to first alert"], variants, {1, 2, 3, 4, 5})}</div>
+"""
+
+
+def monitoring() -> str:
+    alarms = [[f'{a["week"]:%Y-%m-%d}', a["series"].replace(":", " / ").replace("_", " "), a["events"], f'{a["baseline_mean"]:.1f}',
+               R.usd(a["amount"])] for a in R.alarms()]
+    ach = R.weekly_series("ach_debit_in:unauthorized")
+    first_ach = next(w for w in ach if w["is_alarm"])
+    credit = R.weekly_series("credit:payment_missed")
+    gap = [[R.RULE_LABELS[g["rule_id"]], f'{g["cases_known"]} of {g["cases_all"]}', R.usd(g["prevented_known"]), R.usd(g["prevented_all"]),
+            R.pct(g["precision_known"], 1), R.pct(g["precision_all"], 1)] for g in R.label_delay_gap()]
+    w = R.window()
+    prec = {}
+    for m in R.monthly_precision():
+        if m["month"] >= w["train_end"]:
+            a = prec.setdefault(m["rule_id"], [0, 0.0, 0.0])
+            a[0] += m["alerts"]; a[1] += m["precision_at_maturity"] * m["alerts"]; a[2] += m["precision_eventually"] * m["alerts"]
+    prec_rows = [[R.RULE_LABELS[k], f'{v[0]:,}', R.pct(v[1] / v[0], 1), R.pct(v[2] / v[0], 1)] for k, v in sorted(prec.items())]
+    return f"""<h1>Monitoring</h1>
+<p>Every week, each kind of returned payment (by rail and return reason) and each kind of credit event (missed
+payments, charge-offs) is compared with its own previous 12 weeks. No fraud labels are involved: this is what an
+analyst could see that week.</p>
+
+<h2>How the month-12 pattern was found</h2>
+<p>Unauthorized returns on ACH debits had been near zero, then jumped. The first alarm became visible on
+{first_ach["week_closes_at"]:%d %b %Y}. The investigation (docs/investigations/INV-001-ach-debit-returns.md, frozen at Phase 2)
+led to R9, which now runs in the champion.</p>
+{weekly_bars(ach, [(first_ach["week_closes_at"], "alarm visible")], "Unauthorized ACH-debit returns per week")}
+
+<h2>Missed payments on the line of credit</h2>
+<p>Missed payments come from honest businesses that fail and from bust-outs. The "no champion alert" column in the
+table view is the part no rule saw coming.</p>
+{weekly_bars(credit, [], "Missed credit payments per week")}
+
+<details><summary>Every alarm in the window (most are bursts of bad checks that the check rules already cover)</summary>
+<div class="card">{table(["Week of", "Series", "Events", "Trailing mean", "Amount"], alarms, {2, 3, 4})}</div></details>
+<p class="src">Source: monitoring.mon_weekly_alarms</p>
+
+<h2>Labels arrive late</h2>
+<p>When tuning in month 12, the bank only knows the fraud it has confirmed so far. A bust-out is confirmed around
+charge-off, about five months after the money leaves. The credit rules were tuned on what the bank could see at the time:</p>
+<div class="card">{table(["Tuned rule (training months)", "Cases the bank knew of (all types)", "Prevented, as seen then", "Prevented, all labels", "Precision, as seen then", "Precision, all labels"], gap, {1, 2, 3, 4, 5})}</div>
+<p>Weekly monitoring has the same lag. Precision in the test months, as known 30 days after each week vs eventually:</p>
+<div class="card">{table(["Rule", "Alerts", "Precision at 30 days", "Precision eventually"], prec_rows, {1, 2, 3})}</div>
+<p class="src">Source: backtest.bt_sweep_metrics_known, backtest.bt_monitoring_precision</p>
+"""
+
+
+def limitations() -> str:
+    t = R.totals()
+    return f"""<h1>How sure are we?</h1>
+<h2>What flatters these results</h2>
+<ul>
+<li><strong>I wrote the fraud.</strong> The rules look for exactly the shapes I planted, so detection rates in the 90s say more about my generator than about any real bank. Real fraud adapts once it starts getting caught.</li>
+<li><strong>Synthetic bust-outs are clean.</strong> Every one draws the full line within days of an increase, which R12 catches almost perfectly. Real bust-outs are messier and slower.</li>
+<li><strong>The final grade uses the full answer key.</strong> Tuning only sees labels known by month 12, but the headline comparison uses every label, including cases a real bank would never confirm.</li>
+<li><strong>Generator shortcuts can leak into results.</strong> I've found and fixed two. Bust-out money sent back to the owner's own account made R5 look like a bust-out detector. ACH fraud cash-outs to the owner's account let R5 catch part of the month-12 pattern by luck. I documented the second rather than removing it.</li>
+</ul>
+<h2>What makes them uncertain</h2>
+<ul>
+<li><strong>Small samples.</strong> The test months hold {t["test_cases"]} cases across seven fraud types, 6 to 22 each. One case moves a fraud type's numbers a lot; the headline carries bootstrap ranges for that reason.</li>
+<li><strong>Invented costs.</strong> Cutoffs are chosen with costs I made up (config/backtest.yaml): $30 a review, $150 per good business flagged, $1,000 per delayed payroll, $300 per good applicant declined. Different costs pick different cutoffs.</li>
+<li><strong>Simplified mechanics.</strong> There are no account balances or overdrafts, an RFI is assumed to stop half the fraud, and a hold is assumed to stop all of it.</li>
+<li><strong>A thin tuning set for credit.</strong> Bust-out labels arrive about five months after the money leaves, so tuning in month 12 saw only a handful of confirmed bust-outs.</li>
+</ul>
+<h2>What isn't modelled</h2>
+<ul>
+<li>Fraud that adapts to the rules: a ring buying aged shelf companies to dodge R6's decline, or money moved out through fake payroll runs to dodge R1.</li>
+<li>Customer reactions to friction (churn), chargebacks, and the card rail beyond aggregate spend.</li>
+</ul>
+"""
+
+
+def glossary() -> str:
+    terms = [
+        ("RFI", "Request for information: ask the customer for documents. The payment is not stopped."),
+        ("Hold", "Delay the payment, the deposited funds or the credit draw until reviewed (assumed 2 days for a good customer)."),
+        ("Block", "At onboarding: decline the application. R6 declines only strong identity links at newly incorporated businesses."),
+        ("Precision", "Share of alerts that landed on fraud (a fraudulent transaction or a fraudster's account)."),
+        ("Recall", "Share of fraud cases (or fraud dollars) the rules caught."),
+        ("Dollar-days held", "Good customers' money held × days held. $10,000 held for 2 days is 20,000 dollar-days."),
+        ("Champion / challenger", "The current rule set and a proposed one, graded on the same held-out months."),
+        ("Label delay", "The time between a fraud happening and the bank confirming it was fraud."),
+        ("Alarm", "A week where a monitored series is far above its own recent normal."),
+        ("Bust-out", "Building a clean credit history, raising the limit, then drawing everything and disappearing."),
+        ("Charge-off", "The bank writing off a balance it no longer expects to collect (here, 120 days after a missed payment)."),
+        ("First-party fraud", "Fraud by the customer themselves, as opposed to someone impersonating or exploiting them."),
+    ]
+    dl = "".join(f"<dt>{esc(a)}</dt><dd>{esc(b)}</dd>" for a, b in terms)
+    return f"<h1>Glossary</h1><dl>{dl}</dl>"
+
+
+def pages() -> dict[str, tuple[str, str, int]]:
+    out = {"index.html": ("Overview", overview(), 0), "tradeoffs.html": ("Trade-offs", tradeoffs(), 0),
+           "types.html": ("Fraud types", types_index(), 0), "monitoring.html": ("Monitoring", monitoring(), 0),
+           "limitations.html": ("How sure are we", limitations(), 0), "glossary.html": ("Glossary", glossary(), 0)}
+    for key, label in R.TYPOLOGY_LABELS.items():
+        out[f"types/{key}.html"] = (label, type_page(key), 1)
+    return out
+
+
 def main() -> None:
-    OUT.parent.mkdir(exist_ok=True)
-    OUT.write_text(page())
-    print(f"wrote {OUT.relative_to(ROOT)}")
+    site = OUT.parent
+    shutil.rmtree(site, ignore_errors=True)
+    for rel, (title, body, depth) in pages().items():
+        path = site / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(shell(title, body, depth))
+    print(f"wrote {len(pages())} pages to {site.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":

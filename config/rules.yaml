@@ -1,7 +1,8 @@
 # The rule set. Each rule has ONE swept score; everything else is a fixed gate in `params`.
 #
-# status    champion   = running today. Phase 2's champion is Phase 1's challenger, promoted (ADR-010):
-#                        R1 excludes payroll (ADR-009) and the five cutoffs are the ones Phase 1 tuned.
+# status    champion   = running today. Phase 3's champion is Phase 2's challenger, promoted (ADR-010, ADR-016):
+#                        R1 excludes payroll (ADR-009); R1-R5 keep Phase 1's cutoffs; R6-R8 the cutoffs Phase 2
+#                        tuned; R6 declines only strong links at young businesses (ADR-015); R9 runs throughout.
 #           challenger = proposed. Added only to the challenger rule set.
 # threshold the cutoff the rule runs at. For champion rules it is fixed. For a challenger rule with tune: true
 #           it is only the starting point: the backtest picks the challenger's cutoff on the training months,
@@ -76,8 +77,7 @@ rules:
       min_amount: 1000
 
   R6_onboarding_shared_identity:
-    status: challenger
-    tune: true
+    status: champion
     rationale: Applicants who share a device, phone, address or business email domain with earlier applicants, and are freshly incorporated, look like a ring of synthetic businesses.
     applies_to: approved applications, before the account opens
     score: most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days
@@ -90,13 +90,12 @@ rules:
       young_incorporation_days: 90
 
   R7_mule_fan_in_sweep:
-    status: challenger
-    tune: true
+    status: champion
     rationale: Many first-time senders paying in, and most of it paid straight back out, is how a mule account moves scam proceeds.
     applies_to: outbound ACH and wire payments
     score: distinct first-time senders of ACH or wire payments in the last 14 days
     comparator: ">="
-    threshold: 15
+    threshold: 5
     sweep: [5, 10, 15, 20, 30, 40]
     action: hold
     params:
@@ -104,22 +103,19 @@ rules:
       min_swept_share: 0.6           # outbound in 14 days / that inbound
 
   R8_ato_new_device_sequence:
-    status: challenger
-    tune: true
+    status: champion
     rationale: A new device, then a change to the email or phone on file, then a first payment to a payee added after that login, is the account-takeover sequence.
     applies_to: first payments to a payee
     score: hours since the first login from a device never seen on this account
     comparator: "<="
-    threshold: 24
+    threshold: 12
     sweep: [6, 12, 24, 48, 72, 168]
     action: hold
     params:
       lookback_hours: 168
 
   R9_ach_pull_then_fast_out:
-    status: challenger
-    tune: false                      # set from the investigation, before grading (ADR-014)
-    effective_from_alarm: ach_debit_in:unauthorized
+    status: champion                 # written after the month-12 alarm (ADR-014, INV-001); shipped in Phase 2
     rationale: Money pulled in by ACH debit and paid straight back out, above normal spending, is R1's pattern on a rail R1 never watched.
     applies_to: outbound ACH and wire payments (payroll excluded)
     score: share of the last 5 days of ACH debits pulled in that left in the last 48 hours on top of a normal week of the account's spending
@@ -129,3 +125,43 @@ rules:
     action: hold
     params:
       min_recent_pulls: 5000
+
+  # ---- Phase 3: the line of credit (ADR-016) ----
+  R10_credit_inflow_ramp:
+    status: challenger
+    tune: true
+    rationale: A line opening or limit increase asked for right after inflows jumped above the account's own history is how a bust-out earns a bigger line.
+    applies_to: line openings and limit-increase requests
+    score: last 30 days of inflow / average month of the 90 days before that
+    comparator: ">="
+    threshold: 2.5
+    sweep: [1.5, 2.0, 2.5, 3.0, 4.0, 6.0]
+    action: rfi                      # ask for financials before granting (ADR-016)
+    params:
+      min_recent_inflow: 5000
+
+  R11_draw_then_fast_out:
+    status: challenger
+    tune: true
+    rationale: Money drawn on the line and sent straight back out, above normal spending, is the moment a bust-out cashes out.
+    applies_to: outbound ACH and wire payments (payroll excluded)
+    score: share of the last 72 hours of line draws that left in the last 48 hours on top of a normal week of the account's spending
+    comparator: ">="
+    threshold: 0.6
+    sweep: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    action: hold
+    params:
+      min_recent_draws: 2000
+
+  R12_full_draw_after_increase:
+    status: challenger
+    tune: true
+    rationale: Drawing the line to its limit days after it was raised is the bust-out's signature.
+    applies_to: draws on the line of credit
+    score: days since the limit was last raised
+    comparator: "<="
+    threshold: 14
+    sweep: [3, 7, 14, 30, 60, 90]
+    action: hold                     # hold the draw
+    params:
+      min_utilisation: 0.8

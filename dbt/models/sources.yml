@@ -8,6 +8,8 @@ sources:
       - name: owners
       - name: applications
       - name: events
+      - name: credit_lines
+      - name: credit_line_events
       - name: accounts
       - name: payees
       - name: payee_events

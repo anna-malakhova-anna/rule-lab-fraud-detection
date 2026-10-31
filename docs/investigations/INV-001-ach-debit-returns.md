@@ -1,6 +1,6 @@
 # INV-001: Unauthorized ACH-debit returns
 
-> Synthetic data. The facts table is generated from the warehouse by `make results`; the rest is my write-up
+> Synthetic data. The facts table is FROZEN from the Phase 2 build (commit 4b76799); the rest is my write-up
 > of how I would have worked the alarm, and is a draft.
 
 ## What fired
@@ -9,7 +9,6 @@ The weekly return monitor (`monitoring.mon_return_alarms`) compares each return 
 reason, with its own previous 12 weeks. Unauthorized returns on ACH debits had been close to zero all year.
 Then they weren't.
 
-<!-- inv-facts:start -->
 | Fact (from the warehouse) | Value |
 |---|---|
 | Unauthorized ACH-debit returns, all weeks before the alarm | 7 |
@@ -21,7 +20,6 @@ Then they weren't.
 | ACH return fraud cases starting in the test months | 19 |
 | Prevented by the champion (no ACH rule) | $543K of $1.20M |
 | Prevented by the challenger (with R9 from its live date) | $1.06M of $1.20M |
-<!-- inv-facts:end -->
 
 ## What I looked at
 

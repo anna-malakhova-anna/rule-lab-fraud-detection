@@ -17,8 +17,9 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from generator import events, legit
-from generator.common import DAY, EVENT_SCHEMA, INBOUND, ROOT, TXN_SCHEMA, Calendar, Columns, load_config, rng_for
+from generator import credit, events, legit
+from generator.common import (CREDIT_EVENT_ID_BASE, DAY, EVENT_SCHEMA, INBOUND, ROOT, TXN_SCHEMA, Calendar, Columns,
+                              load_config, rng_for)
 from generator.typologies import (account_takeover, ach_return_fraud, bec_vendor_change, check_deposit_fraud,
                                   money_mule, synthetic_shell)
 from generator.world import account_rows, build_businesses, build_identities, business_rows
@@ -45,13 +46,21 @@ def generate(cfg: dict, out: Path) -> dict:
     payees = legit.Payees()
     ev = Columns(EVENT_SCHEMA)
     parts, cases = [], []
+    lines, line_events = [], []
     case_id = 0
     for b in businesses:
-        if b.fraud:
+        if b.fraud in TYPOLOGIES:
             TYPOLOGIES[b.fraud].plan(cfg, b)
         buf = Columns(TXN_SCHEMA)
         ctx = legit.generate(cfg, cal, b, rng_for(cfg["seed"], "legit", b.business_id), buf, payees)
         events.generate(cfg, cal, b, rng_for(cfg["seed"], "events", b.business_id), ev, ctx)
+        if b.fraud == "credit_bust_out":
+            case_id += 1
+            tx, case = credit.run(cfg, cal, b, rng_for(cfg["seed"], "credit", b.business_id), buf.finish(), payees,
+                                  lines, line_events, ctx, case_id)
+            cases.append(case)
+            parts.append(tx)
+            continue
         if b.fraud:
             case_id += 1
             frng = rng_for(cfg["seed"], b.fraud, b.business_id)
@@ -67,7 +76,10 @@ def generate(cfg: dict, out: Path) -> dict:
                 cases.append(case)
             else:
                 b.fraud = None
-        parts.append(buf.finish() if buf is not None else tx)
+        tx = buf.finish() if buf is not None else tx
+        # Honest businesses may take a line of credit (and some fail and default on it).
+        tx, _ = credit.run(cfg, cal, b, rng_for(cfg["seed"], "credit", b.business_id), tx, payees, lines, line_events, ctx, None)
+        parts.append(tx)
 
     tx = {c: np.concatenate([p[c] for p in parts if len(p[c])]) for c in TXN_SCHEMA}
     # Stable transaction ids: by time, then business, then account, then amount.
@@ -113,6 +125,16 @@ def generate(cfg: dict, out: Path) -> dict:
         "address": [a["address"] for a in applications],
         "device_id": [a["device_id"] for a in applications],
     }, raw / "applications.parquet")
+    lines.sort(key=lambda r: r["line_id"])
+    _write({"line_id": [r["line_id"] for r in lines], "business_id": [r["business_id"] for r in lines],
+            "opened_at": _ts(cal, np.array([r["opened_t"] for r in lines])),
+            "initial_limit": [r["initial_limit"] for r in lines]}, raw / "credit_lines.parquet")
+    line_events.sort(key=lambda e: (e[1], e[0], e[2]))
+    _write({"credit_event_id": CREDIT_EVENT_ID_BASE + np.arange(1, len(line_events) + 1),
+            "line_id": [e[0] for e in line_events], "business_id": [e[0] for e in line_events],
+            "event_time": _ts(cal, np.array([e[1] for e in line_events])), "event_type": [e[2] for e in line_events],
+            "limit_after": pa.array([e[3] for e in line_events], type=pa.float64()),
+            "balance": pa.array([e[4] for e in line_events], type=pa.float64())}, raw / "credit_line_events.parquet")
     e = ev.finish()
     eo = np.lexsort((e["event_type"].astype(str), e["business_id"], e["t"]))
     _write({"event_id": np.arange(1, len(eo) + 1), "business_id": e["business_id"][eo].astype(np.int64),
@@ -173,7 +195,7 @@ def generate(cfg: dict, out: Path) -> dict:
     }, key / "fraud_cases.parquet")
     _write([{"business_id": b.business_id, "archetype": b.archetype} for b in businesses], key / "business_profile.parquet")
     return {"businesses": len(businesses), "transactions": n, "cases": len(cases), "payees": len(pay),
-            "applications": len(applications), "events": len(eo)}
+            "applications": len(applications), "events": len(eo), "credit_lines": len(lines)}
 
 
 def main() -> None:

@@ -14,8 +14,7 @@ from scripts import results as R
 from scripts.common import ROOT
 
 README = ROOT / "README.md"
-MEMO = ROOT / "docs" / "memo" / "rule-change-memo-phase2-DRAFT.md"
-INVESTIGATION = ROOT / "docs" / "investigations" / "INV-001-ach-debit-returns.md"
+MEMO = ROOT / "docs" / "memo" / "rule-change-memo-phase3-DRAFT.md"
 
 
 def readme_block() -> str:
@@ -79,31 +78,26 @@ def memo_blocks() -> dict[str, str]:
         "memo-capacity": f"Review capacity: {R.window()['reviews_capacity_per_day']:g} reviews per business day. "
                          f"Days over capacity in the test months: champion {cap['days_over_capacity']}, "
                          f"challenger {m_test['challenger']['days_over_capacity']}, of {cap['business_days']}.",
-        "inv-facts": investigation_facts(),
+        "memo-credit-loss": credit_loss_table(),
     }
 
 
-def investigation_facts() -> str:
-    eff = {e["rule_id"]: e for e in R.effective_dates()}["R9_ach_pull_then_fast_out"]
-    weeks = R.weekly_return_series("ach_debit_in:unauthorized")
-    before = [w for w in weeks if w["week"] < eff["detected_at"].date()]
-    first = next(w for w in weeks if w["is_alarm"])
-    after = [w for w in weeks if w["week"] >= eff["detected_at"].date()]
-    ach = R.typology_totals("champion")["ach_return_fraud"]
-    ach_c = R.typology_totals("challenger")["ach_return_fraud"]
-    rows = [
-        ("Unauthorized ACH-debit returns, all weeks before the alarm", f"{sum(w['returns'] for w in before)}"),
-        ("First alarm (week of)", f"{first['week']:%d %b %Y}: {first['returns']} returns vs a trailing mean of {first['baseline_mean']:.1f}"),
-        ("Alarm visible (week closes)", f"{eff['detected_at']:%d %b %Y}"),
-        ("Answering rule (R9) live from", f"{eff['effective_from']:%d %b %Y}"),
-        ("Unauthorized ACH-debit returns after the alarm", f"{sum(w['returns'] for w in after)} ({R.usd(sum(w['returned_amount'] for w in after))})"),
-        ("Share of those returned dollars no champion rule had alerted on",
-         R.pct(sum(w["unalerted_amount"] for w in after) / max(1, sum(w["returned_amount"] for w in after)))),
-        ("ACH return fraud cases starting in the test months", f"{ach['cases']}"),
-        ("Prevented by the champion (no ACH rule)", f"{R.usd(ach['prevented'])} of {R.usd(ach['loss'])}"),
-        ("Prevented by the challenger (with R9 from its live date)", f"{R.usd(ach_c['prevented'])} of {R.usd(ach_c['loss'])}"),
-    ]
-    return R.markdown_table(["Fact (from the warehouse)", "Value"], rows)
+def credit_loss_table() -> str:
+    """Honest defaults: a separate line, never added to fraud prevented (ADR-016)."""
+    cl = R.credit_losses()
+    rows = []
+    for period in ("test", "train"):
+        ch, cc = cl.get(("champion", period)), cl.get(("challenger", period))
+        if not ch:
+            continue
+        rows += [
+            (f"Honest businesses that defaulted ({period} months)", ch["honest_defaults"], cc["honest_defaults"]),
+            (f"Balance when they missed a payment ({period})", R.usd(ch["balance_at_missed_payment"]), R.usd(cc["balance_at_missed_payment"])),
+            (f"Of which flagged by a rule in the 90 days before ({period})", R.usd(ch["balance_flagged_before_default"]),
+             R.usd(cc["balance_flagged_before_default"])),
+            (f"Holds put on these struggling businesses ({period})", ch["holds_on_honest_defaulters"], cc["holds_on_honest_defaulters"]),
+        ]
+    return R.markdown_table(["Credit losses that are NOT fraud", "Champion", "Challenger"], rows)
 
 
 def num_or(x) -> str:
@@ -120,7 +114,7 @@ def replace_block(text: str, name: str, body: str) -> str:
 def render() -> dict:
     out = {README: replace_block(README.read_text(), "results", readme_block())}
     blocks = memo_blocks()
-    for path in (MEMO, INVESTIGATION):
+    for path in (MEMO,):
         text = path.read_text()
         for name, body in blocks.items():
             if f"<!-- {name}:start -->" in text:

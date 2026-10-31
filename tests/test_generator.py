@@ -32,7 +32,7 @@ def test_fraud_prevalence_is_realistic_and_low(con):
 def test_odd_but_legitimate_businesses_exist(con):
     archetypes = {r[0]: r[1] for r in con.execute("select archetype, count(*) from answer_key.business_profile group by 1").fetchall()}
     for a in ("seasonal_heavy", "many_small_checks", "lumpy_contractor", "annual_big_invoice", "vendor_details_churn",
-              "many_small_transfers", "new_bookkeeper"):
+              "many_small_transfers", "new_bookkeeper", "failing_business"):
         assert archetypes.get(a, 0) >= 50, a
 
 
@@ -53,7 +53,7 @@ def test_raw_tables_carry_no_fraud_labels(con):
 def test_typologies_planted_in_both_periods(con):
     rows = con.execute("select typology, period, count(*) from backtest.bt_cases group by all").fetchall()
     seen = {(t, p) for t, p, n in rows if n >= 4}
-    for t in ("check_deposit_fraud", "bec_vendor_change", "synthetic_shell", "money_mule", "account_takeover"):
+    for t in ("check_deposit_fraud", "bec_vendor_change", "synthetic_shell", "money_mule", "account_takeover", "credit_bust_out"):
         assert {(t, "train"), (t, "test")} <= seen, t
 
 
@@ -79,3 +79,11 @@ def test_legitimate_identity_sharing_exists(con):
 def test_some_cases_are_never_labelled(con):
     never = con.execute("select count(*) from answer_key.fraud_cases where label_known_at is null").fetchone()[0]
     assert never > 0
+
+
+def test_credit_lines_follow_policy(con):
+    early = con.execute("""
+        select count(*) from raw.credit_lines l join raw.accounts a
+          on a.business_id = l.business_id and a.account_type = 'operating'
+        where l.opened_at < a.open_date + interval 180 day""").fetchone()[0]
+    assert early == 0, "lines open only after six months of history"

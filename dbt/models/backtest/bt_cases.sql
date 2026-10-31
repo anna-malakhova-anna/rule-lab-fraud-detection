@@ -9,7 +9,7 @@ select
     c.account_is_fraudulent,
     -- First-party fraud: the customer is the fraudster, so after the scheme starts their account is not a
     -- "good customer" any more. Account takeover and BEC victims stay good customers throughout.
-    c.typology in ('check_deposit_fraud', 'synthetic_shell', 'money_mule', 'ach_return_fraud') as is_first_party,
+    c.typology in ('check_deposit_fraud', 'synthetic_shell', 'money_mule', 'ach_return_fraud', 'credit_bust_out') as is_first_party,
     c.case_start,
     c.case_end,
     c.label_known_at,                                 -- null: the bank never confirms it (ADR-013)

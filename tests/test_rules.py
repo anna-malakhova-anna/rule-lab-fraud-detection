@@ -13,7 +13,7 @@ def test_every_configured_rule_has_models_and_vice_versa():
     for rid in RULES:
         assert (ROOT / "dbt" / "models" / "rules" / f"rule_{rid}.sql").exists()
     macro = (ROOT / "dbt" / "macros" / "rule_ids.sql").read_text()
-    assert set(re.findall(r"'(R\d_[a-z0-9_]+)'", macro)) == set(RULES)
+    assert set(re.findall(r"'(R\d+_[a-z0-9_]+)'", macro)) == set(RULES)
 
 
 def test_rule_config_is_complete():

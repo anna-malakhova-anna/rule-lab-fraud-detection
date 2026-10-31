@@ -15,6 +15,9 @@ RULE_LABELS = {
     "R7_mule_fan_in_sweep": "R7 Many new senders, swept out",
     "R8_ato_new_device_sequence": "R8 New device, contact change, new payee",
     "R9_ach_pull_then_fast_out": "R9 ACH debit money out fast",
+    "R10_credit_inflow_ramp": "R10 Inflows ramped before a credit decision",
+    "R11_draw_then_fast_out": "R11 Credit draw money out fast",
+    "R12_full_draw_after_increase": "R12 Line drawn to limit soon after increase",
 }
 TYPOLOGY_LABELS = {
     "check_deposit_fraud": "Check deposit fraud",
@@ -23,6 +26,7 @@ TYPOLOGY_LABELS = {
     "money_mule": "Money mules",
     "account_takeover": "Account takeover",
     "ach_return_fraud": "ACH return fraud (emerging, month 12)",
+    "credit_bust_out": "Credit bust-out",
 }
 
 
@@ -78,7 +82,7 @@ def challenger_thresholds() -> list[dict]:
         from config.cfg_rules r
         left join backtest.bt_challenger_thresholds t using (rule_id)
         left join monitoring.mon_rule_effective_from e using (rule_id)
-        order by r.rule_id""")
+        order by cast(regexp_extract(r.rule_id, 'R(\\d+)', 1) as integer)""")
 
 
 def sweep(period: str = "train") -> list[dict]:
@@ -108,19 +112,35 @@ def label_delay_gap() -> list[dict]:
         order by t.rule_id""")
 
 
-def weekly_return_series(series: str) -> list[dict]:
+def weekly_series(series: str) -> list[dict]:
     return _rows("""
-        select week, returns, returned_amount, unalerted_amount, baseline_mean, baseline_sd, is_alarm
-        from monitoring.mon_return_alarms where series = ? and week >= (select window_start from config.cfg_window)
+        select week, events, amount, unalerted_amount, baseline_mean, baseline_sd, is_alarm, week_closes_at
+        from monitoring.mon_weekly_alarms where series = ? and week >= (select window_start from config.cfg_window)
         order by week""", [series])
 
 
 def alarms() -> list[dict]:
     return _rows("""
-        select series, week, returns, baseline_mean, unalerted_amount, returned_amount
-        from monitoring.mon_return_alarms
+        select series, week, events, baseline_mean, unalerted_amount, amount
+        from monitoring.mon_weekly_alarms
         where is_alarm and week >= (select window_start from config.cfg_window)
         order by week, series""")
+
+
+def credit_losses() -> dict[tuple[str, str], dict]:
+    return {(r["strategy_id"], r["period"]): r for r in _rows("select * from backtest.bt_credit_losses")}
+
+
+def rules_touching(typology: str, strategy: str = "challenger") -> list[dict]:
+    """Which rules touched a fraud type's cases, and how many cases each (test and training months)."""
+    return _rows("""
+        with per_rule as (
+            select c.period, c.case_id, unnest(string_split(g.rules, ',')) as rule_id
+            from backtest.bt_strategy_graded g join backtest.bt_cases c using (case_id)
+            where g.strategy_id = ? and c.typology = ?)
+        select rule_id, count(distinct case_id) filter (where period = 'test') as test_cases,
+               count(distinct case_id) filter (where period = 'train') as train_cases
+        from per_rule group by rule_id order by test_cases desc, rule_id""", [strategy, typology])
 
 
 def effective_dates() -> list[dict]:
@@ -141,7 +161,7 @@ def overlap(strategy: str = "champion") -> list[dict]:
     return _rows("""
         select rule_id, period, cases_detected, cases_only_this_rule, loss_in_cases_only_this_rule
         from backtest.bt_rule_overlap where strategy_id = ? and period is not null
-        order by rule_id, period""", [strategy])
+        order by cast(regexp_extract(rule_id, 'R(\\d+)', 1) as integer), period""", [strategy])
 
 
 def harm_by_archetype(strategy: str = "champion") -> list[dict]:

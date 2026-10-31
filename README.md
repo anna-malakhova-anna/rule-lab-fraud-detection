@@ -14,21 +14,21 @@ I know the truth.
 ## Headline
 
 <!-- results:start -->
-Synthetic data: 12,000 businesses, 10,712,353 transactions, 222 planted fraud cases (71 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
+Synthetic data: 12,000 businesses, 10,722,334 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $2.30M ($1.45M to $3.26M) | $3.96M ($2.94M to $5.14M) |
-| Share of fraud $ prevented | 55% (43% to 66%) | 95% (92% to 97%) |
-| Fraud cases detected | 42 of 71 | 66 of 71 |
-| Alerts that were fraud (precision) | 1.5% | 3.5% |
-| Good businesses flagged | 3,487 | 3,740 |
-| Good businesses with money held | 2,965 | 3,122 |
-| Good applicants declined | 0 | 0 |
+| Fraud $ prevented (90% range) | $3.86M ($2.84M to $5.02M) | $4.47M ($3.40M to $5.67M) |
+| Share of fraud $ prevented | 80% (72% to 87%) | 92% (88% to 96%) |
+| Fraud cases detected | 68 of 80 | 79 of 80 |
+| Alerts that were fraud (precision) | 2.4% | 2.7% |
+| Good businesses flagged | 3,681 | 3,848 |
+| Good businesses with money held | 3,050 | 3,212 |
+| Good applicants declined | 1 | 1 |
 | Payrolls delayed | 0 | 0 |
-| Good-customer dollar-days held | $269.91M | $289.11M |
-| Reviews per business day (avg / max) | 79.2 / 171 | 88.2 / 187 |
-| Days over review capacity | 34 of 129 | 51 of 129 |
+| Good-customer dollar-days held | $282.46M | $288.27M |
+| Reviews per business day (avg / max) | 86.1 / 185 | 88.9 / 190 |
+| Days over review capacity | 48 of 129 | 54 of 129 |
 <!-- results:end -->
 
 ## What's in it
@@ -38,7 +38,10 @@ Synthetic data: 12,000 businesses, 10,712,353 transactions, 222 planted fraud ca
   logins and devices, and the odd-but-legitimate businesses that create false positives: a seasonal
   landscaper, a shop taking dozens of small checks, a marketplace seller with hundreds of small transfers, a
   business that has just hired a bookkeeper.
-- **Six planted fraud types**, with parameters in `config/generation.yaml` and an answer key that only the
+- **A line of credit** that businesses qualify for after six months, with a limit based on what flows through
+  their account. Some honest businesses fail and default on it. That's a credit loss, reported on its own line
+  and never counted as fraud.
+- **Seven planted fraud types**, with parameters in `config/generation.yaml` and an answer key that only the
   backtest reads:
   - check deposit fraud
   - vendor bank-detail change (BEC)
@@ -46,15 +49,18 @@ Synthetic data: 12,000 businesses, 10,712,353 transactions, 222 planted fraud ca
   - money mules
   - account takeover
   - first-party ACH return fraud, which starts in month 12 and that none of my rules were designed for
-- **Nine rules in SQL** (`dbt/models/rules/`). Thresholds are in `config/rules.yaml`, each with a one-line
+  - credit bust-out: clean history, inflows pumped up, a bigger limit, then the whole line drawn and gone
+- **Twelve rules in SQL** (`dbt/models/rules/`). Thresholds are in `config/rules.yaml`, each with a one-line
   rationale and a status: running today (champion) or proposed (challenger).
 - **A backtest** (`dbt/models/backtest/`) that grades every rule and rule set on fraud dollars prevented,
   good businesses flagged, good applicants declined, payrolls delayed, and reviews per day against capacity.
   It includes a threshold sweep and a champion/challenger comparison on held-out months.
 - **Monitoring** (`dbt/models/monitoring/`): weekly alarms on returned payments that use no fraud labels.
   This is how the month-12 pattern was found (`docs/investigations/INV-001-ach-debit-returns.md`).
-- **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`. The Phase 1
-  memo's numbers are frozen from the Phase 1 build.
+- **A results site** (`make site`, written to `site/`): overview, trade-off curves, one page per fraud type,
+  monitoring, a limitations page and a glossary.
+- **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`: one per phase. Earlier
+  phases' numbers are frozen at the commit that produced them.
 
 ## How I set it up so the numbers mean something
 
@@ -86,5 +92,4 @@ make setup
 make all
 ```
 
-`make all` runs generate, load, build, backtest, results, site and test. The results page is written to
-`site/index.html`.
+`make all` runs generate, load, build, backtest, results, site and test. Open `site/index.html` for the results.

@@ -146,7 +146,7 @@ def _form_rings(t: dict, rng: np.random.Generator, shells: list[Business], cal: 
 
 
 def _setup_mule(cfg, t, rng, cal, b) -> None:
-    if b.fraud_variant == "recruited_new":
+    if b.fraud_variant == "opened_for_purpose":
         b.open_day = int(rng.uniform(0, cal.n_days - 80))
         b.actual_revenue = float(rng.uniform(1_500, 6_000))
         b.has_payroll = False
@@ -191,6 +191,14 @@ def _setup_check_fraud(cfg, t, rng, cal, b) -> None:
         b.extra["case_day"] = int(rng.uniform(30, cal.n_days - 15))
 
 
+def _setup_bust_out(cfg, t, rng, cal, b) -> None:
+    # An established customer: the scheme needs a line, so the account is at least ~7 months old by the time
+    # the window opens and qualifies for a line from day one (generator/credit.py).
+    _established(cfg, b)
+    b.open_day = min(b.open_day, -210)
+    b.extra["case_day"] = int(rng.uniform(60, cal.n_days - 45))
+
+
 SETUP = {
     "check_deposit_fraud": _setup_check_fraud,
     "bec_vendor_change": _setup_bec,
@@ -198,6 +206,7 @@ SETUP = {
     "money_mule": _setup_mule,
     "account_takeover": _setup_ato,
     "ach_return_fraud": _setup_ach_return,
+    "credit_bust_out": _setup_bust_out,
 }
 
 

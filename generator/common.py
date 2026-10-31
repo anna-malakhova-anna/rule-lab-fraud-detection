@@ -19,7 +19,8 @@ HOUR = 3_600
 # Independent random streams: adding a typology never changes the legitimate world's draws.
 STREAMS = {"world": 1, "legit": 2, "check_deposit_fraud": 3, "bec_vendor_change": 4, "owners": 5,
            "synthetic_shell": 6, "money_mule": 7, "account_takeover": 8, "ach_return_fraud": 9,
-           "events": 10, "applications": 11, "labels": 12, "identity": 13}
+           "events": 10, "applications": 11, "labels": 12, "identity": 13,
+           "credit": 14, "credit_bust_out": 15}
 
 
 def load_config(path: Path | None = None) -> dict:
@@ -119,6 +120,7 @@ TXN_SCHEMA = {
     "return_after_s": -1, "return_reason": "",
     "case_id": -1, "role": "", "loss_amount": 0.0,
 }
-INBOUND = {"card_settlement", "ach_in", "ach_debit_in", "wire_in", "mobile_check_deposit", "internal_transfer_in"}
+INBOUND = {"card_settlement", "ach_in", "ach_debit_in", "wire_in", "mobile_check_deposit", "internal_transfer_in", "loc_draw"}
 EVENT_SCHEMA = {"business_id": -1, "owner_id": -1, "t": 0, "event_type": "", "device_id": ""}
 APPLICATION_ID_BASE = 10**12   # application ids never collide with transaction ids (both are rule entity ids)
+CREDIT_EVENT_ID_BASE = 2 * 10**12   # nor do credit line event ids

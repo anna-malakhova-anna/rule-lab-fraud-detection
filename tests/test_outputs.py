@@ -14,9 +14,11 @@ def test_memos_are_marked_draft():
         assert "DRAFT" in p.read_text().splitlines()[0], p.name
 
 
-def test_phase1_memo_is_frozen_not_regenerated():
-    text = (ROOT / "docs" / "memo" / "rule-change-memo-phase1-DRAFT.md").read_text()
-    assert ":start -->" not in text and "FROZEN" in text
+def test_earlier_phase_docs_are_frozen_not_regenerated():
+    for name in ("memo/rule-change-memo-phase1-DRAFT.md", "memo/rule-change-memo-phase2-DRAFT.md",
+                 "investigations/INV-001-ach-debit-returns.md"):
+        text = (ROOT / "docs" / name).read_text()
+        assert ":start -->" not in text and "FROZEN" in text, name
 
 
 def test_site_has_no_third_party_material():
@@ -35,7 +37,18 @@ def test_site_check_refuses_images_and_remote_assets(tmp_path):
 
 def test_no_real_company_or_personal_context_in_repo():
     banned = ["interview", "recruit", "hiring", "job application"]
-    for p in list(ROOT.glob("*.md")) + list((ROOT / "docs").rglob("*.md")) + [ROOT / "site" / "index.html"]:
+    for p in list(ROOT.glob("*.md")) + list((ROOT / "docs").rglob("*.md")) + list((ROOT / "site").rglob("*.html")):
         text = p.read_text().lower()
         for word in banned:
             assert word not in text, f"{p.name} mentions '{word}'"
+
+
+def test_site_has_every_page():
+    for page in ("index", "tradeoffs", "types", "monitoring", "limitations", "glossary"):
+        assert (ROOT / "site" / f"{page}.html").exists(), page
+    assert len(list((ROOT / "site" / "types").glob("*.html"))) == 7
+
+
+def test_duckdb_pinned_below_2():
+    import duckdb
+    assert int(duckdb.__version__.split(".")[0]) < 2, "see ADR-017"
