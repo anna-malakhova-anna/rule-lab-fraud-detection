@@ -14,7 +14,7 @@ I know the truth.
 ## Headline
 
 <!-- results:start -->
-Synthetic data: 12,000 businesses, 10,722,334 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
+Synthetic data: 12,000 businesses, 10,688,609 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
@@ -22,13 +22,13 @@ Synthetic data: 12,000 businesses, 10,722,334 transactions, 234 planted fraud ca
 | Share of fraud $ prevented | 80% (72% to 87%) | 92% (88% to 96%) |
 | Fraud cases detected | 68 of 80 | 79 of 80 |
 | Alerts that were fraud (precision) | 2.4% | 2.7% |
-| Good businesses flagged | 3,681 | 3,848 |
-| Good businesses with money held | 3,050 | 3,212 |
+| Good businesses flagged | 3,670 | 3,826 |
+| Good businesses with money held | 3,039 | 3,195 |
 | Good applicants declined | 1 | 1 |
 | Payrolls delayed | 0 | 0 |
-| Good-customer dollar-days held | $282.46M | $288.27M |
-| Reviews per business day (avg / max) | 86.1 / 185 | 88.9 / 190 |
-| Days over review capacity | 48 of 129 | 54 of 129 |
+| Good-customer dollar-days held | $280.49M | $285.73M |
+| Reviews per business day (avg / max) | 85.9 / 186 | 88.5 / 190 |
+| Days over review capacity | 49 of 129 | 52 of 129 |
 <!-- results:end -->
 
 ## What's in it

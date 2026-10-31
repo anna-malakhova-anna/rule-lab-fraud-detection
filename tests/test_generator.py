@@ -87,3 +87,11 @@ def test_credit_lines_follow_policy(con):
           on a.business_id = l.business_id and a.account_type = 'operating'
         where l.opened_at < a.open_date + interval 180 day""").fetchone()[0]
     assert early == 0, "lines open only after six months of history"
+
+
+def test_honest_defaults_in_both_periods(con):
+    rows = dict(con.execute("""
+        select case when e.event_time < (select train_end from config.cfg_window) then 'train' else 'test' end, count(*)
+        from raw.credit_line_events e join answer_key.business_profile p using (business_id)
+        where p.archetype = 'failing_business' and e.event_type = 'payment_missed' group by 1""").fetchall())
+    assert rows.get("train", 0) >= 20 and rows.get("test", 0) >= 20, rows

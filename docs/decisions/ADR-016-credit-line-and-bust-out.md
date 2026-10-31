@@ -37,3 +37,15 @@ rather than a finding. Round-trip money now goes back to the outside accounts it
 
 **Known simplification.** An RFI on an increase request is credited, like every RFI, with stopping half the
 loss. In reality a fraudster whose increase is questioned might still draw the original limit.
+
+## Follow-up: honest defaults spread over both periods
+
+The first version put 6 honest defaults in the tuning months and 73 in the test months. Two shortcuts in my
+generator caused it:
+- Lines could only open six months after the start of the *data*, rather than six months after the *account*
+  opened.
+- Failure dates were drawn after the line opened, at least five months later.
+
+Now eligibility follows the account's age (and a line opens only once 90 days of data exist to set the limit).
+For failing businesses the failure date is drawn first, evenly across the window, and the line opens some time
+before the decline. Missed payments now split 69 in the tuning months and 77 in the test months.

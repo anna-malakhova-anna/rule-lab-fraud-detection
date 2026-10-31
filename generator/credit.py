@@ -50,10 +50,23 @@ def run(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, tx: dic
     c = cfg["credit"]
     lo, hi = ctx["lo"], ctx["hi"]
     bust = b.fraud == "credit_bust_out"
+    # Eligibility is about the ACCOUNT's age (six months), not about how much of it the data covers. The limit
+    # needs 90 days of visible inflows, so no line opens in the first 90 days of data.
+    earliest = max(b.open_day + c["min_history_days"], cal.first_day + 90)
+    failing = False
     if not bust:
-        if b.fraud or hi - lo < c["min_history_days"] + 90 or rng.random() >= c["take_up"]:
+        if b.fraud or hi - earliest < 90 or rng.random() >= c["take_up"]:
             return tx, None
-        open_day = int(rng.uniform(lo + c["min_history_days"], hi - 60))
+        decline = int(rng.uniform(*c["failing_decline_days"]))
+        latest_fail = min(hi, cal.n_days) - 5
+        # Failure dates are drawn first and spread evenly over the window, so honest defaults land in both the
+        # tuning and the test months; the line then opens some time before the decline begins.
+        if rng.random() < c["failing_share"] and latest_fail - (earliest + 30 + decline) > 30:
+            failing = True
+            fail_day = int(rng.uniform(earliest + 30 + decline, latest_fail))
+            open_day = int(rng.uniform(earliest, fail_day - decline - 30))
+        else:
+            open_day = int(rng.uniform(earliest, hi - 60))
     else:
         t = cfg["typologies"]["credit_bust_out"]
         ramp_day = b.extra["case_day"]
@@ -64,11 +77,8 @@ def run(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, tx: dic
     lines.append({"line_id": bid, "business_id": bid, "opened_t": open_t, "initial_limit": limit})
     events.append((bid, open_t, "line_opened", limit, 0.0))
 
-    failing = (not bust) and hi - open_day > 200 and rng.random() < c["failing_share"]
     if failing:
         b.archetype = "failing_business"
-        fail_day = int(rng.uniform(open_day + 150, min(hi, cal.n_days) - 5))
-        decline = int(rng.uniform(*c["failing_decline_days"]))
         # Revenue falls away: inflows thin out towards the failure date, then everything stops.
         ramp = np.clip((tx["t"] - (fail_day - decline) * DAY) / (decline * DAY), 0, 1)
         inbound = np.isin(tx["txn_type"], list(INBOUND - {"internal_transfer_in"}))
