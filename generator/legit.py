@@ -178,6 +178,18 @@ def generate(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, tx
                 amount=np.round(lognormal_around(rng, b.actual_revenue * L["owner_draw_share"], 0.3, len(draw_days)), 2),
                 payee_id=owner_pid)
 
+    # Owner top-ups: some owners fund the business by pulling from their own account (ACH debit), monthly.
+    if rng.random() < L["owner_topup_share"]:
+        tdays = cal.next_business_day(np.arange(lo + int(rng.integers(0, 30)), hi, 30))
+        tdays = tdays[tdays < hi]
+        amt = np.round(b.actual_revenue * rng.uniform(*L["owner_topup_of_revenue"]) * lognormal_around(rng, 1, 0.3, len(tdays)), 2)
+        ret = np.full(len(tdays), -1, dtype=np.int64)
+        returned = rng.random(len(tdays)) < L["owner_topup_return_rate"]
+        ret[returned] = (rng.uniform(2, 4, returned.sum()) * DAY).astype(np.int64)
+        txns.append(business_id=bid, account_id=op, t=times_on(rng, tdays), txn_type="ach_debit_in", amount=amt,
+                    counterparty_id=bid * 100_000 + 99_999, return_after_s=ret,
+                    return_reason=np.where(returned, "nsf", "").astype(object))
+
     # Tax reserve: a monthly sweep into the tax sub-account.
     if b.has_tax_account:
         tdays = cal.next_business_day(np.arange(lo + 15, hi, 30))
@@ -198,6 +210,7 @@ def generate(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, tx
                     amount=np.round(np.maximum(lognormal_around(rng, avg, 0.8, len(d)), 3), 2))
 
     _apply_archetype_events(cfg, cal, b, rng, txns, ctx, clients)
+    _apply_phase2_archetypes(cfg, cal, b, rng, txns, payees, ctx)
     return ctx
 
 
@@ -231,3 +244,40 @@ def _apply_archetype_events(cfg, cal, b, rng, txns, ctx, clients) -> None:
                 txns.append(business_id=bid, account_id=op, t=times_on(rng, np.array([day]), 9, 17),
                             txn_type=v["rail"], amount=[round(v["typical"] * rng.uniform(*a["multiple_of_typical"]), 2)],
                             payee_id=[v["payee_id"]])
+
+
+def _apply_phase2_archetypes(cfg, cal, b, rng, txns, payees, ctx) -> None:
+    """Look-alikes for mules (many small transfers, swept out) and account takeover (a new bookkeeper)."""
+    bid, op = b.business_id, b.business_id * 10
+    lo, hi = ctx["lo"], ctx["hi"]
+    if b.archetype == "many_small_transfers":
+        a = cfg["odd_archetypes"]["many_small_transfers"]
+        senders = bid * 100_000 + 20_000 + np.arange(int(rng.integers(*a["n_senders"])))
+        days = cal.days(lo, hi)
+        per_day = rng.uniform(*a["payments_per_month"]) / 30.4
+        d = np.repeat(days, rng.poisson(per_day, len(days)))
+        if len(d):
+            t = times_on(rng, d, 0, 24)
+            amt = np.round(rng.uniform(*a["amount"], len(d)), 2)
+            txns.append(business_id=bid, account_id=op, t=t, txn_type="ach_in", amount=amt, counterparty_id=rng.choice(senders, len(d)))
+            # A weekly sweep of most of the week's takings to the owner's own account.
+            share = rng.uniform(*a["sweep_share"])
+            for week_start in range(lo, hi - 7, 7):
+                in_week = amt[(t >= week_start * DAY) & (t < (week_start + 7) * DAY)].sum()
+                if in_week > 0:
+                    txns.append(business_id=bid, account_id=op, t=times_on(rng, cal.next_business_day(np.array([week_start + 7]))),
+                                txn_type="ach_out", amount=[round(in_week * share, 2)], payee_id=[bid * 1000 + 998])
+    if b.archetype == "new_bookkeeper" and hi - lo > 60:
+        a = cfg["odd_archetypes"]["new_bookkeeper"]
+        tb = int((rng.uniform(lo + 30, hi - 20)) * DAY)
+        ctx["bookkeeper_t"] = tb
+        for k in range(int(rng.integers(a["new_payees"][0], a["new_payees"][1] + 1))):
+            pid = bid * 1000 + 900 + k
+            created = tb + int(rng.uniform(2, 72) * HOUR)
+            payees.add(pid, bid, "vendor", f"{VENDOR_WORDS[rng.integers(len(VENDOR_WORDS))]} {VENDOR_KINDS[rng.integers(len(VENDOR_KINDS))]}", created)
+            typical = b.actual_revenue * rng.uniform(0.02, 0.08)
+            pay_days = np.arange(created // DAY + 1, hi, 30)
+            if len(pay_days):
+                txns.append(business_id=bid, account_id=op, t=times_on(rng, cal.next_business_day(pay_days), 9, 17),
+                            txn_type="ach_out", amount=np.round(typical * lognormal_around(rng, 1, 0.15, len(pay_days)), 2),
+                            payee_id=pid)

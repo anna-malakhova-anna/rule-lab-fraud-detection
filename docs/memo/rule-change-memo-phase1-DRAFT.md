@@ -1,6 +1,8 @@
 # DRAFT: Rule-change memo (Phase 1)
 
-> **DRAFT. Numbers are generated from the warehouse by `make results`; the prose is mine to write.**
+> **DRAFT. Numbers are FROZEN from the Phase 1 build (commit 6796339: 8,000 businesses, two typologies).**
+> They no longer match the current warehouse; check out that commit and run `make all` to reproduce them.
+> The prose is mine to write.
 > Everything below is synthetic data. Bracketed notes are prompts, not text to keep.
 
 ## Recommendation
@@ -11,7 +13,6 @@
 
 ### Fraud dollars, good customers, reviews per day (test months, held out)
 
-<!-- memo-headline:start -->
 | Measure (test months) | Champion (today) | Challenger (proposed) |
 |---|---|---|
 | Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $1.03M ($527K to $1.63M) |
@@ -24,11 +25,9 @@
 | Good-customer dollar-days held | $141.73M | $177.26M |
 | Reviews per business day (avg / max) | 52.3 / 126 | 51.7 / 108 |
 | Days over review capacity | 33 of 129 | 39 of 129 |
-<!-- memo-headline:end -->
 
 ### What changes rule by rule
 
-<!-- memo-thresholds:start -->
 | Rule | Action | Champion cutoff | Challenger cutoff |
 |---|---|---|---|
 | R1 Check money out fast | hold | >= 0.6 | >= 0.4, excluding payroll |
@@ -36,9 +35,7 @@
 | R3 Many new check payers | rfi | >= 4 | >= 5 |
 | R4 First payment to changed bank details | hold | <= 14 | <= 7 |
 | R5 Payment far above usual for payee | rfi | >= 3 | >= 4 |
-<!-- memo-thresholds:end -->
 
-<!-- memo-rules:start -->
 | Rule alone, champion cutoff (test months) | Cases detected | Fraud $ prevented | Good businesses flagged | Payrolls delayed | Reviews/day |
 |---|---|---|---|---|---|
 | R1 Check money out fast | 9 of 27 | $428K | 1,403 | 999 | 20.1 |
@@ -46,7 +43,6 @@
 | R3 Many new check payers | 5 of 27 | $69K | 247 | 0 | 7.5 |
 | R4 First payment to changed bank details | 11 of 27 | $486K | 287 | 0 | 2.4 |
 | R5 Payment far above usual for payee | 12 of 27 | $259K | 756 | 0 | 21.3 |
-<!-- memo-rules:end -->
 
 ## Risks
 
@@ -54,18 +50,15 @@
 
 ### Payroll
 
-<!-- memo-payroll:start -->
 | Rule | Period | Good payrolls held |
 |---|---|---|
 | R1 Check money out fast | test | 999 |
 | R1 Check money out fast | train | 1512 |
 
 Review capacity: 60 reviews per business day. Champion test-period days over capacity: 33 of 129.
-<!-- memo-payroll:end -->
 
 ### Overlap between rules
 
-<!-- memo-overlap:start -->
 | Rule (champion set, test months) | Cases it touched | Cases ONLY it touched |
 |---|---|---|
 | R1 Check money out fast | 9 | 0 |
@@ -73,7 +66,6 @@ Review capacity: 60 reviews per business day. Champion test-period days over cap
 | R3 Many new check payers | 5 | 0 |
 | R4 First payment to changed bank details | 11 | 4 |
 | R5 Payment far above usual for payee | 12 | 0 |
-<!-- memo-overlap:end -->
 
 ## What to monitor after the change
 

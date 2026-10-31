@@ -10,6 +10,7 @@ select
     r.action,
     printf('%s: %s = %.2f (cutoff %s %s)', c.rule_id, r.score_description, c.score, r.comparator, cast(r.threshold as varchar))
         || coalesce('; ' || c.detail, '') as reason,
+    r.status,
     c.business_id,
     c.txn_type,
     c.amount,

@@ -11,6 +11,18 @@ RULE_LABELS = {
     "R3_many_new_check_payers": "R3 Many new check payers",
     "R4_new_bank_details_first_payment": "R4 First payment to changed bank details",
     "R5_payee_amount_out_of_pattern": "R5 Payment far above usual for payee",
+    "R6_onboarding_shared_identity": "R6 Applicant shares identity with others",
+    "R7_mule_fan_in_sweep": "R7 Many new senders, swept out",
+    "R8_ato_new_device_sequence": "R8 New device, contact change, new payee",
+    "R9_ach_pull_then_fast_out": "R9 ACH debit money out fast",
+}
+TYPOLOGY_LABELS = {
+    "check_deposit_fraud": "Check deposit fraud",
+    "bec_vendor_change": "Vendor bank-detail change (BEC)",
+    "synthetic_shell": "Synthetic / shell businesses",
+    "money_mule": "Money mules",
+    "account_takeover": "Account takeover",
+    "ach_return_fraud": "ACH return fraud (emerging, month 12)",
 }
 
 
@@ -24,11 +36,19 @@ def _rows(sql: str, params: list | None = None) -> list[dict]:
 
 
 def challenger_cell(r: dict) -> str:
-    """How the challenger runs a rule: its cutoff, plus any scope change."""
-    if not r["is_kept"]:
-        return "retired"
+    """How the challenger runs a rule: its cutoff, and when it starts if it answers an alarm."""
+    if r["status"] == "challenger" and r["tune"] and not r["is_kept"]:
+        return "not adopted"
     cell = f"{r['comparator']} {r['challenger_cutoff']:g}"
-    return cell + (f", excluding {r['excluded']}" if r["excluded"] else "")
+    if r["status"] == "challenger" and r["tune"]:
+        cell += " (tuned)"
+    if r["effective_from"] is not None:
+        cell += f", from {r['effective_from']:%d %b %Y}"
+    return cell
+
+
+def champion_cell(r: dict) -> str:
+    return f"{r['comparator']} {r['champion_cutoff']:g}" if r["status"] == "champion" else "not running"
 
 
 def window() -> dict:
@@ -46,22 +66,69 @@ def bootstrap() -> dict[tuple[str, str], dict]:
 
 def challenger_thresholds() -> list[dict]:
     return _rows("""
-        select r.rule_id, r.threshold as champion_cutoff, t.challenger_cutoff, t.is_kept, t.scope, r.comparator, r.action,
-               (select string_agg(excluded_txn_type, ', ') from config.cfg_challenger_scope x where x.rule_id = r.rule_id) as excluded
-        from config.cfg_rules r left join backtest.bt_challenger_thresholds t using (rule_id)
+        select r.rule_id, r.status, r.tune, r.threshold as champion_cutoff,
+               coalesce(t.challenger_cutoff, r.threshold) as challenger_cutoff, coalesce(t.is_kept, true) as is_kept,
+               r.comparator, r.action, e.effective_from, e.detected_at
+        from config.cfg_rules r
+        left join backtest.bt_challenger_thresholds t using (rule_id)
+        left join monitoring.mon_rule_effective_from e using (rule_id)
         order by r.rule_id""")
 
 
 def sweep(period: str = "train") -> list[dict]:
     return _rows("""
-        select m.*, s.scope, s.is_champion_cutoff,
-               coalesce(t.challenger_cutoff = m.cutoff and t.scope = s.scope, false) as is_challenger_cutoff, r.comparator
+        select m.*, s.status, s.is_configured_cutoff and s.status = 'champion' as is_champion_cutoff,
+               coalesce(t.challenger_cutoff = m.cutoff, false)
+                 or (s.status = 'challenger' and not r.tune and s.is_configured_cutoff) as is_challenger_cutoff,
+               r.comparator
         from backtest.bt_sweep_metrics m
         join backtest.bt_sweep_strategies s using (strategy_id)
         join config.cfg_rules r on r.rule_id = m.rule_id
         left join backtest.bt_challenger_thresholds t on t.rule_id = m.rule_id
         where m.period = ?
-        order by m.rule_id, s.scope, m.cutoff""", [period])
+        order by m.rule_id, m.cutoff""", [period])
+
+
+def label_delay_gap() -> list[dict]:
+    """For each tuned rule at its chosen cutoff: training months as measured at tuning time vs with all labels."""
+    return _rows("""
+        select t.rule_id, t.challenger_cutoff, k.cases as cases_known, f.cases as cases_all,
+               k.loss_prevented as prevented_known, f.loss_prevented as prevented_all,
+               k.precision as precision_known, f.precision as precision_all
+        from backtest.bt_challenger_thresholds t
+        join backtest.bt_sweep_strategies s on s.rule_id = t.rule_id and s.cutoff = t.challenger_cutoff
+        join backtest.bt_sweep_metrics_known k on k.strategy_id = s.strategy_id and k.period = 'train'
+        join backtest.bt_sweep_metrics f on f.strategy_id = s.strategy_id and f.period = 'train'
+        order by t.rule_id""")
+
+
+def weekly_return_series(series: str) -> list[dict]:
+    return _rows("""
+        select week, returns, returned_amount, unalerted_amount, baseline_mean, baseline_sd, is_alarm
+        from monitoring.mon_return_alarms where series = ? and week >= (select window_start from config.cfg_window)
+        order by week""", [series])
+
+
+def alarms() -> list[dict]:
+    return _rows("""
+        select series, week, returns, baseline_mean, unalerted_amount, returned_amount
+        from monitoring.mon_return_alarms
+        where is_alarm and week >= (select window_start from config.cfg_window)
+        order by week, series""")
+
+
+def effective_dates() -> list[dict]:
+    return _rows("select * from monitoring.mon_rule_effective_from")
+
+
+def monthly_precision() -> list[dict]:
+    return _rows("""
+        select rule_id, cast(date_trunc('month', week) as date) as month, sum(alerts) as alerts,
+               sum(fraud_alerts_known_at_maturity) / sum(alerts) as precision_at_maturity,
+               sum(fraud_alerts_eventually) / sum(alerts) as precision_eventually
+        from backtest.bt_monitoring_precision
+        where week >= (select window_start from config.cfg_window)
+        group by all order by rule_id, month""")
 
 
 def overlap(strategy: str = "champion") -> list[dict]:
@@ -102,6 +169,16 @@ def typology_outcomes(strategy: str = "champion", period: str = "test") -> list[
                median(hours_to_first_hit) as median_hours_to_first_hit
         from backtest.bt_strategy_cases where strategy_id = ? and period = ?
         group by all order by 1, 2""", [strategy, period])
+
+
+def typology_totals(strategy: str, period: str = "test") -> dict[str, dict]:
+    """Outcomes per fraud type (variants summed), keyed by typology."""
+    rows = _rows("""
+        select typology, count(*) as cases, count(*) filter (where detected) as detected,
+               sum(loss_if_uncaught) as loss, sum(loss_prevented) as prevented
+        from backtest.bt_strategy_cases where strategy_id = ? and period = ?
+        group by typology""", [strategy, period])
+    return {r["typology"]: r for r in rows}
 
 
 def weekly_reviews() -> list[dict]:
@@ -155,6 +232,7 @@ def headline_rows() -> list[tuple[str, str, str]]:
         ("Alerts that were fraud (precision)", pct(ch["precision"], 1), pct(cl["precision"], 1)),
         ("Good businesses flagged", num(ch["good_businesses_flagged"]), num(cl["good_businesses_flagged"])),
         ("Good businesses with money held", num(ch["good_businesses_held"]), num(cl["good_businesses_held"])),
+        ("Good applicants declined", num(ch["good_applicants_declined"]), num(cl["good_applicants_declined"])),
         ("Payrolls delayed", num(ch["payrolls_delayed"]), num(cl["payrolls_delayed"])),
         ("Good-customer dollar-days held", usd(ch["good_dollar_days_held"]), usd(cl["good_dollar_days_held"])),
         ("Reviews per business day (avg / max)", f"{num(ch['reviews_per_day'], 1)} / {ch['reviews_max_day']}",

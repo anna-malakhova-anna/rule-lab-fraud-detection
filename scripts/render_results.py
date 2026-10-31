@@ -14,7 +14,8 @@ from scripts import results as R
 from scripts.common import ROOT
 
 README = ROOT / "README.md"
-MEMO = ROOT / "docs" / "memo" / "rule-change-memo-DRAFT.md"
+MEMO = ROOT / "docs" / "memo" / "rule-change-memo-phase2-DRAFT.md"
+INVESTIGATION = ROOT / "docs" / "investigations" / "INV-001-ach-debit-returns.md"
 
 
 def readme_block() -> str:
@@ -29,36 +30,80 @@ def memo_blocks() -> dict[str, str]:
     m_test = R.strategy_metrics("test")
     headline = R.markdown_table(["Measure (test months)", "Champion (today)", "Challenger (proposed)"], R.headline_rows())
 
+    rules = R.challenger_thresholds()
     thresholds = R.markdown_table(
-        ["Rule", "Action", "Champion cutoff", "Challenger cutoff"],
-        [(R.RULE_LABELS[r["rule_id"]], r["action"], f"{r['comparator']} {r['champion_cutoff']:g}",
-          R.challenger_cell(r)) for r in R.challenger_thresholds()])
+        ["Rule", "Action", "Champion", "Challenger"],
+        [(R.RULE_LABELS[r["rule_id"]], r["action"], R.champion_cell(r), R.challenger_cell(r)) for r in rules])
 
-    sweep_test = {(r["rule_id"], r["cutoff"]): r for r in R.sweep("test") if r["scope"] == "as_written"}
+    # Each rule alone, at the cutoff the challenger runs it at, on the test months.
+    sweep_test = {(r["rule_id"], r["cutoff"]): r for r in R.sweep("test")}
     per_rule = []
-    for r in R.challenger_thresholds():
-        champ = sweep_test[(r["rule_id"], r["champion_cutoff"])]
-        per_rule.append((R.RULE_LABELS[r["rule_id"]], f"{champ['cases_detected']} of {champ['cases']}", R.usd(champ["loss_prevented"]),
-                         num_or(champ["good_businesses_flagged"]), num_or(champ["payrolls_delayed"]), R.num(champ["reviews_per_day"], 1)))
+    for r in rules:
+        m = sweep_test[(r["rule_id"], r["challenger_cutoff"])]
+        per_rule.append((R.RULE_LABELS[r["rule_id"]], f"{m['cases_detected']} of {m['cases']}", R.usd(m["loss_prevented"]),
+                         R.num(m["good_businesses_flagged"]), R.num(m["good_applicants_declined"]), R.num(m["reviews_per_day"], 1)))
     rules_table = R.markdown_table(
-        ["Rule alone, champion cutoff (test months)", "Cases detected", "Fraud $ prevented", "Good businesses flagged",
-         "Payrolls delayed", "Reviews/day"], per_rule)
+        ["Rule alone, challenger cutoff (test months)", "Cases touched", "Fraud $ prevented", "Good businesses flagged",
+         "Good applicants declined", "Reviews/day"], per_rule)
+
+    champ = R.typology_totals("champion")
+    chall = R.typology_totals("challenger")
+    typ_rows = []
+    for t, label in R.TYPOLOGY_LABELS.items():
+        a, b = champ.get(t), chall.get(t)
+        if a:
+            typ_rows.append((label, a["cases"], a["detected"], b["detected"], R.usd(a["loss"]), R.usd(a["prevented"]), R.usd(b["prevented"])))
+    typology_table = R.markdown_table(
+        ["Fraud type (test months)", "Cases", "Detected: champion", "Detected: challenger", "Loss at stake",
+         "Prevented: champion", "Prevented: challenger"], typ_rows)
 
     overlap = [(R.RULE_LABELS[o["rule_id"]], o["cases_detected"], o["cases_only_this_rule"])
-               for o in R.overlap("champion") if o["period"] == "test"]
-    overlap_table = R.markdown_table(["Rule (champion set, test months)", "Cases it touched", "Cases ONLY it touched"], overlap)
+               for o in R.overlap("challenger") if o["period"] == "test"]
+    overlap_table = R.markdown_table(["Rule (challenger set, test months)", "Cases it touched", "Cases ONLY it touched"], overlap)
 
-    payroll = [(R.RULE_LABELS[p["rule_id"]], p["period"], p["payrolls_delayed"]) for p in R.payroll_by_rule("champion")]
-    payroll_table = R.markdown_table(["Rule", "Period", "Good payrolls held"], payroll) if payroll else "_No payrolls delayed._"
+    gap = [(R.RULE_LABELS[g["rule_id"]], f"{g['challenger_cutoff']:g}", f"{g['cases_known']} of {g['cases_all']}",
+            R.usd(g["prevented_known"]), R.usd(g["prevented_all"]), R.pct(g["precision_known"], 1), R.pct(g["precision_all"], 1))
+           for g in R.label_delay_gap()]
+    gap_table = R.markdown_table(
+        ["Tuned rule (training months)", "Cutoff", "Cases the bank knew of", "Prevented, as seen then", "Prevented, all labels",
+         "Precision, as seen then", "Precision, all labels"], gap)
+
     cap = m_test["champion"]
     return {
         "memo-headline": headline,
         "memo-thresholds": thresholds,
         "memo-rules": rules_table,
+        "memo-typology": typology_table,
         "memo-overlap": overlap_table,
-        "memo-payroll": payroll_table + f"\n\nReview capacity: {R.window()['reviews_capacity_per_day']:g} reviews per business day. "
-                                        f"Champion test-period days over capacity: {cap['days_over_capacity']} of {cap['business_days']}.",
+        "memo-label-delay": gap_table,
+        "memo-capacity": f"Review capacity: {R.window()['reviews_capacity_per_day']:g} reviews per business day. "
+                         f"Days over capacity in the test months: champion {cap['days_over_capacity']}, "
+                         f"challenger {m_test['challenger']['days_over_capacity']}, of {cap['business_days']}.",
+        "inv-facts": investigation_facts(),
     }
+
+
+def investigation_facts() -> str:
+    eff = {e["rule_id"]: e for e in R.effective_dates()}["R9_ach_pull_then_fast_out"]
+    weeks = R.weekly_return_series("ach_debit_in:unauthorized")
+    before = [w for w in weeks if w["week"] < eff["detected_at"].date()]
+    first = next(w for w in weeks if w["is_alarm"])
+    after = [w for w in weeks if w["week"] >= eff["detected_at"].date()]
+    ach = R.typology_totals("champion")["ach_return_fraud"]
+    ach_c = R.typology_totals("challenger")["ach_return_fraud"]
+    rows = [
+        ("Unauthorized ACH-debit returns, all weeks before the alarm", f"{sum(w['returns'] for w in before)}"),
+        ("First alarm (week of)", f"{first['week']:%d %b %Y}: {first['returns']} returns vs a trailing mean of {first['baseline_mean']:.1f}"),
+        ("Alarm visible (week closes)", f"{eff['detected_at']:%d %b %Y}"),
+        ("Answering rule (R9) live from", f"{eff['effective_from']:%d %b %Y}"),
+        ("Unauthorized ACH-debit returns after the alarm", f"{sum(w['returns'] for w in after)} ({R.usd(sum(w['returned_amount'] for w in after))})"),
+        ("Share of those returned dollars no champion rule had alerted on",
+         R.pct(sum(w["unalerted_amount"] for w in after) / max(1, sum(w["returned_amount"] for w in after)))),
+        ("ACH return fraud cases starting in the test months", f"{ach['cases']}"),
+        ("Prevented by the champion (no ACH rule)", f"{R.usd(ach['prevented'])} of {R.usd(ach['loss'])}"),
+        ("Prevented by the challenger (with R9 from its live date)", f"{R.usd(ach_c['prevented'])} of {R.usd(ach_c['loss'])}"),
+    ]
+    return R.markdown_table(["Fact (from the warehouse)", "Value"], rows)
 
 
 def num_or(x) -> str:
@@ -74,10 +119,13 @@ def replace_block(text: str, name: str, body: str) -> str:
 
 def render() -> dict:
     out = {README: replace_block(README.read_text(), "results", readme_block())}
-    memo = MEMO.read_text()
-    for name, body in memo_blocks().items():
-        memo = replace_block(memo, name, body)
-    out[MEMO] = memo
+    blocks = memo_blocks()
+    for path in (MEMO, INVESTIGATION):
+        text = path.read_text()
+        for name, body in blocks.items():
+            if f"<!-- {name}:start -->" in text:
+                text = replace_block(text, name, body)
+        out[path] = text
     return out
 
 

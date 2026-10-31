@@ -6,6 +6,8 @@ sources:
     tables:
       - name: businesses
       - name: owners
+      - name: applications
+      - name: events
       - name: accounts
       - name: payees
       - name: payee_events

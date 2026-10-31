@@ -28,13 +28,18 @@ def plan(cfg: dict, b: Business) -> None:
 
 
 def plant(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, txns: Columns, payees: Payees,
-          case_id: int) -> dict:
+          case_id: int, typology: str = "check_deposit_fraud", variant: str | None = None,
+          monthly: float | None = None) -> dict:
+    """Plant the scheme. Shell businesses reuse it for their bust-out (typology, variant and the monthly
+    scale are then passed in)."""
     t = cfg["typologies"]["check_deposit_fraud"]
     bid, op = b.business_id, b.business_id * 10
     day = b.extra["case_day"]
-    monthly = b.actual_revenue * season_curve(cfg, b)[cal.at(cal.month, np.array([day]))[0]]
+    variant = variant or b.fraud_variant
+    if monthly is None:
+        monthly = b.actual_revenue * season_curve(cfg, b)[cal.at(cal.month, np.array([day]))[0]]
 
-    if b.fraud_variant == "single_large":
+    if variant == "single_large":
         v = t["single_large"]
         n = int(rng.integers(v["n_checks"][0], v["n_checks"][1] + 1))
         amounts = np.maximum(v["min_amount"], monthly * rng.uniform(*v["multiple_of_month"], n))
@@ -69,7 +74,7 @@ def plant(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, txns:
     txns.append(business_id=bid, account_id=op, t=w_t, txn_type=rail, amount=w_amt, payee_id=dest,
                 case_id=case_id, role="loss", loss_amount=w_amt)
 
-    return {"case_id": case_id, "business_id": bid, "typology": "check_deposit_fraud", "variant": b.fraud_variant,
+    return {"case_id": case_id, "business_id": bid, "typology": typology, "variant": variant,
             "account_is_fraudulent": bool(b.extra["new_account"]),
             "case_start_t": int(dep_t[0]), "case_end_t": int((dep_t + ret_after).max()),
             "loss_if_uncaught": float(w_amt.sum()), "n_checks": n, "check_total": float(amounts.sum())}

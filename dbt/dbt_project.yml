@@ -21,6 +21,9 @@ models:
     rules:
       +materialized: table
       +schema: rules
+    monitoring:
+      +materialized: table
+      +schema: monitoring
     backtest:
       +materialized: table
       +schema: backtest
@@ -31,7 +34,7 @@ seeds:
     cfg_window:
       +column_types: {window_start: date, train_end: date, window_end: date}
     cfg_rules:
-      +column_types: {threshold: double}
+      +column_types: {threshold: double, tune: boolean, effective_from_alarm: varchar}
     cfg_rule_params:
       +column_types: {value: double}
     cfg_sweep:

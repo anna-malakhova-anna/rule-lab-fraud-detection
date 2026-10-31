@@ -14,62 +14,72 @@ I know the truth.
 ## Headline
 
 <!-- results:start -->
-Synthetic data: 8,000 businesses, 6,933,736 transactions, 96 planted fraud cases (27 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
+Synthetic data: 12,000 businesses, 10,712,353 transactions, 222 planted fraud cases (71 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $985K ($475K to $1.58M) | $1.03M ($527K to $1.63M) |
-| Share of fraud $ prevented | 82% (63% to 95%) | 86% (73% to 95%) |
-| Fraud cases detected | 20 of 27 | 23 of 27 |
-| Alerts that were fraud (precision) | 0.9% | 1.0% |
-| Good businesses flagged | 2,302 | 2,327 |
-| Good businesses with money held | 1,788 | 1,967 |
-| Payrolls delayed | 999 | 0 |
-| Good-customer dollar-days held | $141.73M | $177.26M |
-| Reviews per business day (avg / max) | 52.3 / 126 | 51.7 / 108 |
-| Days over review capacity | 33 of 129 | 39 of 129 |
+| Fraud $ prevented (90% range) | $2.30M ($1.45M to $3.26M) | $3.98M ($2.95M to $5.17M) |
+| Share of fraud $ prevented | 55% (43% to 66%) | 96% (93% to 98%) |
+| Fraud cases detected | 42 of 71 | 66 of 71 |
+| Alerts that were fraud (precision) | 1.5% | 3.5% |
+| Good businesses flagged | 3,487 | 3,740 |
+| Good businesses with money held | 2,965 | 3,241 |
+| Good applicants declined | 0 | 174 |
+| Payrolls delayed | 0 | 0 |
+| Good-customer dollar-days held | $269.91M | $289.11M |
+| Reviews per business day (avg / max) | 79.2 / 171 | 88.2 / 187 |
+| Days over review capacity | 34 of 129 | 51 of 129 |
 <!-- results:end -->
 
 ## What's in it
 
-- **A synthetic bank** (`generator/`): 8,000 businesses across ten industries, about 18 months of
-  activity, biweekly payroll, seasonality, and the odd-but-legitimate businesses that create false positives
-  (a seasonal landscaper, a shop that takes dozens of small checks, a contractor with big lumpy checks).
-- **Two planted fraud types** in Phase 1: mobile check deposit fraud and business email compromise
-  (a vendor's bank details changed, then the business pays the fraudster). Parameters are in
-  `config/generation.yaml`. The answer key is written separately and only the backtest reads it.
-- **Five rules in SQL** (`dbt/models/rules/`). Thresholds live in `config/rules.yaml`, each with a
-  one-line rationale.
+- **A synthetic bank** (`generator/`): 12,000 businesses in ten industries, about 18 months of activity,
+  biweekly payroll and seasonality. It includes onboarding applications (some declined), online-banking
+  logins and devices, and the odd-but-legitimate businesses that create false positives: a seasonal
+  landscaper, a shop taking dozens of small checks, a marketplace seller with hundreds of small transfers, a
+  business that has just hired a bookkeeper.
+- **Six planted fraud types**, with parameters in `config/generation.yaml` and an answer key that only the
+  backtest reads:
+  - check deposit fraud
+  - vendor bank-detail change (BEC)
+  - synthetic or shell business rings at onboarding
+  - money mules
+  - account takeover
+  - first-party ACH return fraud, which starts in month 12 and that none of my rules were designed for
+- **Nine rules in SQL** (`dbt/models/rules/`). Thresholds are in `config/rules.yaml`, each with a one-line
+  rationale and a status: running today (champion) or proposed (challenger).
 - **A backtest** (`dbt/models/backtest/`) that grades every rule and rule set on fraud dollars prevented,
-  good businesses flagged, payrolls delayed, and reviews per day against capacity. It includes a threshold
-  sweep and a champion/challenger comparison on held-out months.
-- **Decisions** are in `docs/decisions/`. A **draft rule-change memo** is in `docs/memo/`.
+  good businesses flagged, good applicants declined, payrolls delayed, and reviews per day against capacity.
+  It includes a threshold sweep and a champion/challenger comparison on held-out months.
+- **Monitoring** (`dbt/models/monitoring/`): weekly alarms on returned payments that use no fraud labels.
+  This is how the month-12 pattern was found (`docs/investigations/INV-001-ach-debit-returns.md`).
+- **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`. The Phase 1
+  memo's numbers are frozen from the Phase 1 build.
 
 ## How I set it up so the numbers mean something
 
-- **Tune on one period, grade on another.** I tune challenger thresholds on months 1 to 12 and compare
-  champion with challenger only on months 13 to 18. Tuning and grading on the same months would flatter the
-  challenger.
+- **Tune on one period, grade on another.** I tune new cutoffs on months 1 to 12 and compare champion with
+  challenger only on months 13 to 18.
+- **Tune on the labels I would actually have had.** Fraud takes time to confirm: days for a returned check,
+  months for a mule, and some cases never. Tuning only sees the cases confirmed by the end of month 12.
 - **The rules can't see the answer key.** A check walks dbt's lineage and fails the build if anything
   outside `models/backtest/` depends on it.
-- **Champion thresholds were set before grading.** I looked at alert volumes (which need no labels), not at
-  fraud caught.
+- **A new pattern has to be found, not stumbled on.** The rule for the month-12 pattern only counts from the
+  day monitoring raised the alarm, plus the time an investigation takes.
 - **Thresholds can't fix a rule that looks at the wrong payments.** R1 held good payrolls at every cutoff,
-  so the challenger also excludes payroll from R1 (ADR-009). The champion keeps R1 as written, so the
-  difference is visible.
-- **Small samples get ranges.** The test months hold only a couple dozen fraud cases, so headline numbers
-  carry bootstrap ranges.
+  so payroll is out of its scope (ADR-009).
+- **Small samples get ranges.** Each fraud type has only a handful of cases in the test months.
 
 ## Limitations
 
 Synthetic data flatters rules: I wrote the fraud, so I know its shape, and real fraud adapts once it gets
-caught. Labels here are complete and arrive instantly; in reality they arrive late and incomplete (modelling
-that delay is planned for a later phase). Costs used to choose the challenger are stated assumptions in
+caught. Labels are delayed and sometimes missing when tuning, but the final grade still uses the full answer
+key, which a real bank never gets. Costs used to choose the challenger are stated assumptions in
 `config/backtest.yaml`, not measurements.
 
 ## Run it
 
-Needs [uv](https://docs.astral.sh/uv/). Everything takes about two minutes.
+Needs [uv](https://docs.astral.sh/uv/). Everything takes about three minutes.
 
 ```bash
 make setup

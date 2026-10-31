@@ -1,6 +1,7 @@
 -- Outbound payments made while the account holds a meaningful amount of uncleared check money.
 -- Score: the share of that check money that has already left ON TOP of a normal week of the account's spending.
 -- (A raw outflow/checks ratio would flag every business that simply spends more than it deposits by check.)
+-- Payroll is excluded since Phase 2 (ADR-009, ADR-010).
 select
     'R1_check_then_fast_out'                  as rule_id,
     txn_id,
@@ -13,3 +14,4 @@ select
            out_48h_incl_this, normal_week_outflow, checks_prior_72h) as detail
 from {{ ref('feat_outbound_payments') }}
 where checks_prior_72h >= {{ rule_param('R1_check_then_fast_out', 'min_recent_checks') }}
+  and txn_type <> 'payroll'      -- payroll is out of scope (ADR-009): deposit-fraud money never leaves that way

@@ -1,21 +1,29 @@
--- Hits for the champion and challenger rule sets, from the same candidate models.
--- The challenger uses its tuned cutoffs and drops the transaction types it excludes per rule (ADR-009).
+-- Hits for the two rule sets, from the same candidate models.
+--   champion   = the rules running today, at their configured cutoffs.
+--   challenger = the champion plus the proposed rules: tuned cutoffs where the rule is tuned, the configured
+--                cutoff otherwise, and only from the date a rule written after an alarm went live (ADR-014).
+with challenger_cutoffs as (
+    select r.rule_id, r.action, r.comparator, coalesce(t.challenger_cutoff, r.threshold) as cutoff
+    from {{ ref('cfg_rules') }} as r
+    left join {{ ref('bt_challenger_thresholds') }} as t using (rule_id)
+    where r.status = 'champion'
+       or (r.status = 'challenger' and (not r.tune or t.is_kept))
+)
+
 select
     'champion' as strategy_id, 'champion' as strategy_kind, h.rule_id, r.threshold as cutoff,
     h.entity_id as txn_id, h.business_id, h.event_time, h.txn_type, h.amount, h.action
 from {{ ref('rule_hits') }} as h
 join {{ ref('cfg_rules') }} as r using (rule_id)
+where h.status = 'champion'
 
 union all
 
 select
-    'challenger', 'challenger', c.rule_id, t.challenger_cutoff,
-    c.txn_id, c.business_id, c.event_time, c.txn_type, c.amount, r.action
+    'challenger', 'challenger', c.rule_id, cc.cutoff,
+    c.txn_id, c.business_id, c.event_time, c.txn_type, c.amount, cc.action
 from {{ ref('rule_candidates') }} as c
-join {{ ref('bt_challenger_thresholds') }} as t using (rule_id)
-join {{ ref('cfg_rules') }} as r using (rule_id)
-left join {{ ref('cfg_challenger_scope') }} as x
-    on x.rule_id = c.rule_id and x.excluded_txn_type = c.txn_type
-where t.is_kept
-  and x.rule_id is null
-  and {{ passes('c.score', 'r.comparator', 't.challenger_cutoff') }}
+join challenger_cutoffs as cc using (rule_id)
+left join {{ ref('mon_rule_effective_from') }} as e using (rule_id)
+where {{ passes('c.score', 'cc.comparator', 'cc.cutoff') }}
+  and (e.rule_id is null or c.event_time >= e.effective_from)

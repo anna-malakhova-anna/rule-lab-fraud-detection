@@ -12,6 +12,8 @@ def test_every_configured_rule_has_models_and_vice_versa():
     assert models == set(RULES)
     for rid in RULES:
         assert (ROOT / "dbt" / "models" / "rules" / f"rule_{rid}.sql").exists()
+    macro = (ROOT / "dbt" / "macros" / "rule_ids.sql").read_text()
+    assert set(re.findall(r"'(R\d_[a-z0-9_]+)'", macro)) == set(RULES)
 
 
 def test_rule_config_is_complete():
@@ -19,7 +21,10 @@ def test_rule_config_is_complete():
         assert r["rationale"].strip() and r["action"] in {"allow", "rfi", "hold", "block"}
         assert r["comparator"] in {">=", "<="}
         assert len(r["sweep"]) >= 5, f"{rid}: the sweep needs 5+ cutoffs"
-        assert r["threshold"] in r["sweep"], f"{rid}: the champion cutoff must be a sweep point"
+        assert r["threshold"] in r["sweep"], f"{rid}: the configured cutoff must be a sweep point"
+        assert r["status"] in {"champion", "challenger"}
+        if r["status"] == "champion":
+            assert not r.get("tune") and not r.get("effective_from_alarm"), f"{rid}: champion rules are fixed"
 
 
 def test_gates_come_from_config():
@@ -28,13 +33,17 @@ def test_gates_come_from_config():
         for param in r["params"]:
             assert f"rule_param('{rid}', '{param}')" in sql, f"{rid}: gate {param} not read from config"
         where = sql.split("where", 1)[-1]
-        literals = re.findall(r"[<>=]=?\s*(\d+(?:\.\d+)?)\b", where)
+        # "> 0" is an existence check, not a threshold; any other number must come from config.
+        literals = [x for x in re.findall(r"[<>=]=?\s*(\d+(?:\.\d+)?)\b", where) if float(x) != 0]
         assert not literals, f"{rid}: literal threshold(s) {literals} in the WHERE clause"
 
 
 def test_rule_output_contract(con):
     cols = [r[0] for r in con.execute("describe rules.rule_hits").fetchall()]
     assert cols[:5] == ["rule_id", "entity_id", "event_time", "action", "reason"]
+    for rid in RULES:
+        rcols = [r[0] for r in con.execute(f"describe rules.rule_{rid}").fetchall()]
+        assert rcols[:5] == cols[:5], rid
     actions = {r[0] for r in con.execute("select distinct action from rules.rule_hits").fetchall()}
     assert actions <= {"allow", "rfi", "hold", "block"}
 

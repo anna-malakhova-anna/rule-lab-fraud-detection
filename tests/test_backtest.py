@@ -2,9 +2,10 @@
 from scripts.common import ROOT
 
 
-def test_challenger_is_tuned_on_training_months_only():
+def test_challenger_is_tuned_on_training_months_with_known_labels_only():
     sql = (ROOT / "dbt" / "models" / "backtest" / "bt_challenger_thresholds.sql").read_text()
     assert "m.period = 'train'" in sql and "'test'" not in sql
+    assert "bt_sweep_metrics_known" in sql and "ref('bt_sweep_metrics')" not in sql
 
 
 def test_periods_split_at_month_12(con):
@@ -38,18 +39,34 @@ def test_bootstrap_ranges_bracket_the_estimate(con):
         assert lo - 1e-9 <= est <= hi + 1e-9 or est == 0, (s, metric)
 
 
-def test_challenger_never_holds_excluded_types(con):
-    leaked = con.execute("""
-        select count(*) from backtest.bt_strategy_hits h
-        join config.cfg_challenger_scope x on x.rule_id = h.rule_id and x.excluded_txn_type = h.txn_type
-        where h.strategy_id = 'challenger'""").fetchone()[0]
-    assert leaked == 0
-
-
-def test_challenger_scope_is_tuned_in_its_own_scope(con):
+def test_known_labels_never_exceed_all_labels(con):
     rows = con.execute("""
-        select t.rule_id, t.scope, x.rule_id is not null as has_scope
-        from backtest.bt_challenger_thresholds t
-        left join (select distinct rule_id from config.cfg_challenger_scope) x using (rule_id)""").fetchall()
-    for rule_id, scope, has_scope in rows:
-        assert scope == ("challenger" if has_scope else "as_written"), rule_id
+        select k.strategy_id, k.period, k.cases, f.cases, k.loss_prevented, f.loss_prevented
+        from backtest.bt_sweep_metrics_known k join backtest.bt_sweep_metrics f using (strategy_id, period)""").fetchall()
+    for s, p, kc, fc, kp, fp in rows:
+        assert kc <= fc and kp <= fp + 0.01, (s, p)
+
+
+def test_challenger_keeps_every_champion_hit(con):
+    missing = con.execute("""
+        select count(*) from backtest.bt_strategy_hits c
+        where c.strategy_id = 'champion' and not exists (
+            select 1 from backtest.bt_strategy_hits x
+            where x.strategy_id = 'challenger' and x.txn_id = c.txn_id and x.rule_id = c.rule_id)""").fetchone()[0]
+    assert missing == 0
+
+
+def test_alarm_driven_rule_starts_at_its_live_date(con):
+    early = con.execute("""
+        select count(*) from backtest.bt_strategy_hits h
+        join monitoring.mon_rule_effective_from e using (rule_id)
+        where h.strategy_id = 'challenger' and h.event_time < e.effective_from""").fetchone()[0]
+    assert early == 0
+    detected, live = con.execute("select detected_at, effective_from from monitoring.mon_rule_effective_from").fetchone()
+    start = con.execute("select window_start from config.cfg_window").fetchone()[0]
+    assert detected is not None and live > detected and detected.date() >= start
+
+
+def test_alarm_is_found_without_labels():
+    sql = "".join(p.read_text() for p in (ROOT / "dbt" / "models" / "monitoring").glob("*.sql"))
+    assert "answer_key" not in sql and "bt_" not in sql

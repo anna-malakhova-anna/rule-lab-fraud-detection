@@ -9,8 +9,14 @@ def test_readme_and_memo_match_warehouse(con):
         assert path.read_text() == text, f"{path.name} is stale: run `make results`"
 
 
-def test_memo_is_marked_draft():
-    assert "DRAFT" in (ROOT / "docs" / "memo" / "rule-change-memo-DRAFT.md").read_text().splitlines()[0]
+def test_memos_are_marked_draft():
+    for p in (ROOT / "docs" / "memo").glob("*.md"):
+        assert "DRAFT" in p.read_text().splitlines()[0], p.name
+
+
+def test_phase1_memo_is_frozen_not_regenerated():
+    text = (ROOT / "docs" / "memo" / "rule-change-memo-phase1-DRAFT.md").read_text()
+    assert ":start -->" not in text and "FROZEN" in text
 
 
 def test_site_has_no_third_party_material():
