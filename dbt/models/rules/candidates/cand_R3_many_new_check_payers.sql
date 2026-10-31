@@ -8,6 +8,7 @@ select
     'mobile_check_deposit'                    as txn_type,
     amount,
     new_payers_7d_industry_z                  as score,
+    true                                      as escalation_eligible,
     printf('%d first-time payers in 7 days (%s)', new_payers_7d, industry) as detail
 from {{ ref('feat_check_deposits') }}
 where new_payers_7d >= {{ rule_param('R3_many_new_check_payers', 'min_new_payers') }}

@@ -60,8 +60,9 @@ def test_escalation_only_on_strong_hits(con):
             continue
         assert esc["action"] in {"hold", "block"} and esc["action"] != r["action"]
         op = r["comparator"]
+        # Escalated exactly when the score passes `at` and the candidate is eligible.
         bad = con.execute(f"""
             select count(*) from rules.rule_hits
-            where rule_id = ? and ((action = ? and not (score {op} ?)) or (action <> ? and score {op} ?))""",
-            [rid, esc["action"], esc["at"], esc["action"], esc["at"]]).fetchone()[0]
+            where rule_id = ? and ((action = ?) <> (score {op} ? and escalation_eligible))""",
+            [rid, esc["action"], esc["at"]]).fetchone()[0]
         assert bad == 0, rid

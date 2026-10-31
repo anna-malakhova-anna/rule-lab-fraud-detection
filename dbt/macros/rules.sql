@@ -14,7 +14,8 @@ select
     c.business_id,
     c.txn_type,
     c.amount,
-    c.score
+    c.score,
+    c.escalation_eligible
 from {{ ref('cand_' ~ rule_id) }} as c
 join {{ ref('cfg_rules') }} as r using (rule_id)
 where {{ passes('c.score', 'r.comparator', 'r.threshold') }}

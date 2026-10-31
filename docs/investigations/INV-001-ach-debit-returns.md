@@ -20,7 +20,7 @@ Then they weren't.
 | Share of those returned dollars no champion rule had alerted on | 31% |
 | ACH return fraud cases starting in the test months | 19 |
 | Prevented by the champion (no ACH rule) | $543K of $1.20M |
-| Prevented by the challenger (with R9 from its live date) | $1.07M of $1.20M |
+| Prevented by the challenger (with R9 from its live date) | $1.06M of $1.20M |
 <!-- inv-facts:end -->
 
 ## What I looked at

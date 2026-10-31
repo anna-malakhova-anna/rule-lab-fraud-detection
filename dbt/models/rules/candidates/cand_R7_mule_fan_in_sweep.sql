@@ -8,6 +8,7 @@ select
     txn_type,
     amount,
     cast(new_senders_14d as double)           as score,
+    true                                      as escalation_eligible,
     printf('%d first-time senders paid $%,.0f in 14 days; $%,.0f went out', new_senders_14d,
            new_sender_inbound_14d, out_14d_incl_this) as detail
 from {{ ref('feat_payment_signals') }}

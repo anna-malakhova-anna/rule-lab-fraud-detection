@@ -8,6 +8,7 @@ select
     txn_type,
     amount,
     excess_out_48h_vs_ach_debits              as score,
+    true                                      as escalation_eligible,
     printf('$%,.0f out in 48h (normal week $%,.0f) vs $%,.0f pulled by ACH debit in 5 days',
            out_48h_incl_this, normal_week_outflow, ach_debits_prior_5d) as detail
 from {{ ref('feat_payment_signals') }}

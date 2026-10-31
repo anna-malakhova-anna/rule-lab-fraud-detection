@@ -22,6 +22,7 @@ select
     'mobile_check_deposit'                    as txn_type,
     amount,
     amount / nullif(reference_monthly_inflow, 0) as score,
+    true                                      as escalation_eligible,
     printf('$%,.0f check vs $%,.0f/month %s', amount, reference_monthly_inflow,
            case when uses_stated_revenue then 'stated revenue' else 'trailing inflow' end) as detail
 from scored

@@ -8,6 +8,7 @@ select
     txn_type,
     amount,
     hours_since_new_device                    as score,
+    true                                      as escalation_eligible,
     printf('new device %.1f hours before; %d contact change(s) since; first payment to a payee added after that login',
            hours_since_new_device, contact_changes_since_new_device) as detail
 from {{ ref('feat_payment_signals') }}

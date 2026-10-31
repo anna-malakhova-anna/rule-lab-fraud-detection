@@ -10,6 +10,7 @@ select
     txn_type,
     amount,
     excess_out_48h_vs_recent_checks           as score,
+    true                                      as escalation_eligible,
     printf('$%,.0f out in 48h (normal week $%,.0f) vs $%,.0f of checks in 72h',
            out_48h_incl_this, normal_week_outflow, checks_prior_72h) as detail
 from {{ ref('feat_outbound_payments') }}

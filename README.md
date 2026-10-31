@@ -18,13 +18,13 @@ Synthetic data: 12,000 businesses, 10,712,353 transactions, 222 planted fraud ca
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $2.30M ($1.45M to $3.26M) | $3.97M ($2.94M to $5.16M) |
-| Share of fraud $ prevented | 55% (43% to 66%) | 95% (93% to 98%) |
+| Fraud $ prevented (90% range) | $2.30M ($1.45M to $3.26M) | $3.96M ($2.94M to $5.14M) |
+| Share of fraud $ prevented | 55% (43% to 66%) | 95% (92% to 97%) |
 | Fraud cases detected | 42 of 71 | 66 of 71 |
 | Alerts that were fraud (precision) | 1.5% | 3.5% |
 | Good businesses flagged | 3,487 | 3,740 |
-| Good businesses with money held | 2,965 | 3,161 |
-| Good applicants declined | 0 | 55 |
+| Good businesses with money held | 2,965 | 3,122 |
+| Good applicants declined | 0 | 0 |
 | Payrolls delayed | 0 | 0 |
 | Good-customer dollar-days held | $269.91M | $289.11M |
 | Reviews per business day (avg / max) | 79.2 / 171 | 88.2 / 187 |

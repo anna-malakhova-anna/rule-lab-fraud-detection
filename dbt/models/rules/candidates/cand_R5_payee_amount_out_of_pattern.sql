@@ -7,6 +7,7 @@ select
     txn_type,
     amount,
     amount_vs_payee_median                    as score,
+    true                                      as escalation_eligible,
     printf('$%,.0f vs usual $%,.0f to this payee', amount, payee_median_last6) as detail
 from {{ ref('feat_outbound_payments') }}
 where prior_payments_to_payee >= {{ rule_param('R5_payee_amount_out_of_pattern', 'min_prior_payments') }}

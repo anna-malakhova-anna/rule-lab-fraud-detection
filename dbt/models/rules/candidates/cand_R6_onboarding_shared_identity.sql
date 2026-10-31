@@ -11,6 +11,9 @@ select
     cast(max_shared_with_one
       + case when days_incorporated <= {{ rule_param('R6_onboarding_shared_identity', 'young_incorporation_days') }}
              then 1 else 0 end as double)     as score,
+    -- Only a newly incorporated applicant can be declined; an established business with strong links (usually
+    -- the same owner's second business) gets an RFI instead (ADR-015).
+    days_incorporated <= {{ rule_param('R6_onboarding_shared_identity', 'young_incorporation_days') }} as escalation_eligible,
     printf('shares %s with an earlier applicant; %d linked applications (%d declined); incorporated %d days before applying',
            coalesce(most_shared_attributes, 'nothing'), linked_applications, linked_declined_applications, days_incorporated) as detail
 from {{ ref('feat_applications') }}
