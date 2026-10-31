@@ -1,0 +1,28 @@
+[project]
+name = "smb-fraud-rule-lab"
+version = "0.1.0"
+description = "Fraud rules for a SYNTHETIC small-business bank: generator with an answer key, SQL rules in dbt on DuckDB, and a backtest harness."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "duckdb",
+    "dbt-core",
+    "dbt-duckdb",
+    "faker",
+    "numpy",
+    "pyarrow",
+    "pyyaml",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["generator", "generator.typologies", "loader", "scripts"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

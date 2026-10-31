@@ -1,0 +1,40 @@
+name: smb_fraud_rule_lab
+version: "0.1.0"
+config-version: 2
+profile: smb_fraud_rule_lab
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: target
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  smb_fraud_rule_lab:
+    staging:
+      +materialized: view
+      +schema: staging
+    features:
+      +materialized: table
+      +schema: features
+    rules:
+      +materialized: table
+      +schema: rules
+    backtest:
+      +materialized: table
+      +schema: backtest
+
+seeds:
+  smb_fraud_rule_lab:
+    +schema: config
+    cfg_window:
+      +column_types: {window_start: date, train_end: date, window_end: date}
+    cfg_rules:
+      +column_types: {threshold: double}
+    cfg_rule_params:
+      +column_types: {value: double}
+    cfg_sweep:
+      +column_types: {cutoff: double}
+    cfg_costs:
+      +column_types: {value: double}

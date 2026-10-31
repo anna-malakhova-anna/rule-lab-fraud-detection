@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: raw
+    description: What the bank sees. Loaded as-is from data/raw by loader/load.py.
+    tables:
+      - name: businesses
+      - name: owners
+      - name: accounts
+      - name: payees
+      - name: payee_events
+      - name: transactions
+      - name: returns
+
+  - name: answer_key
+    description: >
+      Ground truth for the planted fraud and each business's hidden archetype. ONLY models under
+      models/backtest/ may read this source; scripts/check_answer_key_isolation.py fails the build otherwise.
+    tables:
+      - name: fraud_cases
+      - name: fraud_txns
+      - name: business_profile

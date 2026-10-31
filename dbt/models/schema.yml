@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    columns:
+      - name: txn_id
+        data_tests: [unique, not_null]
+      - name: direction
+        data_tests:
+          - accepted_values: {arguments: {values: ['in', 'out']}}
+
+  - name: feat_check_deposits
+    columns:
+      - name: txn_id
+        data_tests: [unique, not_null]
+
+  - name: feat_outbound_payments
+    columns:
+      - name: txn_id
+        data_tests: [unique, not_null]
+
+  - name: rule_hits
+    description: Every rule's hits at champion thresholds. The output contract every rule follows.
+    columns:
+      - name: rule_id
+        data_tests: [not_null]
+      - name: entity_id
+        data_tests: [not_null]
+      - name: event_time
+        data_tests: [not_null]
+      - name: action
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: ['allow', 'rfi', 'hold', 'block']}}
+      - name: reason
+        data_tests: [not_null]
+
+  - name: bt_strategy_metrics
+    columns:
+      - name: period
+        data_tests:
+          - accepted_values: {arguments: {values: ['train', 'test']}}

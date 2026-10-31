@@ -1,0 +1,62 @@
+# Phase 1 rule set. Each rule has ONE swept score; everything else is a fixed gate in `params`.
+# `threshold` is the champion cutoff: set from fraud intuition and alert volumes, before any rule was graded
+# against the answer key (ADR-007). `sweep` is the grid the backtest tries. A rule fires when
+# score <comparator> cutoff and every gate passes.
+
+rules:
+  R1_check_then_fast_out:
+    rationale: Money leaving within hours of check deposits that have not had time to clear is how deposit fraud turns into loss.
+    applies_to: outbound payments (ACH, wire, payroll)
+    score: share of the last 72 hours of check deposits that left in the last 48 hours on top of a normal week of the account's spending
+    comparator: ">="
+    threshold: 0.6
+    sweep: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    action: hold
+    params:
+      min_recent_checks: 5000        # ignore small check volumes entirely
+
+  R2_check_vs_own_baseline:
+    rationale: A single check worth more than the account normally takes in over a month is out of character for that account.
+    applies_to: mobile check deposits
+    score: deposit amount / the account's trailing 90-day average monthly inflow (stated revenue when history is under 30 days)
+    comparator: ">="
+    threshold: 1.0
+    sweep: [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0]
+    action: hold
+    params:
+      min_amount: 2000
+      min_history_days: 30
+
+  R3_many_new_check_payers:
+    rationale: Checks from many payers the business has never been paid by before, compared with what is normal for its industry.
+    applies_to: mobile check deposits
+    score: industry z-score of distinct first-time check payers in the last 7 days
+    comparator: ">="
+    threshold: 4.0
+    sweep: [2.0, 3.0, 4.0, 5.0, 6.0, 8.0]
+    action: rfi
+    params:
+      min_new_payers: 3
+
+  R4_new_bank_details_first_payment:
+    rationale: The first payment to a known payee's newly changed bank details is the moment a vendor-impersonation scam pays out.
+    applies_to: outbound payments to vendors and other payees
+    score: days since the payee's bank details were changed
+    comparator: "<="
+    threshold: 14
+    sweep: [1, 3, 7, 14, 30, 60]
+    action: hold
+    params:
+      min_amount: 1000
+
+  R5_payee_amount_out_of_pattern:
+    rationale: A payment far above what this business usually pays this payee suggests an altered or fake invoice.
+    applies_to: outbound payments to payees with at least 3 earlier payments
+    score: amount / median of the last 6 payments to the same payee
+    comparator: ">="
+    threshold: 3.0
+    sweep: [1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 8.0]
+    action: rfi
+    params:
+      min_prior_payments: 3
+      min_amount: 1000

@@ -1,0 +1,171 @@
+# Synthetic world for the SMB Fraud Rule Lab. Everything here is invented; no number is a real-world rate.
+# Changing a value here changes the world; every downstream number is rebuilt from it by `make all`.
+
+seed: 42
+bank_name: Bramblewick Business Banking   # invented; one place to change it
+
+window:
+  start_date: "2025-01-01"
+  months: 18                # 2025-01 .. 2026-06
+  train_months: 12          # ADR-002: thresholds are tuned on months 1-12, graded on 13-18
+  warmup_days: 90           # activity generated before the window so baselines exist on day 1; never graded
+
+population:
+  n_businesses: 8000
+  # Share of businesses whose account opened before the window (they arrive with history).
+  share_open_before_window: 0.70
+  max_years_open_before_window: 4
+
+# Industry shapes. rev_median is stated monthly revenue (USD). Inflow mix shares sum to 1.
+# season: monthly multiplier, Jan..Dec. payroll_share: payroll as a share of revenue for businesses with staff.
+industries:
+  restaurant:
+    weight: 0.14
+    rev_median: 45000
+    inflow_mix: {card: 0.85, ach_client: 0.10, check: 0.05}
+    has_payroll: 0.95
+    payroll_share: 0.30
+    n_clients: [2, 6]
+    season: [0.85, 0.85, 0.95, 1.0, 1.05, 1.1, 1.15, 1.1, 1.0, 0.95, 0.95, 1.1]
+  retail:
+    weight: 0.13
+    rev_median: 35000
+    inflow_mix: {card: 0.80, ach_client: 0.12, check: 0.08}
+    has_payroll: 0.80
+    payroll_share: 0.18
+    n_clients: [2, 8]
+    season: [0.8, 0.8, 0.9, 0.95, 1.0, 1.0, 1.0, 1.0, 0.95, 1.0, 1.2, 1.5]
+  ecommerce:
+    weight: 0.10
+    rev_median: 30000
+    inflow_mix: {card: 0.92, ach_client: 0.08, check: 0.0}
+    has_payroll: 0.50
+    payroll_share: 0.12
+    n_clients: [1, 4]
+    season: [0.85, 0.8, 0.9, 0.9, 0.95, 0.95, 0.95, 1.0, 1.0, 1.05, 1.3, 1.5]
+  professional_services:
+    weight: 0.16
+    rev_median: 40000
+    inflow_mix: {card: 0.05, ach_client: 0.75, check: 0.20}
+    has_payroll: 0.75
+    payroll_share: 0.40
+    n_clients: [4, 30]
+    season: [1.0, 1.0, 1.05, 1.1, 1.0, 1.0, 0.9, 0.9, 1.0, 1.0, 1.0, 1.05]
+  construction:
+    weight: 0.12
+    rev_median: 80000
+    inflow_mix: {card: 0.0, ach_client: 0.45, check: 0.55}
+    has_payroll: 0.90
+    payroll_share: 0.35
+    n_clients: [3, 15]
+    season: [0.7, 0.7, 0.9, 1.05, 1.15, 1.2, 1.2, 1.2, 1.1, 1.0, 0.9, 0.8]
+  landscaping:
+    weight: 0.07
+    rev_median: 25000
+    inflow_mix: {card: 0.10, ach_client: 0.30, check: 0.60}
+    has_payroll: 0.70
+    payroll_share: 0.35
+    n_clients: [10, 60]
+    season: [0.3, 0.35, 0.8, 1.4, 1.6, 1.6, 1.5, 1.4, 1.2, 1.0, 0.6, 0.35]
+  healthcare_clinic:
+    weight: 0.08
+    rev_median: 70000
+    inflow_mix: {card: 0.25, ach_client: 0.55, check: 0.20}
+    has_payroll: 0.95
+    payroll_share: 0.38
+    n_clients: [3, 10]
+    season: [1.0, 1.0, 1.0, 1.0, 1.0, 0.95, 0.9, 0.95, 1.0, 1.05, 1.05, 1.1]
+  trucking:
+    weight: 0.08
+    rev_median: 60000
+    inflow_mix: {card: 0.0, ach_client: 0.85, check: 0.15}
+    has_payroll: 0.65
+    payroll_share: 0.25
+    n_clients: [2, 12]
+    season: [0.9, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.05, 1.1, 1.1, 1.0]
+  creative_agency:
+    weight: 0.06
+    rev_median: 30000
+    inflow_mix: {card: 0.05, ach_client: 0.85, check: 0.10}
+    has_payroll: 0.55
+    payroll_share: 0.40
+    n_clients: [2, 10]
+    season: [0.9, 0.95, 1.0, 1.0, 1.0, 1.0, 0.85, 0.85, 1.05, 1.1, 1.1, 1.1]
+  education_services:   # tutoring, lessons, youth programs: many small checks is normal here
+    weight: 0.06
+    rev_median: 15000
+    inflow_mix: {card: 0.30, ach_client: 0.20, check: 0.50}
+    has_payroll: 0.60
+    payroll_share: 0.35
+    n_clients: [40, 200]
+    season: [1.1, 1.0, 1.0, 1.0, 0.9, 0.6, 0.5, 0.9, 1.3, 1.1, 1.0, 0.8]
+
+# Legitimate businesses that LOOK odd. They exist to generate realistic false positives.
+# share: fraction of eligible businesses that get the archetype.
+odd_archetypes:
+  seasonal_heavy:            # a landscaper whose winter is near zero and whose spring arrives as big checks
+    industries: [landscaping]
+    share: 0.45
+    winter_floor: 0.08
+    sharpen_power: 2.5
+  many_small_checks:         # e.g. a farm stand or community shop that takes dozens of small checks a month
+    industries: [retail, professional_services, healthcare_clinic]
+    share: 0.04
+    n_payers: [60, 250]
+    check_amount: [40, 400]
+  lumpy_contractor:          # occasional large progress-payment checks, spent fast on suppliers and payroll
+    industries: [construction]
+    share: 0.30
+    lumps_per_year: [1, 4]
+    lump_multiple_of_month: [1.5, 5.0]
+    spend_share_within_3d: [0.5, 0.9]
+  annual_big_invoice:        # one large payment a year to an existing vendor (insurance, equipment, rent deposit)
+    industries: [restaurant, retail, professional_services, construction, healthcare_clinic, trucking]
+    share: 0.10
+    multiple_of_typical: [5.0, 15.0]
+  vendor_details_churn:      # vendors that legitimately change bank details more often (e.g. after a bank switch)
+    industries: [restaurant, retail, construction, trucking, ecommerce]
+    share: 0.06
+    changes_per_vendor_year: 0.35
+
+legit:
+  vendor_count: [3, 10]
+  vendor_outflow_share: 0.42      # share of revenue paid to vendors
+  owner_draw_share: 0.08
+  tax_transfer_share: 0.07
+  card_spend_share: 0.06
+  card_spend_per_month: [2, 12]
+  wire_if_typical_over: 20000
+  wire_share_for_large: 0.6
+  vendor_details_change_per_year: 0.03
+  mobile_deposit_limit_per_check: 50000   # larger checks go to a branchless bank's other channels; not modelled
+  check_return_rate: 0.006        # ordinary returned checks (NSF etc.) on legitimate deposits
+  new_check_payer_share: 0.15     # checks from a payer the business has not been paid by before
+
+# Planted fraud. Prevalence is per business. ADR-005 and ADR-006 document the parameters.
+typologies:
+  check_deposit_fraud:
+    prevalence: 0.006
+    share_new_account: 0.60          # account opened inside the window for the purpose
+    new_account_scheme_after_days: [20, 90]
+    variants: {single_large: 0.55, multi_payer: 0.45}
+    single_large: {n_checks: [1, 2], multiple_of_month: [1.5, 8.0], min_amount: 3000}
+    multi_payer:  {n_checks: [4, 12], days: [1, 5], multiple_of_month: [0.3, 1.5], min_amount: 800}
+    first_withdrawal_hours_median: 10
+    first_withdrawal_hours_sigma: 1.0
+    n_withdrawals: [1, 4]
+    withdrawn_share: [0.70, 0.95]
+    wire_share: 0.40
+    return_days: [2, 7]
+    return_reasons: {counterfeit: 0.40, account_closed: 0.25, stop_payment: 0.15, nsf: 0.20}
+  bec_vendor_change:
+    prevalence: 0.006
+    min_prior_payments: 3
+    variants: {normal_invoice: 0.5, inflated: 0.5}
+    normal_invoice: {multiple_of_typical: [0.9, 1.2]}
+    inflated: {multiple_of_typical: [1.8, 6.0]}
+    payment_delay_hours_median: 48
+    payment_delay_hours_sigma: 1.1
+    n_payments: [1, 2]
+    wire_share: 0.50
+    discovered_after_days: [5, 25]   # the real vendor chases the unpaid invoice; details are reverted

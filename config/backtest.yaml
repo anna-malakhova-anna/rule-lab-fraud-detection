@@ -1,0 +1,31 @@
+# How the backtest turns rule hits into fraud caught, good customers hurt and ops load.
+# All values are assumptions for a synthetic bank (ADR-003, ADR-004, ADR-008).
+
+# Severity orders actions when several rules hit the same transaction: the strongest wins.
+# prevents: share of the case's later loss stopped when this action lands on real fraud (ADR-003).
+# hold_days: how long a good customer's money waits when this action lands on them. An RFI asks for
+#   documents without stopping the payment, so it holds nothing.
+actions:
+  allow: {severity: 0, prevents: 0.0, hold_days: 0, review: false}
+  rfi:   {severity: 1, prevents: 0.5, hold_days: 0, review: true}
+  hold:  {severity: 2, prevents: 1.0, hold_days: 2, review: true}
+  block: {severity: 3, prevents: 1.0, hold_days: 5, review: true}
+
+# Review capacity sized to the book (ADR-004): reviews land on the next business day.
+capacity:
+  analysts: 1.5
+  reviews_per_analyst_day: 40
+
+# Costs used ONLY to pick challenger thresholds on the training months (ADR-008). Invented, stated, and
+# shown next to every result so a reader can disagree with them.
+costs:
+  review_cost: 30                    # analyst time per review, USD
+  good_customer_touch_cost: 150      # friction, support contact and churn risk when a good business is flagged
+  hold_cost_per_dollar_day: 0.0005   # 5 bps per day of a good customer's money held
+  payroll_delay_cost: 1000           # a delayed payroll is the worst thing we can do to a good business
+  # A single rule may use at most this share of daily review capacity on average (training months).
+  max_capacity_share_per_rule: 0.5
+
+bootstrap:
+  iterations: 1000
+  seed: 42
