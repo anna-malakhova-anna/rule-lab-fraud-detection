@@ -8,8 +8,8 @@
 | Action | delay |
 | Fires when | hours since the last contact change or new-device login <= 72 |
 | Why it exists | Right after a new device or a change of email or phone is when a taken-over account pays out. |
-| Alerts per business day, rule alone (test months) | 2.2 |
-| Share that were fraud (test months) | 6.1% |
+| Alerts per business day, rule alone (test months) | 1.9 |
+| Share that were fraud (test months) | 7.5% |
 <!-- playbook-facts:end -->
 
 ## What to check

@@ -15,6 +15,7 @@ from generator.common import APPLICATION_ID_BASE, DAY, Calendar, lognormal_aroun
 STATES = ["CA", "TX", "FL", "NY", "IL", "PA", "OH", "GA", "NC", "MI", "NJ", "VA", "WA", "AZ", "MA",
           "TN", "IN", "MO", "MD", "WI", "CO", "MN", "SC", "AL", "LA", "OR", "UT", "NV"]
 SUB_ACCOUNTS = {0: "operating", 1: "tax_reserve", 2: "payroll"}
+SUB_ACCOUNT_OPEN_DELAY_DAYS = 3        # tax and payroll sub-accounts open this many days after the operating account
 
 
 @dataclass
@@ -153,8 +154,9 @@ def _setup_mule(cfg, t, rng, cal, b) -> None:
         b.extra["new_account"] = True
         b.extra["case_day"] = b.open_day + int(rng.uniform(*t["start_after_open_days"]))
     else:
-        # An existing small business that lets its account be used.
+        # An existing small business that lets its account be used: open before the window, like any established one.
         b.extra["new_account"] = False
+        _established(cfg, b)
         b.extra["case_day"] = int(rng.uniform(30, cal.n_days - 45))
 
 
@@ -188,6 +190,7 @@ def _setup_check_fraud(cfg, t, rng, cal, b) -> None:
     else:
         # An existing customer turning to deposit fraud (first-party): years of normal history first.
         b.extra["new_account"] = False
+        _established(cfg, b)
         b.extra["case_day"] = int(rng.uniform(30, cal.n_days - 15))
 
 
@@ -331,12 +334,11 @@ def account_rows(cal: Calendar, businesses: list[Business]) -> list[dict]:
     for b in businesses:
         for acc in b.account_ids():
             sub = acc % 10
-            # Sub-accounts open a few days after the operating account.
             rows.append({
                 "account_id": acc,
                 "business_id": b.business_id,
                 "account_type": SUB_ACCOUNTS[sub],
-                "open_date": cal.start + dt.timedelta(days=b.open_day + (0 if sub == 0 else 3)),
+                "open_date": cal.start + dt.timedelta(days=b.open_day + (0 if sub == 0 else SUB_ACCOUNT_OPEN_DELAY_DAYS)),
             })
     return rows
 

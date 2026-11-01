@@ -9,7 +9,7 @@
 | Fires when | Larchstone verification (90 = not found or mismatch, 10 = verified) >= 50 |
 | Why it exists | A business the registry can't find, or whose details don't match, is a common sign of a shell. |
 | Alerts per business day, rule alone (test months) | 0.3 |
-| Share that were fraud (test months) | 27.8% |
+| Share that were fraud (test months) | 20.6% |
 <!-- playbook-facts:end -->
 
 ## What to check

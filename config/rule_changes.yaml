@@ -1,0 +1,80 @@
+# Change log: every rule added and every threshold, action or scope change, with the evidence behind it
+# (module F, ADR-024). Newest last. tests/test_governance.py checks that each rule's latest entry matches its
+# threshold and action in config/rules.yaml, so a change that skips this log fails the build.
+#
+# date      the day the change was made in this project
+# change    added | threshold | action | scope | status
+# threshold / action   the values AFTER the change (omit when unchanged)
+# decision  the ADR that records the choice
+# backtest  the result that justified it, by model or document
+
+changes:
+  # Phase 1: day-one rules, cutoffs from alert volumes only (no labels).
+  - {date: 2026-10-31, rule_id: R1_check_then_fast_out, change: added, threshold: 0.6, action: hold,
+     decision: ADR-007, backtest: "alert volume only (about 14 a day after the score redesign); no labels used"}
+  - {date: 2026-10-31, rule_id: R2_check_vs_own_baseline, change: added, threshold: 1.0, action: hold,
+     decision: ADR-007, backtest: "alert volume only"}
+  - {date: 2026-10-31, rule_id: R3_many_new_check_payers, change: added, threshold: 4.0, action: rfi,
+     decision: ADR-007, backtest: "alert volume only"}
+  - {date: 2026-10-31, rule_id: R4_new_bank_details_first_payment, change: added, threshold: 14, action: hold,
+     decision: ADR-007, backtest: "alert volume only"}
+  - {date: 2026-10-31, rule_id: R5_payee_amount_out_of_pattern, change: added, threshold: 3.0, action: rfi,
+     decision: ADR-007, backtest: "alert volume only"}
+  - {date: 2026-10-31, rule_id: R1_check_then_fast_out, change: scope,
+     decision: ADR-009, backtest: "Phase 1 sweep: about 2,500 good payrolls held at every cutoff, 3 on a fraudster's account; payroll excluded"}
+
+  # Phase 2: the Phase 1 challenger cutoffs ship; four new rules.
+  - {date: 2026-10-31, rule_id: R1_check_then_fast_out, change: threshold, threshold: 0.4,
+     decision: ADR-010, backtest: "Phase 1 bt_challenger_thresholds (training months), confirmed on the test months in the Phase 1 memo"}
+  - {date: 2026-10-31, rule_id: R2_check_vs_own_baseline, change: threshold, threshold: 0.5,
+     decision: ADR-010, backtest: "Phase 1 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R3_many_new_check_payers, change: threshold, threshold: 5.0,
+     decision: ADR-010, backtest: "Phase 1 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R4_new_bank_details_first_payment, change: threshold, threshold: 7,
+     decision: ADR-010, backtest: "Phase 1 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R5_payee_amount_out_of_pattern, change: threshold, threshold: 4.0,
+     decision: ADR-010, backtest: "Phase 1 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R6_onboarding_shared_identity, change: added, threshold: 3, action: block,
+     decision: ADR-012, backtest: "Phase 2 challenger, cutoff tuned on the training months"}
+  - {date: 2026-10-31, rule_id: R7_mule_fan_in_sweep, change: added, threshold: 15, action: hold,
+     decision: ADR-012, backtest: "Phase 2 challenger, cutoff tuned on the training months"}
+  - {date: 2026-10-31, rule_id: R8_ato_new_device_sequence, change: added, threshold: 24, action: hold,
+     decision: ADR-012, backtest: "Phase 2 challenger, cutoff tuned on the training months"}
+  - {date: 2026-10-31, rule_id: R9_ach_pull_then_fast_out, change: added, threshold: 0.4, action: hold,
+     decision: ADR-014, backtest: "monitoring alarm on unauthorized ACH-debit returns (INV-001); cutoff set in the investigation, not tuned"}
+  - {date: 2026-10-31, rule_id: R6_onboarding_shared_identity, change: action, threshold: 1, action: rfi,
+     decision: ADR-015, backtest: "174 good applicants declined in the test months on a single shared attribute; strong links (score 3+) now decline, weaker ones get an RFI"}
+  - {date: 2026-10-31, rule_id: R6_onboarding_shared_identity, change: scope,
+     decision: ADR-015, backtest: "declines limited to applicants incorporated within 90 days; an established business with strong links is usually the same owner's second business"}
+
+  # Phase 3: the Phase 2 challenger ships; credit rules proposed.
+  - {date: 2026-10-31, rule_id: R6_onboarding_shared_identity, change: status,
+     decision: ADR-016, backtest: "Phase 2 challenger vs champion on the test months (Phase 2 memo)"}
+  - {date: 2026-10-31, rule_id: R7_mule_fan_in_sweep, change: threshold, threshold: 5,
+     decision: ADR-016, backtest: "Phase 2 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R8_ato_new_device_sequence, change: threshold, threshold: 12,
+     decision: ADR-016, backtest: "Phase 2 bt_challenger_thresholds (training months)"}
+  - {date: 2026-10-31, rule_id: R9_ach_pull_then_fast_out, change: status,
+     decision: ADR-016, backtest: "Phase 2 challenger vs champion on the test months (Phase 2 memo)"}
+  - {date: 2026-10-31, rule_id: R10_credit_inflow_ramp, change: added, threshold: 2.5, action: rfi,
+     decision: ADR-016, backtest: "challenger; cutoff tuned on the training months (bt_challenger_thresholds)"}
+  - {date: 2026-10-31, rule_id: R11_draw_then_fast_out, change: added, threshold: 0.6, action: hold,
+     decision: ADR-016, backtest: "challenger; cutoff tuned on the training months (bt_challenger_thresholds)"}
+  - {date: 2026-10-31, rule_id: R12_full_draw_after_increase, change: added, threshold: 14, action: hold,
+     decision: ADR-016, backtest: "challenger; cutoff tuned on the training months (bt_challenger_thresholds)"}
+
+  # Instant-payout launch controls and vendor signals: proposed, not running.
+  - {date: 2026-10-31, rule_id: C1_instant_new_account, change: added, threshold: 90, action: delay,
+     decision: ADR-021, backtest: "bt_launch_controls"}
+  - {date: 2026-10-31, rule_id: C2_instant_new_payee, change: added, threshold: 72, action: delay,
+     decision: ADR-021, backtest: "bt_launch_controls"}
+  - {date: 2026-10-31, rule_id: C3_instant_after_contact_change, change: added, threshold: 72, action: delay,
+     decision: ADR-021, backtest: "bt_launch_controls"}
+  - {date: 2026-10-31, rule_id: C4_instant_uncleared_funds, change: added, threshold: 0.5, action: delay,
+     decision: ADR-021, backtest: "bt_launch_controls"}
+  - {date: 2026-10-31, rule_id: V1_device_vendor, change: added, threshold: 80, action: rfi,
+     decision: ADR-022, backtest: "bt_vendor_bakeoff"}
+  - {date: 2026-10-31, rule_id: V2_contact_vendor, change: added, threshold: 80, action: rfi,
+     decision: ADR-022, backtest: "bt_vendor_bakeoff"}
+  - {date: 2026-10-31, rule_id: V3_registry_vendor, change: added, threshold: 50, action: rfi,
+     decision: ADR-022, backtest: "bt_vendor_bakeoff"}

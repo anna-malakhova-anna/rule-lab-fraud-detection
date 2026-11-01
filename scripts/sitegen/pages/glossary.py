@@ -22,6 +22,11 @@ def glossary() -> str:
         ("Priority score", "What is at stake on a case times how often its rule's alerts were fraud, as known when tuning."),
         ("Lapsed case", "A case nobody reviewed in time: its hold releases and the money moves."),
         ("Reason code", "A short stable code for why a rule fired (for example CHK_OUT_FAST), used in queues and playbooks."),
+        ("Fast lane", "Established, clean businesses (open a year, no returned item in 180 days) whose own-account alerts ask for documents instead of holding money."),
+        ("Break-even precision", "The precision at which a rule's false alarms cost as much as the fraud it stops. Below it, the rule loses money."),
+        ("Leave one out", "Running the rules without one of them to see what is lost: the fraud dollars that rule adds on top of the others."),
+        ("Retire candidate", "A rule the quarterly review flags because it added nothing on top of the other rules for two reviews in a row. A person decides."),
+        ("Citation", "In a case summary, the case fields a line rests on, in brackets. A line whose numbers aren't in its cited fields is rejected."),
     ]
     dl = "".join(f"<dt>{esc(a)}</dt><dd>{esc(b)}</dd>" for a, b in terms)
     return f"""{page_title("Glossary", "The words on these pages, in plain terms")}<div class="card"><dl>{dl}</dl></div>"""

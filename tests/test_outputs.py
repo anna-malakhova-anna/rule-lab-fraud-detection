@@ -10,7 +10,8 @@ def test_readme_and_memo_match_warehouse(con):
 
 
 def test_memos_and_stakeholder_pack_are_marked_draft():
-    for p in [q for d in ("memo", "stakeholder", "launch", "vendors") for q in (ROOT / "docs" / d).glob("*.md")]:
+    drafts = [q for d in ("memo", "stakeholder", "launch", "vendors", "fastlane", "summaries") for q in (ROOT / "docs" / d).glob("*.md")]
+    for p in drafts + [ROOT / "docs" / "governance" / "rule-change-template-DRAFT.md"]:
         assert "DRAFT" in p.read_text().splitlines()[0], p.name
 
 
@@ -44,7 +45,8 @@ def test_no_real_company_or_personal_context_in_repo():
 
 
 def test_site_has_every_page():
-    for page in ("index", "tradeoffs", "riskops", "launch", "vendors", "types", "monitoring", "limitations", "glossary"):
+    for page in ("index", "tradeoffs", "rules", "riskops", "launch", "vendors", "fastlane", "types", "monitoring", "summaries",
+                 "limitations", "glossary"):
         assert (ROOT / "site" / f"{page}.html").exists(), page
     assert len(list((ROOT / "site" / "types").glob("*.html"))) == 7
 

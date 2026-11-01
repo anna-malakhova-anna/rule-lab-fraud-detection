@@ -6,7 +6,7 @@ with after_launch as (
         l.strategy_id,
         sum(l.loss_amount)                     as loss_at_stake,
         sum(l.loss_amount * l.prevents)        as loss_prevented
-    from {{ ref('bt_launch_loss_credit') }} as l
+    from {{ ref('bt_loss_credit') }} as l
     where cast(l.txn_time as date) >= {{ window_value('instant_launch_date') }}
     group by l.strategy_id
 ),

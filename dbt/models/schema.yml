@@ -41,3 +41,29 @@ models:
       - name: period
         data_tests:
           - accepted_values: {arguments: {values: ['train', 'test']}}
+
+  - name: gov_rule_quarterly
+    columns:
+      - name: recommendation
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: ['keep', 'retune', 'retire candidate', 'investigate drift', 'too early']}}
+
+  - name: gov_rule_inventory
+    columns:
+      - name: rule_id
+        data_tests: [unique, not_null]
+      - name: owner
+        data_tests: [not_null]
+      - name: last_changed
+        data_tests: [not_null]
+
+  - name: case_records
+    columns:
+      - name: case_id
+        data_tests: [unique, not_null]
+
+  - name: bt_fast_lane_tradeoff
+    columns:
+      - name: fraud_let_through
+        data_tests: [not_null]

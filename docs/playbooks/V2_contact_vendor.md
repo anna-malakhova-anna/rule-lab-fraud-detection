@@ -9,7 +9,7 @@
 | Fires when | Quenchwire email and phone risk score (0-100) >= 80 |
 | Why it exists | An email or phone the vendor rates risky, at onboarding or on a contact change before a payment. |
 | Alerts per business day, rule alone (test months) | 0.2 |
-| Share that were fraud (test months) | 50.0% |
+| Share that were fraud (test months) | 65.0% |
 <!-- playbook-facts:end -->
 
 ## What to check

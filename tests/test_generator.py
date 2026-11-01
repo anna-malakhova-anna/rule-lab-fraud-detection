@@ -42,6 +42,13 @@ def test_payroll_runs_every_two_weeks(con):
     assert share_14 > 0.99
 
 
+def test_no_activity_before_an_account_opens(con):
+    early = con.execute("""
+        select count(*) from raw.transactions t join raw.accounts a using (account_id)
+        where cast(t.txn_time as date) < a.open_date""").fetchone()[0]
+    assert early == 0
+
+
 def test_raw_tables_carry_no_fraud_labels(con):
     cols = {r[0] for r in con.execute(
         "select column_name from information_schema.columns where table_schema = 'raw'").fetchall()}

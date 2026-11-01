@@ -11,7 +11,7 @@ select
     coalesce(sum(l.loss_amount) filter (where l.is_instant), 0)    as loss_at_stake_instant,
     sum(l.loss_amount * l.prevents)                                as loss_prevented,
     sum(l.loss_amount * l.prevents) / nullif(sum(l.loss_amount), 0) as share_prevented
-from {{ ref('bt_launch_loss_credit') }} as l
+from {{ ref('bt_loss_credit') }} as l
 join {{ ref('bt_cases') }} as c using (case_id)
 where cast(l.txn_time as date) >= {{ window_value('train_end') }}
   and l.strategy_id in ('champion', 'launch_controls')

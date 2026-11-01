@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case summaries · SMB Fraud Rule Lab</title>
+<style>
+/* Palette: slate #4C5C8A and its undertones for the page; a slightly more saturated slate and an amber for chart
+   marks (validated with the dataviz palette checker in both modes). */
+:root {
+  color-scheme: light;
+  --page: #F7F5EF; --surface: #FFFFFF; --header: #FBFAF6; --tint: #E7EAF4; --tint-2: #F0F2F8;
+  --ink: #161A26; --ink-2: #4A4F5E; --muted: #8A8D97;
+  --brand: #4C5C8A; --brand-deep: #2E3858; --brand-soft: #7F8DBA; --brand-wash: #D9DEEF;
+  --hero-a: #1B2030; --hero-b: #2E3858; --hero-c: #4C5C8A; --hero-ink: #F4F1E8;
+  --grid: #E3E1DA; --axis: #C6C4BB; --border: rgba(22,26,38,0.10);
+  --series-1: #4560AE; --series-2: #C26E1A; --banner: #E7EAF4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+    --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+    --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+    --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+    --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+    --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+  --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+  --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+  --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+  --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+  --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--brand); }
+.display, .hero h1, .stat b { font-family: "Avenir Next Condensed", "Helvetica Neue", "Arial Narrow", system-ui, sans-serif;
+  font-stretch: condensed; font-weight: 800; letter-spacing: -0.01em; }
+.serif { font-family: "Iowan Old Style", Charter, Georgia, serif; }
+
+/* Header: light bar, wordmark, links, two pill buttons */
+.topbar { background: var(--header); border-bottom: 1px solid var(--border); }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+/* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
+.wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
+  font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
+  letter-spacing: 0.04em; line-height: 1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand .logo { width: 40px; height: 40px; flex: none; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
+.links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
+.pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
+  border: 1.5px solid var(--brand); color: var(--brand); white-space: nowrap; }
+.pill.solid { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--hero-ink); }
+
+.banner { background: var(--banner); color: var(--ink); font-size: 14px; }
+.banner-in { max-width: 1160px; margin: 0 auto; padding: 10px 16px; }
+
+main { max-width: 1160px; margin: 0 auto; padding: 8px 16px 64px; }
+
+/* Page titles: very large, uppercase, condensed, slate gradient */
+.title { text-align: center; padding: 40px 0 8px; }
+.display { font-size: clamp(44px, 9vw, 112px); line-height: 0.92; text-transform: uppercase; margin: 0;
+  background: linear-gradient(90deg, var(--brand-soft), var(--brand) 55%, var(--brand-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { font-size: clamp(20px, 3vw, 30px); font-weight: 700; color: var(--brand-deep); margin: 14px auto 0; max-width: none; }
+
+/* Category bar: serif links between two rules */
+.catbar { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); margin: 28px 0 32px; padding: 16px 8px;
+  text-align: center; font-family: "Iowan Old Style", Charter, Georgia, serif; font-size: 19px; line-height: 2; }
+.catbar a { color: var(--brand-deep); text-decoration: none; white-space: nowrap; }
+.catbar a:hover { text-decoration: underline; }
+.catbar .sep { color: var(--muted); padding: 0 10px; }
+
+/* Overview hero: dark slate gradient band */
+.hero { background: linear-gradient(170deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%); color: var(--hero-ink);
+  border-radius: 0 0 24px 24px; margin: 0 -16px 8px; padding: 48px 32px 40px; }
+.hero h1 { font-size: clamp(40px, 7vw, 84px); line-height: 0.95; text-transform: uppercase; margin: 0 0 18px; max-width: 17ch; }
+.hero p { color: var(--hero-ink); opacity: 0.88; font-size: 18px; max-width: 62ch; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 32px; }
+.feature { display: flex; gap: 14px; align-items: flex-start; }
+.feature .icon { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-wash); color: var(--brand-deep);
+  display: grid; place-items: center; }
+:root[data-theme="dark"] .feature .icon { color: var(--hero-ink); }
+.feature b { display: block; font-size: 22px; line-height: 1.15; }
+.feature span { font-size: 14px; opacity: 0.8; }
+
+h2 { font-size: 26px; line-height: 1.2; margin: 52px 0 10px; color: var(--ink); }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p, li { color: var(--ink-2); max-width: 74ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.card.tint { background: var(--tint); }
+.chip { display: inline-block; border: 1.5px solid var(--brand); color: var(--brand-deep); border-radius: 8px; padding: 3px 12px;
+  font-size: 14px; margin-bottom: 12px; }
+.typecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.typecard { background: var(--tint); border-radius: 16px; padding: 22px; text-decoration: none; display: block; }
+.typecard h3 { font-size: 26px; line-height: 1.15; color: var(--ink); font-weight: 600; margin: 0 0 8px; }
+.typecard p { margin: 0; color: var(--ink-2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat { background: var(--tint); border-radius: 16px; padding: 18px; }
+.stat b { display: block; font-size: 44px; line-height: 1; color: var(--brand-deep); }
+.stat span { font-size: 14px; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg .lbl { fill: var(--ink-2); }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; flex-wrap: wrap; }
+.key { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+details { margin-top: 8px; font-size: 14px; }
+summary { cursor: pointer; color: var(--ink-2); }
+.src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
+@media (max-width: 640px) {
+  .topbar-in { gap: 12px; } .pills { margin-left: 0; } dl { grid-template-columns: 1fr; }
+  .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
+  .catbar a { display: inline-block; margin: 4px 10px; }
+  .hero { padding: 32px 18px 28px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+<a class="brand" href="index.html"><svg class="logo" viewBox="0 2 48 48" width="40" height="40" role="img" aria-label="Rule Lab logo: a flask pouring coins">
+<defs><clipPath id="logo-flask"><path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/></clipPath></defs>
+<path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z" fill="var(--brand-wash)"/>
+<rect x="-10" y="21" width="80" height="40" fill="var(--brand)" clip-path="url(#logo-flask)"/>
+<g transform="rotate(118 20 22)" fill="none" stroke="var(--brand-deep)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/><path d="M14.5 6 H25.5"/></g>
+<g stroke="var(--brand-deep)" stroke-width="1.5" fill="#E0A93B">
+<circle cx="37.5" cy="35.5" r="3.3"/><circle cx="34" cy="42" r="3.3"/><circle cx="41" cy="45.5" r="3.3"/></g>
+<g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
+<circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
+</svg><span class="wordmark">Rule Lab</span></a>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html" aria-current="page">Case summaries</a><a href="glossary.html">Glossary</a></nav>
+<div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
+</div></header>
+<div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
+No number here is a real-world fraud rate.</div></div>
+<main>
+<div class="title"><h1 class="display">Case summaries</h1><p class="subtitle">Two or three lines per case, every claim traced to the case</p></div>
+<nav class="catbar"><a href="#examples">Examples</a> <span class="sep">|</span> <a href="#guardrail">The guardrail</a> <span class="sep">|</span> <a href="#limits">What it can&#x27;t catch</a></nav>
+<p>When a case opens, the analyst gets a short summary: who the business is, what it is queued for, and the evidence
+behind its strongest alerts. Every line ends with the case fields it rests on (shown in grey). A check rejects any line
+that cites nothing, cites a field the case doesn't have, names the wrong rule, or states a number or date its fields
+don't hold. Summaries here come from a fixed template: no language model and no API key, so the project builds
+offline. A model can be swapped in later behind the same check.</p>
+<div class="stats">
+<div class="stat"><b>27,242</b><span>cases summarised; 0 fail the check</span></div>
+<div class="stat"><b>100.0%</b><span>of deliberately corrupted summaries rejected, for the five kinds of error the check is built to catch</span></div>
+</div>
+
+<h2 id="examples">Examples</h2>
+<p>The first case in the window whose strongest alert comes from each rule.</p>
+<div class="grid"><div class="card"><h3>R1 Check money out fast</h3><p class="summary">Williams Partners LLC (trucking, open 1134 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R1: $22,263 went out in two days against a normal week of $10,775, right after $5,338 of check deposits<span class="cite">alerts[0].rule_id, alerts[0].evidence.out_48h_incl_this, alerts[0].evidence.normal_week_outflow, alerts[0].evidence.checks_prior_72h</span></p><p class="src">Case 4885-20250101</p></div><div class="card"><h3>R2 Check far above own baseline</h3><p class="summary">Smith Collective LLC (construction, open 572 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R2: a $38,019 check against its usual monthly inflow of $74,974<span class="cite">alerts[0].rule_id, alerts[0].evidence.amount, alerts[0].evidence.reference_monthly_inflow, alerts[0].evidence.uses_stated_revenue</span></p><p class="src">Case 2224-20250101</p></div><div class="card"><h3>R3 Many new check payers</h3><p class="summary">Roberts Studio LLC (education_services, open 6 days) is queued for a document request on 2 alerts<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R3: 11 first-time check payers in a week, far above what is normal in education_services (z-score 5.6)<span class="cite">alerts[0].rule_id, alerts[0].evidence.new_payers_7d, alerts[0].evidence.industry, alerts[0].evidence.new_payers_7d_industry_z</span></p><p class="src">Case 2377-20250113</p></div><div class="card"><h3>R4 First payment to changed bank details</h3><p class="summary">King Group LLC (retail, open 675 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R4: first payment, $8,052 (usually $9,369), to a payee whose bank details changed 2.6 days earlier<span class="cite">alerts[0].rule_id, alerts[0].evidence.amount, alerts[0].evidence.days_since_bank_details_change, alerts[0].evidence.payee_median_last6</span></p><p class="src">Case 5945-20250102</p></div><div class="card"><h3>R5 Payment far above usual for payee</h3><p class="summary">Frederick Partners LLC (retail, open 397 days) is queued for a document request on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R5: $6,808 to a payee usually paid $573, after 3 earlier payments<span class="cite">alerts[0].rule_id, alerts[0].evidence.amount, alerts[0].evidence.payee_median_last6, alerts[0].evidence.prior_payments_to_payee</span></p><p class="src">Case 7385-20250101</p></div><div class="card"><h3>R6 Applicant shares identity with others</h3><p class="summary">Marshall Partners LLC (construction), an applicant whose account would open 2025-01-08, is queued for a document request on 1 alert<span class="cite">business.legal_name, business.industry, business.open_date, case.action, case.alert_count</span></p><p class="summary">R6: the application shares address with an earlier applicant; 22 linked applications, 2 of them declined; incorporated 664 days before applying<span class="cite">alerts[0].rule_id, alerts[0].evidence.most_shared_attributes, alerts[0].evidence.linked_applications, alerts[0].evidence.linked_declined_applications, alerts[0].evidence.days_incorporated</span></p><p class="src">Case 1058-20250101</p></div><div class="card"><h3>R7 Many new senders, swept out</h3><p class="summary">Diaz Collective LLC (education_services, open 745 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R7: 31 first-time senders paid in $5,604 over two weeks, and $19,266 went back out<span class="cite">alerts[0].rule_id, alerts[0].evidence.new_senders_14d, alerts[0].evidence.new_sender_inbound_14d, alerts[0].evidence.out_14d_incl_this</span></p><p class="src">Case 170-20250101</p></div><div class="card"><h3>R8 New device, contact change, new payee</h3><p class="summary">Blair Partners LLC (trucking, open 137 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R8: first payment to a payee added after a login from a new device 8.3 hours earlier, with 2 contact change(s) since<span class="cite">alerts[0].rule_id, alerts[0].evidence.hours_since_new_device, alerts[0].evidence.contact_changes_since_new_device</span></p><p class="src">Case 6980-20250217</p></div><div class="card"><h3>R9 ACH debit money out fast</h3><p class="summary">Marsh Group LLC (restaurant, open 551 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R9: $19,310 went out in two days against a normal week of $16,135, right after $6,030 pulled in by ACH debit<span class="cite">alerts[0].rule_id, alerts[0].evidence.out_48h_incl_this, alerts[0].evidence.normal_week_outflow, alerts[0].evidence.ach_debits_prior_5d</span></p><p class="src">Case 1681-20250101</p></div><div class="card"><h3>R10 Inflows ramped before a credit decision</h3><p class="summary">Stephens Studio LLC (professional_services, open 210 days) is queued for a document request on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R10: a credit request after $24,237 came in over the last month, against $9,571 a month before; 54% of it from new payers<span class="cite">alerts[0].rule_id, alerts[0].evidence.inflow_last_30d, alerts[0].evidence.baseline_monthly_inflow_31_120d, alerts[0].evidence.share_last_30d_from_new_payers</span></p><p class="src">Case 8795-20250101</p></div><div class="card"><h3>R11 Credit draw money out fast</h3><p class="summary">King Supply LLC (retail, open 1301 days) is queued for a hold on 2 alerts<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R11: $7,094 went out in two days against a normal week of $3,538, right after $3,875 drawn on the credit line<span class="cite">alerts[0].rule_id, alerts[0].evidence.out_48h_incl_this, alerts[0].evidence.normal_week_outflow, alerts[0].evidence.line_draws_prior_72h</span></p><p class="src">Case 6173-20250108</p></div><div class="card"><h3>R12 Line drawn to limit soon after increase</h3><p class="summary">Davis Co LLC (restaurant, open 598 days) is queued for a hold on 1 alert<span class="cite">business.legal_name, business.industry, business.tenure_days, case.action, case.alert_count</span></p><p class="summary">R12: a $130,009 draw takes the line to 97% of its $150,000 limit, raised 7.5 days ago<span class="cite">alerts[0].rule_id, alerts[0].evidence.amount, alerts[0].evidence.utilisation_after, alerts[0].evidence.current_limit, alerts[0].evidence.days_since_limit_increase</span></p><p class="src">Case 6511-20250425</p></div></div>
+
+<h2 id="guardrail">The guardrail, measured</h2>
+<p>Template summaries can't invent anything, so their error rate is zero by construction. To show what the check
+itself catches, the summaries of a sample of cases were corrupted in known ways.</p>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Corruption</th><th class="">Should the check reject it?</th><th class="n">Summaries</th><th class="n">Rejected</th><th class="n">Rejection rate</th></tr></thead><tbody><tr><td class="">added an invented claim, uncited</td><td class="">yes</td><td class="n">500</td><td class="n">500</td><td class="n">100.0%</td></tr><tr><td class="">changed a number</td><td class="">yes</td><td class="n">500</td><td class="n">500</td><td class="n">100.0%</td></tr><tr><td class="">cited a field the case does not have</td><td class="">yes</td><td class="n">500</td><td class="n">500</td><td class="n">100.0%</td></tr><tr><td class="">dropped a citation</td><td class="">yes</td><td class="n">500</td><td class="n">500</td><td class="n">100.0%</td></tr><tr><td class="">named the wrong rule</td><td class="">yes</td><td class="n">500</td><td class="n">500</td><td class="n">100.0%</td></tr><tr><td class="">added an invented claim with a real citation</td><td class="">no: a known limit</td><td class="n">500</td><td class="n">0</td><td class="n">0.0%</td></tr><tr><td class="">swapped two cited numbers</td><td class="">no: a known limit</td><td class="n">500</td><td class="n">0</td><td class="n">0.0%</td></tr></tbody></table></div></div>
+<p class="src">Source: analysis.summary_checks (scripts/case_summaries.py). Write-up: docs/summaries/case-summaries-DRAFT.md</p>
+
+<h2 id="limits">What it can't catch</h2>
+<p>The check proves that what a line says can be traced to the case, not that it means what the case means. A made-up
+sentence with no numbers that cites a real field passes, and two cited numbers swapped into each other's places still
+match. Before release, the check did catch template lines describing applicants as "open -4 days", and it surfaced a
+data bug: some accounts had activity before they opened. Both were fixed.</p>
+
+</main>
+<footer><p><a href="limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built from the warehouse by <code>make site</code>. Synthetic data, seed 42.</p></footer>
+</body>
+</html>

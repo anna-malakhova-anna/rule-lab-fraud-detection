@@ -27,6 +27,9 @@ models:
     vendors:
       +materialized: table
       +schema: vendors
+    cases:
+      +materialized: table
+      +schema: cases
     backtest:
       +materialized: table
       +schema: backtest
@@ -37,7 +40,7 @@ seeds:
     cfg_window:
       +column_types: {window_start: date, train_end: date, window_end: date, instant_launch_date: date}
     cfg_rules:
-      +column_types: {reason_code: varchar, threshold: double, tune: boolean, effective_from_alarm: varchar, escalate_action: varchar, escalate_at: double}
+      +column_types: {reason_code: varchar, owner: varchar, threshold: double, tune: boolean, effective_from_alarm: varchar, escalate_action: varchar, escalate_at: double}
     cfg_rule_params:
       +column_types: {value: double}
     cfg_sweep:
@@ -48,3 +51,13 @@ seeds:
       +column_types: {value: double}
     cfg_vendors:
       +column_types: {cost_per_call: double, latency_ms: double, coverage: double}
+    cfg_decline_bar:
+      +column_types: {decline_at: double}
+    cfg_governance:
+      +column_types: {value: double}
+    cfg_rule_changes:
+      +column_types: {change_date: date, threshold: double, action: varchar}
+    cfg_fast_lane_caps:
+      +column_types: {max_amount: double}
+    cfg_review_lag:
+      +column_types: {lag_quarters: integer}

@@ -14,21 +14,21 @@ I know the truth.
 ## Headline
 
 <!-- results:start -->
-Synthetic data: 12,000 businesses, 10,688,674 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
+Synthetic data: 12,000 businesses, 10,691,265 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $3.31M ($2.36M to $4.33M) | $3.86M ($2.89M to $4.94M) |
-| Share of fraud $ prevented | 68% (60% to 76%) | 80% (74% to 85%) |
+| Fraud $ prevented (90% range) | $3.33M ($2.39M to $4.35M) | $3.89M ($2.90M to $4.95M) |
+| Share of fraud $ prevented | 69% (60% to 76%) | 80% (74% to 86%) |
 | Fraud cases detected | 68 of 80 | 79 of 80 |
 | Alerts that were fraud (precision) | 2.6% | 2.9% |
-| Good businesses flagged | 3,670 | 3,826 |
-| Good businesses with money held | 3,039 | 3,195 |
+| Good businesses flagged | 3,673 | 3,831 |
+| Good businesses with money held | 3,044 | 3,203 |
 | Good applicants declined | 1 | 1 |
 | Payrolls delayed | 0 | 0 |
-| Good-customer dollar-days held | $280.49M | $285.73M |
-| Reviews per business day (avg / max) | 85.9 / 186 | 88.5 / 190 |
-| Days over review capacity | 49 of 129 | 52 of 129 |
+| Good-customer dollar-days held | $280.12M | $285.49M |
+| Reviews per business day (avg / max) | 85.7 / 181 | 88.4 / 186 |
+| Days over review capacity | 48 of 129 | 53 of 129 |
 <!-- results:end -->
 
 ## What's in it
@@ -66,9 +66,18 @@ Synthetic data: 12,000 businesses, 10,688,674 transactions, 234 planted fraud ca
   adapting to them. It covers which rules stop working when money leaves in seconds, and which launch controls
   are worth their friction.
 - **A vendor bake-off** (`docs/vendors/`): three invented data vendors, graded on what they add on top of my rules
-  under three call strategies, with a buy / don't-buy line.
-- **A results site** (`make site`, committed in `site/`): overview, trade-off curves, Risk Ops, launch review,
-  vendors, one page per fraud type, monitoring, a limitations page and a glossary.
+  under three call strategies, with a buy / don't-buy line. Each vendor's added value rests on one to three cases,
+  so the line shows how to decide more than what to decide.
+- **A good-customer fast lane** (`docs/fastlane/`): where the rules mostly hold good, established customers, what
+  softening a hold to a document request below a cap removes in friction and lets through in fraud, and what moving
+  the onboarding decline bar does to the approval rate.
+- **Rule governance** (`docs/governance/`): an inventory with owners and retirement triggers, a change log the build
+  enforces, a change template, and a quarterly review that judges each rule with only the labels known at the time.
+- **Case summaries** (`scripts/case_summaries.py`, `docs/summaries/`): a two- or three-line summary per case where
+  every claim cites the case field it comes from, a check that rejects untraceable claims, and its measured catch
+  rate. Templates only, so it runs offline.
+- **A results site** (`make site`, committed in `site/`): overview, trade-off curves, rules, Risk Ops, launch
+  review, vendors, fast lane, one page per fraud type, monitoring, case summaries, a limitations page and a glossary.
 - **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`: one per phase. Earlier
   phases' numbers are frozen at the commit that produced them.
 
@@ -102,4 +111,4 @@ make setup
 make all
 ```
 
-`make all` runs generate, load, build, backtest, results, site and test. Open `site/index.html` for the results.
+`make all` runs generate, load, build, backtest, summaries, results, site and test. Open `site/index.html` for the results.

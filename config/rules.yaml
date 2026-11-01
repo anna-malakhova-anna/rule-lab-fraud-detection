@@ -16,6 +16,7 @@
 #           investigation time, not from day one (ADR-014).
 # escalate   optional stronger action for strong hits: {action, at}. A hit whose score also passes `at`, and that
 #           its candidate model marks escalation_eligible, gets that action instead of the rule's own (ADR-015).
+# owner      the team that answers for the rule: it signs off changes and the quarterly review (module F, ADR-024).
 # reason_code  a stable code for queues, playbooks and reporting; `reason` is the human-readable text and
 #           `evidence` (a JSON object built by each candidate model) the fields an analyst or summary can cite.
 # A rule fires when score <comparator> cutoff and every gate passes.
@@ -24,6 +25,7 @@ rules:
   R1_check_then_fast_out:
     status: champion
     reason_code: CHK_OUT_FAST
+    owner: Deposits risk
     rationale: Money leaving within hours of check deposits that have not had time to clear is how deposit fraud turns into loss.
     applies_to: outbound ACH and wire payments (payroll excluded, ADR-009)
     score: share of the last 72 hours of check deposits that left in the last 48 hours on top of a normal week of the account's spending
@@ -37,6 +39,7 @@ rules:
   R2_check_vs_own_baseline:
     status: champion
     reason_code: CHK_ABOVE_BASELINE
+    owner: Deposits risk
     rationale: A single check worth more than the account normally takes in over a month is out of character for that account.
     applies_to: mobile check deposits
     score: deposit amount / the account's trailing 90-day average monthly inflow (stated revenue when history is under 30 days)
@@ -51,6 +54,7 @@ rules:
   R3_many_new_check_payers:
     status: champion
     reason_code: CHK_NEW_PAYERS
+    owner: Deposits risk
     rationale: Checks from many payers the business has never been paid by before, compared with what is normal for its industry.
     applies_to: mobile check deposits
     score: industry z-score of distinct first-time check payers in the last 7 days
@@ -64,6 +68,7 @@ rules:
   R4_new_bank_details_first_payment:
     status: champion
     reason_code: PAYEE_DETAILS_CHANGED
+    owner: Payments risk
     rationale: The first payment to a known payee's newly changed bank details is the moment a vendor-impersonation scam pays out.
     applies_to: outbound payments to vendors and other payees
     score: days since the payee's bank details were changed
@@ -77,6 +82,7 @@ rules:
   R5_payee_amount_out_of_pattern:
     status: champion
     reason_code: PAYEE_AMOUNT_OUTLIER
+    owner: Payments risk
     rationale: A payment far above what this business usually pays this payee suggests an altered or fake invoice.
     applies_to: outbound payments to payees with at least 3 earlier payments
     score: amount / median of the last 6 payments to the same payee
@@ -91,6 +97,7 @@ rules:
   R6_onboarding_shared_identity:
     status: champion
     reason_code: APP_SHARED_IDENTITY
+    owner: Onboarding risk
     rationale: Applicants who share a device, phone, address or business email domain with earlier applicants, and are freshly incorporated, look like a ring of synthetic businesses.
     applies_to: approved applications, before the account opens
     score: most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days
@@ -105,6 +112,7 @@ rules:
   R7_mule_fan_in_sweep:
     status: champion
     reason_code: MULE_FAN_IN
+    owner: Payments risk
     rationale: Many first-time senders paying in, and most of it paid straight back out, is how a mule account moves scam proceeds.
     applies_to: outbound ACH and wire payments
     score: distinct first-time senders of ACH or wire payments in the last 14 days
@@ -119,6 +127,7 @@ rules:
   R8_ato_new_device_sequence:
     status: champion
     reason_code: ATO_SEQUENCE
+    owner: Payments risk
     rationale: A new device, then a change to the email or phone on file, then a first payment to a payee added after that login, is the account-takeover sequence.
     applies_to: first payments to a payee
     score: hours since the first login from a device never seen on this account
@@ -132,6 +141,7 @@ rules:
   R9_ach_pull_then_fast_out:
     status: champion                 # written after the month-12 alarm (ADR-014, INV-001); shipped in Phase 2
     reason_code: ACH_DEBIT_OUT_FAST
+    owner: Deposits risk
     rationale: Money pulled in by ACH debit and paid straight back out, above normal spending, is R1's pattern on a rail R1 never watched.
     applies_to: outbound ACH and wire payments (payroll excluded)
     score: share of the last 5 days of ACH debits pulled in that left in the last 48 hours on top of a normal week of the account's spending
@@ -146,6 +156,7 @@ rules:
   R10_credit_inflow_ramp:
     status: challenger
     reason_code: CREDIT_INFLOW_RAMP
+    owner: Credit risk
     tune: true
     rationale: A line opening or limit increase asked for right after inflows jumped above the account's own history is how a bust-out earns a bigger line.
     applies_to: line openings and limit-increase requests
@@ -160,6 +171,7 @@ rules:
   R11_draw_then_fast_out:
     status: challenger
     reason_code: CREDIT_DRAW_OUT_FAST
+    owner: Credit risk
     tune: true
     rationale: Money drawn on the line and sent straight back out, above normal spending, is the moment a bust-out cashes out.
     applies_to: outbound ACH and wire payments (payroll excluded)
@@ -174,6 +186,7 @@ rules:
   R12_full_draw_after_increase:
     status: challenger
     reason_code: CREDIT_FULL_DRAW
+    owner: Credit risk
     tune: true
     rationale: Drawing the line to its limit days after it was raised is the bust-out's signature.
     applies_to: draws on the line of credit
@@ -189,6 +202,7 @@ rules:
   C1_instant_new_account:
     status: launch_control
     reason_code: INSTANT_NEW_ACCOUNT
+    owner: Product launch
     rationale: A young account has no history to judge; it waits for standard payments until it has some.
     applies_to: instant payouts
     score: days since the account opened
@@ -201,6 +215,7 @@ rules:
   C2_instant_new_payee:
     status: launch_control
     reason_code: INSTANT_NEW_PAYEE
+    owner: Product launch
     rationale: Cash-outs go to payees added or changed hours earlier; a cooling-off period gives the payment rules time.
     applies_to: instant payouts
     score: hours since the payee was added or its bank details last changed
@@ -213,6 +228,7 @@ rules:
   C3_instant_after_contact_change:
     status: launch_control
     reason_code: INSTANT_AFTER_CONTACT_CHANGE
+    owner: Product launch
     rationale: Right after a new device or a change of email or phone is when a taken-over account pays out.
     applies_to: instant payouts
     score: hours since the last contact change or new-device login
@@ -225,6 +241,7 @@ rules:
   C4_instant_uncleared_funds:
     status: launch_control
     reason_code: INSTANT_UNCLEARED_FUNDS
+    owner: Product launch
     rationale: Instant payouts must not spend money that can still come back (checks, ACH debits, fresh line draws).
     applies_to: instant payouts
     score: returnable money received in the last few days / the payout amount
@@ -238,6 +255,7 @@ rules:
   V1_device_vendor:
     status: vendor
     reason_code: VENDOR_DEVICE_RISK
+    owner: Vendor management
     rationale: A device the vendor has seen behind fraud elsewhere, at onboarding or on a new-device login before a payment.
     applies_to: applications; outbound payments within 7 days of a scored new-device login
     score: Tallowmere device risk score (0-100)
@@ -251,6 +269,7 @@ rules:
   V2_contact_vendor:
     status: vendor
     reason_code: VENDOR_CONTACT_RISK
+    owner: Vendor management
     rationale: An email or phone the vendor rates risky, at onboarding or on a contact change before a payment.
     applies_to: applications; outbound payments within 7 days of a scored contact change
     score: Quenchwire email and phone risk score (0-100)
@@ -264,6 +283,7 @@ rules:
   V3_registry_vendor:
     status: vendor
     reason_code: VENDOR_REGISTRY_FAIL
+    owner: Vendor management
     rationale: A business the registry can't find, or whose details don't match, is a common sign of a shell.
     applies_to: applications
     score: Larchstone verification (90 = not found or mismatch, 10 = verified)
@@ -273,3 +293,27 @@ rules:
     sweep: [50]
     action: rfi
     params: {}
+
+# Good-customer fast lane (module E, ADR-023). Applied to the challenger rule set (the current recommendation) to
+# make the `fast_lane` rule set; nothing changes for the champion.
+# A business is in the fast lane while it has min_tenure_days of history and no returned item (bounced check,
+# returned ACH debit) in the last clean_days. Both are things the bank sees; no label is used.
+# For a fast-lane business, the rules in `softened_rules` act at most at `soften_to` (a document request instead of
+# a hold). These are the rules aimed at a fraudster's OWN account. Rules that protect a victim (R4 changed bank
+# details, R5 inflated invoice, R8 takeover) and the credit rules (a bust-out needs months of clean history) keep
+# their action: established, clean businesses are exactly who those schemes target or imitate. R3 already asks
+# for documents, so it is not listed.
+# max_amount_sweep: softening applies only to alerts on amounts below the cap; `none` softens at any amount.
+# Fraud let through by established accounts is concentrated in large payments, so the cap is where the trade-off
+# lives. It is swept, not tuned: under the stated costs a hold is priced only by the money it ties up, so net
+# value cannot pick a cap. The result is the fraud let through per hold avoided, the price of a hold to judge.
+fast_lane:
+  min_tenure_days: 365
+  clean_days: 180
+  soften_to: rfi
+  softened_rules: [R1_check_then_fast_out, R2_check_vs_own_baseline, R9_ach_pull_then_fast_out]
+  max_amount_sweep: [5000, 10000, 25000, none]
+
+# Onboarding approval rate (module E): the R6 score at which an applicant is declined instead of asked for
+# documents, swept on top of the challenger. 3 is today's bar (ADR-015); `never` declines nobody.
+decline_bar_sweep: [3, 4, 5, never]

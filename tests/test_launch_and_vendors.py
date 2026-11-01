@@ -17,7 +17,7 @@ def test_instant_payouts_respect_the_cap(con):
 def test_an_alert_on_an_instant_payout_itself_cannot_stop_it(con):
     """Champion credit on a still-instant loss only ever comes from an alert strictly before it."""
     bad = con.execute("""
-        select count(*) from backtest.bt_launch_loss_credit l
+        select count(*) from backtest.bt_loss_credit l
         where l.strategy_id = 'champion' and l.still_instant and l.prevents > 0
           and not exists (select 1 from backtest.bt_strategy_graded g
                           where g.strategy_id = 'champion' and g.case_id = l.case_id and g.event_time < l.txn_time)""").fetchone()[0]

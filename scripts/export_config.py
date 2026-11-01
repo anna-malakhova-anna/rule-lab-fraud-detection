@@ -45,11 +45,25 @@ def main() -> None:
     mon = bt["monitoring"]
     _write("cfg_monitoring", ["baseline_weeks", "sigma", "min_count", "investigation_business_days", "precision_maturity_days"],
            [[mon["baseline_weeks"], mon["sigma"], mon["min_count"], mon["investigation_business_days"], mon["precision_maturity_days"]]])
-    _write("cfg_rules", ["rule_id", "reason_code", "status", "tune", "effective_from_alarm", "action", "escalate_action",
+    _write("cfg_rules", ["rule_id", "reason_code", "owner", "status", "tune", "effective_from_alarm", "action", "escalate_action",
                          "escalate_at", "comparator", "threshold", "score_description", "rationale"],
-           [[rid, r["reason_code"], r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"],
+           [[rid, r["reason_code"], r["owner"], r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"],
              r.get("escalate", {}).get("action", ""), r.get("escalate", {}).get("at", ""),
              r["comparator"], r["threshold"], r["score"], r["rationale"]] for rid, r in rules["rules"].items()])
+    fl = rules["fast_lane"]
+    _write("cfg_fast_lane", ["min_tenure_days", "clean_days", "soften_to"],
+           [[fl["min_tenure_days"], fl["clean_days"], fl["soften_to"]]])
+    _write("cfg_fast_lane_rules", ["rule_id"], [[rid] for rid in fl["softened_rules"]])
+    _write("cfg_fast_lane_caps", ["max_amount"], [["" if c == "none" else c] for c in fl["max_amount_sweep"]])
+    # `never` declines nobody: an empty cutoff.
+    _write("cfg_decline_bar", ["decline_at"], [["" if d == "never" else d] for d in rules["decline_bar_sweep"]])
+    gov = load_yaml("governance.yaml")
+    _write("cfg_governance", ["param", "value"], [[k, v] for k, v in gov["quarterly_review"].items()])
+    _write("cfg_review_lag", ["rule_id", "lag_quarters"],
+           [[rid, gov["lag_quarters"].get(rid, 0)] for rid, r in rules["rules"].items() if r["status"] in ("champion", "challenger")])
+    _write("cfg_rule_changes", ["change_no", "change_date", "rule_id", "change", "threshold", "action", "decision", "backtest"],
+           [[i + 1, c["date"], c["rule_id"], c["change"], c.get("threshold", ""), c.get("action", ""), c["decision"], c["backtest"]]
+            for i, c in enumerate(load_yaml("rule_changes.yaml")["changes"])])
     _write("cfg_rule_params", ["rule_id", "param", "value"],
            [[rid, k, v] for rid, r in rules["rules"].items() for k, v in r["params"].items()])
     _write("cfg_sweep", ["rule_id", "cutoff"], [[rid, c] for rid, r in rules["rules"].items() for c in r["sweep"]])

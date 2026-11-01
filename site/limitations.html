@@ -46,15 +46,15 @@ a { color: var(--brand); }
 
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
-.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 /* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand .logo { width: 40px; height: 40px; flex: none; }
-.links { display: flex; gap: 22px; flex-wrap: wrap; }
-.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
 .pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
@@ -125,6 +125,8 @@ svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); str
 details { margin-top: 8px; font-size: 14px; }
 summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
@@ -149,11 +151,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">How sure are we?</h1><p class="subtitle">What flatters these numbers, and what they leave out</p></div>
@@ -162,14 +164,16 @@ No number here is a real-world fraud rate.</div></div>
 <li><strong>I wrote the fraud.</strong> The rules look for exactly the shapes I planted, so detection rates in the 90s say more about my generator than about any real bank. Real fraud adapts once it starts getting caught.</li>
 <li><strong>Synthetic bust-outs are clean.</strong> Every one draws the full line within days of an increase, which R12 catches almost perfectly. Real bust-outs are messier and slower.</li>
 <li><strong>The final grade uses the full answer key.</strong> Tuning only sees labels known by month 12, but the headline comparison uses every label, including cases a real bank would never confirm.</li>
-<li><strong>Generator shortcuts can leak into results.</strong> I've found and fixed two. Bust-out money sent back to the owner's own account made R5 look like a bust-out detector. ACH fraud cash-outs to the owner's account let R5 catch part of the month-12 pattern by luck. I documented the second rather than removing it.</li>
+<li><strong>Generator shortcuts can leak into results.</strong> I've found three. Bust-out money sent back to the owner's own account made R5 look like a bust-out detector (fixed). ACH fraud cash-outs to the owner's account let R5 catch part of the month-12 pattern by luck (documented, not removed). And some existing businesses that turned to mule or deposit fraud were active months before their account opened, which the case-summary check caught (fixed).</li>
 </ul>
 <h2>What makes them uncertain</h2>
 <ul>
 <li><strong>Small samples.</strong> The test months hold 80 cases across seven fraud types, 6 to 22 each. One case moves a fraud type's numbers a lot; the headline carries bootstrap ranges for that reason.</li>
 <li><strong>Invented costs.</strong> Cutoffs are chosen with costs I made up (config/backtest.yaml): $30 a review, $150 per good business flagged, $1,000 per delayed payroll, $300 per good applicant declined. Different costs pick different cutoffs.</li>
-<li><strong>Vendors that know the answer.</strong> The invented vendors' scores are drawn from the planted truth with noise. A real vendor's signal is murkier, and whether it adds anything depends on how much the in-house rules already cover.</li>
+<li><strong>Vendors that know the answer.</strong> The invented vendors' scores are drawn from the planted truth with noise. A real vendor's signal is murkier, and whether it adds anything depends on how much the in-house rules already cover. Each vendor's added dollars also rest on one to three cases, so its buy or don't-buy call is fragile.</li>
 <li><strong>Fraudsters adapt once.</strong> After the instant-payout launch, fraudsters switch to instant and split cash-outs under the cap, but they don't yet adapt to the launch controls themselves.</li>
+<li><strong>The fast lane's cap is untested against splitting.</strong> Fraudsters split instant payouts under that cap; nothing here makes them split payments under the fast lane's cap too. A cap on two days' outflow would resist it.</li>
+<li><strong>The summary check proves traceability, not meaning.</strong> A sentence with no numbers that cites a real field passes whatever it says. Template summaries can't do that; a language-model writer could.</li>
 <li><strong>A simple queue.</strong> The Risk Ops simulation assumes the same capacity every day, one decision per case, no escalation tier, and invented analyst error rates (10% of fraud cleared by mistake, 2% of good cases flagged).</li>
 <li><strong>Simplified mechanics.</strong> There are no account balances or overdrafts, an RFI is assumed to stop half the fraud, and a hold is assumed to stop all of it.</li>
 <li><strong>A thin tuning set for credit.</strong> Bust-out labels arrive about five months after the money leaves, so tuning in month 12 saw only a handful of confirmed bust-outs.</li>

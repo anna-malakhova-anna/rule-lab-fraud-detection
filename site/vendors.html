@@ -46,15 +46,15 @@ a { color: var(--brand); }
 
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
-.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 /* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand .logo { width: 40px; height: 40px; flex: none; }
-.links { display: flex; gap: 22px; flex-wrap: wrap; }
-.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
 .pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
@@ -125,6 +125,8 @@ svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); str
 details { margin-top: 8px; font-size: 14px; }
 summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
@@ -149,11 +151,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html" aria-current="page">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html" aria-current="page">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">Vendors</h1><p class="subtitle">Buy or build: three invented data vendors</p></div>
@@ -164,13 +166,16 @@ onboarding, or only when in-house signals already point at risk. Costs are calls
 positives are priced like any other good business flagged.</p>
 
 <h2 id="decision">Decision</h2>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Vendor</th><th class="">Best call strategy</th><th class="n">Net value (test months)</th><th class="">Fast enough for payments</th><th class="">Decision</th></tr></thead><tbody><tr><td class="">Larchstone Registry Check</td><td class="">Onboarding only</td><td class="n">$19K</td><td class="">no</td><td class="">buy</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Onboarding only</td><td class="n">$5K</td><td class="">yes</td><td class="">buy</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Every call point</td><td class="n">$67K</td><td class="">yes</td><td class="">buy</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Vendor</th><th class="">Best call strategy</th><th class="n">Net value (test months)</th><th class="n">Cases behind it</th><th class="">Fast enough for payments</th><th class="">Decision</th></tr></thead><tbody><tr><td class="">Larchstone Registry Check</td><td class="">Only when already risky</td><td class="n">−$318</td><td class="n">0</td><td class="">no</td><td class="">don&#x27;t buy</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Onboarding only</td><td class="n">$14K</td><td class="n">2</td><td class="">yes</td><td class="">buy</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Every call point</td><td class="n">$45K</td><td class="n">3</td><td class="">yes</td><td class="">buy</td></tr></tbody></table></div></div>
+<p>Each vendor's added dollars rest on one to three fraud cases in the test months, so these calls are fragile: the same
+analysis on a slightly different synthetic world can flip a vendor from buy to don't-buy. Read them as how to make the
+decision, not as the decision.</p>
 
 <h2 id="comparison">Full comparison (test months)</h2>
 <p>"Cases only it caught" counts cases today's rules miss entirely. The vendors here mostly catch the same cases earlier,
 which is worth dollars but adds no new cases. Calling only when already risky adds nothing, because those are exactly
 the cases the rules already catch.</p>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Vendor</th><th class="">Call strategy</th><th class="n">Calls</th><th class="n">Vendor cost</th><th class="n">Fraud $ added</th><th class="n">Cases only it caught</th><th class="n">Extra good businesses flagged</th><th class="n">Break-even price per call</th><th class="n">Net value</th></tr></thead><tbody><tr><td class="">Larchstone Registry Check</td><td class="">Onboarding only</td><td class="n">1,264</td><td class="n">$2K</td><td class="n">$24K</td><td class="n">0</td><td class="n">11</td><td class="n">$16.74</td><td class="n">$19K</td></tr><tr><td class="">Larchstone Registry Check</td><td class="">Only when already risky</td><td class="n">213</td><td class="n">$320</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">$-0.00</td><td class="n">−$320</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Every call point</td><td class="n">1,722</td><td class="n">$172</td><td class="n">$6K</td><td class="n">0</td><td class="n">5</td><td class="n">$2.58</td><td class="n">$4K</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Onboarding only</td><td class="n">1,264</td><td class="n">$126</td><td class="n">$6K</td><td class="n">0</td><td class="n">0</td><td class="n">$4.34</td><td class="n">$5K</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Only when already risky</td><td class="n">319</td><td class="n">$32</td><td class="n">$0</td><td class="n">0</td><td class="n">4</td><td class="n">$-2.63</td><td class="n">−$872</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Every call point</td><td class="n">4,785</td><td class="n">$239</td><td class="n">$69K</td><td class="n">0</td><td class="n">5</td><td class="n">$14.12</td><td class="n">$67K</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Onboarding only</td><td class="n">1,264</td><td class="n">$63</td><td class="n">$31K</td><td class="n">0</td><td class="n">0</td><td class="n">$24.44</td><td class="n">$31K</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Only when already risky</td><td class="n">216</td><td class="n">$11</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">$-0.00</td><td class="n">−$11</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Vendor</th><th class="">Call strategy</th><th class="n">Calls</th><th class="n">Vendor cost</th><th class="n">Fraud $ added</th><th class="n">Cases behind it</th><th class="n">Cases only it caught</th><th class="n">Extra good businesses flagged</th><th class="n">Break-even price per call</th><th class="n">Net value</th></tr></thead><tbody><tr><td class="">Larchstone Registry Check</td><td class="">Onboarding only</td><td class="n">1,263</td><td class="n">$2K</td><td class="n">$3K</td><td class="n">1</td><td class="n">0</td><td class="n">13</td><td class="n">$0.55</td><td class="n">−$1K</td></tr><tr><td class="">Larchstone Registry Check</td><td class="">Only when already risky</td><td class="n">212</td><td class="n">$318</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">$0.00</td><td class="n">−$318</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Every call point</td><td class="n">1,719</td><td class="n">$172</td><td class="n">$15K</td><td class="n">2</td><td class="n">0</td><td class="n">3</td><td class="n">$8.11</td><td class="n">$14K</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Onboarding only</td><td class="n">1,263</td><td class="n">$126</td><td class="n">$15K</td><td class="n">2</td><td class="n">0</td><td class="n">0</td><td class="n">$11.52</td><td class="n">$14K</td></tr><tr><td class="">Quenchwire Contact Signals</td><td class="">Only when already risky</td><td class="n">316</td><td class="n">$32</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">2</td><td class="n">−$1.33</td><td class="n">−$452</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Every call point</td><td class="n">4,783</td><td class="n">$239</td><td class="n">$46K</td><td class="n">3</td><td class="n">0</td><td class="n">5</td><td class="n">$9.41</td><td class="n">$45K</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Onboarding only</td><td class="n">1,263</td><td class="n">$63</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">−$0.07</td><td class="n">−$153</td></tr><tr><td class="">Tallowmere Device Risk</td><td class="">Only when already risky</td><td class="n">215</td><td class="n">$11</td><td class="n">$0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">$0.00</td><td class="n">−$11</td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_vendor_bakeoff. Write-up: docs/vendors/vendor-bakeoff-DRAFT.md</p>
 
 <h2 id="vendors">The vendors</h2>

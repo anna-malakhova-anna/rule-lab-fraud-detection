@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | days since the payee's bank details were changed <= 7 |
 | Why it exists | The first payment to a known payee's newly changed bank details is the moment a vendor-impersonation scam pays out. |
-| Alerts per business day, rule alone (test months) | 1.8 |
+| Alerts per business day, rule alone (test months) | 1.7 |
 | Share that were fraud (test months) | 2.2% |
 <!-- playbook-facts:end -->
 

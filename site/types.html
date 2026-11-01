@@ -46,15 +46,15 @@ a { color: var(--brand); }
 
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
-.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 /* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand .logo { width: 40px; height: 40px; flex: none; }
-.links { display: flex; gap: 22px; flex-wrap: wrap; }
-.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
 .pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
@@ -125,6 +125,8 @@ svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); str
 details { margin-top: 8px; font-size: 14px; }
 summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
@@ -149,11 +151,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">Fraud types</h1><p class="subtitle">Seven ways the synthetic bank loses money</p></div>

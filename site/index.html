@@ -46,15 +46,15 @@ a { color: var(--brand); }
 
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
-.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 /* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand .logo { width: 40px; height: 40px; flex: none; }
-.links { display: flex; gap: 22px; flex-wrap: wrap; }
-.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
 .pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
@@ -125,6 +125,8 @@ svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); str
 details { margin-top: 8px; font-size: 14px; }
 summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
@@ -149,11 +151,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <section class="hero">
@@ -168,10 +170,10 @@ strategist actually trades off.</p>
 </section>
 
 <div class="stats">
-<div class="stat"><b>80%</b><span>of fraud dollars prevented by the challenger in the test months (champion: 68%)</span></div>
+<div class="stat"><b>80%</b><span>of fraud dollars prevented by the challenger in the test months (champion: 69%)</span></div>
 <div class="stat"><b>79 / 80</b><span>fraud cases detected by the challenger (champion: 68)</span></div>
-<div class="stat"><b>3,826</b><span>good businesses flagged by the challenger (champion: 3,670)</span></div>
-<div class="stat"><b>52 / 129</b><span>test-month days over review capacity (champion: 49)</span></div>
+<div class="stat"><b>3,831</b><span>good businesses flagged by the challenger (champion: 3,673)</span></div>
+<div class="stat"><b>53 / 129</b><span>test-month days over review capacity (champion: 48)</span></div>
 </div>
 
 <h2>Champion vs challenger, on months the tuning never saw</h2>
@@ -179,17 +181,17 @@ strategist actually trades off.</p>
 debits. The challenger adds three rules for the new line of credit. New cutoffs were tuned on the first 12 months
 using only the fraud confirmed by then. Both rule sets are graded on months 13 to 18 (80 fraud cases).
 Ranges are 90% bootstrap ranges over businesses.</p>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Test months</th><th class="n">Champion</th><th class="n">Challenger</th></tr></thead><tbody><tr><td class="">Fraud $ prevented (90% range)</td><td class="n">$3.31M ($2.36M to $4.33M)</td><td class="n">$3.86M ($2.89M to $4.94M)</td></tr><tr><td class="">Share of fraud $ prevented</td><td class="n">68% (60% to 76%)</td><td class="n">80% (74% to 85%)</td></tr><tr><td class="">Fraud cases detected</td><td class="n">68 of 80</td><td class="n">79 of 80</td></tr><tr><td class="">Alerts that were fraud (precision)</td><td class="n">2.6%</td><td class="n">2.9%</td></tr><tr><td class="">Good businesses flagged</td><td class="n">3,670</td><td class="n">3,826</td></tr><tr><td class="">Good businesses with money held</td><td class="n">3,039</td><td class="n">3,195</td></tr><tr><td class="">Good applicants declined</td><td class="n">1</td><td class="n">1</td></tr><tr><td class="">Payrolls delayed</td><td class="n">0</td><td class="n">0</td></tr><tr><td class="">Good-customer dollar-days held</td><td class="n">$280.49M</td><td class="n">$285.73M</td></tr><tr><td class="">Reviews per business day (avg / max)</td><td class="n">85.9 / 186</td><td class="n">88.5 / 190</td></tr><tr><td class="">Days over review capacity</td><td class="n">49 of 129</td><td class="n">52 of 129</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Test months</th><th class="n">Champion</th><th class="n">Challenger</th></tr></thead><tbody><tr><td class="">Fraud $ prevented (90% range)</td><td class="n">$3.33M ($2.39M to $4.35M)</td><td class="n">$3.89M ($2.90M to $4.95M)</td></tr><tr><td class="">Share of fraud $ prevented</td><td class="n">69% (60% to 76%)</td><td class="n">80% (74% to 86%)</td></tr><tr><td class="">Fraud cases detected</td><td class="n">68 of 80</td><td class="n">79 of 80</td></tr><tr><td class="">Alerts that were fraud (precision)</td><td class="n">2.6%</td><td class="n">2.9%</td></tr><tr><td class="">Good businesses flagged</td><td class="n">3,673</td><td class="n">3,831</td></tr><tr><td class="">Good businesses with money held</td><td class="n">3,044</td><td class="n">3,203</td></tr><tr><td class="">Good applicants declined</td><td class="n">1</td><td class="n">1</td></tr><tr><td class="">Payrolls delayed</td><td class="n">0</td><td class="n">0</td></tr><tr><td class="">Good-customer dollar-days held</td><td class="n">$280.12M</td><td class="n">$285.49M</td></tr><tr><td class="">Reviews per business day (avg / max)</td><td class="n">85.7 / 181</td><td class="n">88.4 / 186</td></tr><tr><td class="">Days over review capacity</td><td class="n">48 of 129</td><td class="n">53 of 129</td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_strategy_metrics, analysis.bootstrap_ci</p>
 
 <h2>By fraud type (test months)</h2>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Fraud type</th><th class="n">Cases</th><th class="n">Detected: champion</th><th class="n">Detected: challenger</th><th class="n">Loss at stake</th><th class="n">Prevented: champion</th><th class="n">Prevented: challenger</th></tr></thead><tbody><tr><td class="">Check deposit fraud</td><td class="n">10</td><td class="n">10</td><td class="n">10</td><td class="n">$991K</td><td class="n">$918K</td><td class="n">$918K</td></tr><tr><td class="">Vendor bank-detail change (BEC)</td><td class="n">6</td><td class="n">5</td><td class="n">5</td><td class="n">$81K</td><td class="n">$76K</td><td class="n">$76K</td></tr><tr><td class="">Synthetic / shell businesses</td><td class="n">9</td><td class="n">9</td><td class="n">9</td><td class="n">$581K</td><td class="n">$581K</td><td class="n">$581K</td></tr><tr><td class="">Money mules</td><td class="n">10</td><td class="n">10</td><td class="n">10</td><td class="n">$631K</td><td class="n">$584K</td><td class="n">$584K</td></tr><tr><td class="">Account takeover</td><td class="n">8</td><td class="n">8</td><td class="n">8</td><td class="n">$253K</td><td class="n">$160K</td><td class="n">$160K</td></tr><tr><td class="">ACH return fraud (emerging, month 12)</td><td class="n">22</td><td class="n">22</td><td class="n">22</td><td class="n">$1.33M</td><td class="n">$670K</td><td class="n">$670K</td></tr><tr><td class="">Credit bust-out</td><td class="n">15</td><td class="n">4</td><td class="n">15</td><td class="n">$970K</td><td class="n">$318K</td><td class="n">$875K</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Fraud type</th><th class="n">Cases</th><th class="n">Detected: champion</th><th class="n">Detected: challenger</th><th class="n">Loss at stake</th><th class="n">Prevented: champion</th><th class="n">Prevented: challenger</th></tr></thead><tbody><tr><td class="">Check deposit fraud</td><td class="n">10</td><td class="n">10</td><td class="n">10</td><td class="n">$991K</td><td class="n">$918K</td><td class="n">$918K</td></tr><tr><td class="">Vendor bank-detail change (BEC)</td><td class="n">6</td><td class="n">5</td><td class="n">5</td><td class="n">$81K</td><td class="n">$74K</td><td class="n">$74K</td></tr><tr><td class="">Synthetic / shell businesses</td><td class="n">9</td><td class="n">9</td><td class="n">9</td><td class="n">$581K</td><td class="n">$581K</td><td class="n">$581K</td></tr><tr><td class="">Money mules</td><td class="n">10</td><td class="n">10</td><td class="n">10</td><td class="n">$631K</td><td class="n">$599K</td><td class="n">$599K</td></tr><tr><td class="">Account takeover</td><td class="n">8</td><td class="n">8</td><td class="n">8</td><td class="n">$253K</td><td class="n">$160K</td><td class="n">$160K</td></tr><tr><td class="">ACH return fraud (emerging, month 12)</td><td class="n">22</td><td class="n">22</td><td class="n">22</td><td class="n">$1.33M</td><td class="n">$683K</td><td class="n">$683K</td></tr><tr><td class="">Credit bust-out</td><td class="n">15</td><td class="n">4</td><td class="n">15</td><td class="n">$970K</td><td class="n">$318K</td><td class="n">$875K</td></tr></tbody></table></div></div>
 <p>One page per fraud type: <a href="types.html">Fraud types</a>.</p>
 
 <h2>Credit losses that are not fraud (test months)</h2>
 <p>Some honest businesses fail and default on their line. That's credit risk, not fraud, so it is never added to
 fraud prevented. Holding a struggling customer's payments still counts as harm.</p>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class=""></th><th class="n">Champion</th><th class="n">Challenger</th></tr></thead><tbody><tr><td class="">Honest businesses that defaulted</td><td class="n">77</td><td class="n">77</td></tr><tr><td class="">Balance when they missed a payment</td><td class="n">$2.03M</td><td class="n">$2.03M</td></tr><tr><td class="">Of which flagged by a rule in the 90 days before</td><td class="n">$557K</td><td class="n">$725K</td></tr><tr><td class="">Holds put on these struggling businesses</td><td class="n">185</td><td class="n">199</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class=""></th><th class="n">Champion</th><th class="n">Challenger</th></tr></thead><tbody><tr><td class="">Honest businesses that defaulted</td><td class="n">77</td><td class="n">77</td></tr><tr><td class="">Balance when they missed a payment</td><td class="n">$2.03M</td><td class="n">$2.03M</td></tr><tr><td class="">Of which flagged by a rule in the 90 days before</td><td class="n">$558K</td><td class="n">$726K</td></tr><tr><td class="">Holds put on these struggling businesses</td><td class="n">185</td><td class="n">200</td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_credit_losses</p>
 
 <h2>Cutoffs</h2>

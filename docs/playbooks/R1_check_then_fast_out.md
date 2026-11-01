@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | share of the last 72 hours of check deposits that left in the last 48 hours on top of a normal week of the account's spending >= 0.4 |
 | Why it exists | Money leaving within hours of check deposits that have not had time to clear is how deposit fraud turns into loss. |
-| Alerts per business day, rule alone (test months) | 33.3 |
+| Alerts per business day, rule alone (test months) | 33.1 |
 | Share that were fraud (test months) | 1.8% |
 <!-- playbook-facts:end -->
 

@@ -16,9 +16,10 @@ def table(header: list[str], rows: list[list], numeric: set[int] = frozenset()) 
     return f'<div class="table-wrap"><table><thead><tr>{th}</tr></thead><tbody>{trs}</tbody></table></div>'
 
 
-NAV = [("index.html", "Overview"), ("tradeoffs.html", "Trade-offs"), ("riskops.html", "Risk Ops"),
-       ("launch.html", "Launch review"), ("vendors.html", "Vendors"), ("types.html", "Fraud types"),
-       ("monitoring.html", "Monitoring"), ("limitations.html", "How sure are we"), ("glossary.html", "Glossary")]
+NAV = [("index.html", "Overview"), ("tradeoffs.html", "Trade-offs"), ("rules.html", "Rules"), ("riskops.html", "Risk Ops"),
+       ("launch.html", "Launch review"), ("vendors.html", "Vendors"), ("fastlane.html", "Fast lane"),
+       ("types.html", "Fraud types"), ("monitoring.html", "Monitoring"), ("summaries.html", "Case summaries"),
+       ("limitations.html", "How sure are we"), ("glossary.html", "Glossary")]
 
 
 ICONS = {

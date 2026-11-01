@@ -9,7 +9,7 @@
 | Fires when | most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days >= 1 |
 | Why it exists | Applicants who share a device, phone, address or business email domain with earlier applicants, and are freshly incorporated, look like a ring of synthetic businesses. |
 | Alerts per business day, rule alone (test months) | 1.5 |
-| Share that were fraud (test months) | 6.8% |
+| Share that were fraud (test months) | 6.3% |
 <!-- playbook-facts:end -->
 
 ## What to check

@@ -1,5 +1,5 @@
 """Regenerate the numbers blocks in every generated document (README, memo, playbooks, stakeholder pack,
-launch review, vendor bake-off).
+launch review, vendor bake-off, fast lane review, rule register, case summaries).
 
   uv run python -m scripts.render_results           # rewrite the blocks
   uv run python -m scripts.render_results --check   # exit 1 if a block is out of date (used by the tests)
@@ -116,10 +116,10 @@ def replace_block(text: str, name: str, body: str) -> str:
 def documents() -> dict[Path, dict[str, str]]:
     """Every generated document: path -> {block name: generated markdown}. Each file is hand-written except
     between its markers; a marker without a block, or a block without a marker, is an error."""
-    from scripts import docs_launch, docs_playbooks, docs_stakeholder, docs_vendors
+    from scripts import docs_fastlane, docs_governance, docs_launch, docs_playbooks, docs_stakeholder, docs_summaries, docs_vendors
 
     docs = {README: {"results": readme_block()}, MEMO: memo_blocks()}
-    for module in (docs_playbooks, docs_stakeholder, docs_launch, docs_vendors):
+    for module in (docs_playbooks, docs_stakeholder, docs_launch, docs_vendors, docs_fastlane, docs_governance, docs_summaries):
         docs.update(module.documents())
     return docs
 

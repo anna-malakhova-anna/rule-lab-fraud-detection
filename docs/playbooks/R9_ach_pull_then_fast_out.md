@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | share of the last 5 days of ACH debits pulled in that left in the last 48 hours on top of a normal week of the account's spending >= 0.4 |
 | Why it exists | Money pulled in by ACH debit and paid straight back out, above normal spending, is R1's pattern on a rail R1 never watched. |
-| Alerts per business day, rule alone (test months) | 4.9 |
+| Alerts per business day, rule alone (test months) | 5.1 |
 | Share that were fraud (test months) | 7.1% |
 <!-- playbook-facts:end -->
 

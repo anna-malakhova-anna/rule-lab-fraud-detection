@@ -20,10 +20,10 @@
 <!-- exec-numbers:start -->
 | Test months (6, held out) | Today | With the change | Difference |
 |---|---|---|---|
-| Fraud $ prevented | $3.31M | $3.86M | $558K ($279K to $871K) |
-| Good businesses flagged | 3,670 | 3,826 | 156 |
-| Good businesses with money held | 3,039 | 3,195 | 156 |
-| Reviews per business day | 85.9 | 88.5 | 2.6 |
+| Fraud $ prevented | $3.33M | $3.89M | $558K ($279K to $871K) |
+| Good businesses flagged | 3,673 | 3,831 | 158 |
+| Good businesses with money held | 3,044 | 3,203 | 159 |
+| Reviews per business day | 85.7 | 88.4 | 2.7 |
 <!-- exec-numbers:end -->
 
 ## Risk of not acting

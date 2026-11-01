@@ -33,3 +33,10 @@ Buy at the call strategy with the best net value, if that net value is positive.
 
 **Caveat.** The vendors know the planted truth, which a real vendor never does this cleanly. Whether a vendor
 adds unique catches depends heavily on how much the in-house rules already cover.
+
+**Follow-up: the decisions rest on very few cases.** `bt_vendor_bakeoff.cases_caught_earlier` counts the test-month
+cases a vendor's dollars come from (caught earlier, or more fully, than today's rules manage). It is 1 to 3 per
+vendor. When a generator fix in module G (ADR-025) changed a few dozen businesses, the registry vendor went from
+"buy at onboarding, $19K" to a small loss, on the strength of one case. The bake-off shows how to make the decision;
+the decisions themselves are not robust at this sample size. A firmer answer needs more cases: a longer window, a
+larger book, or the same comparison over several generator seeds.

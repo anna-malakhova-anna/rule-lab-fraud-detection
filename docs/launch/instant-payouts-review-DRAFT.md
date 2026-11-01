@@ -13,12 +13,12 @@
 <!-- launch-controls:start -->
 | After launch | Fraud $ stopped | Added to today's rules | Good payouts slowed | Good businesses slowed | Net value | Launch with it? |
 |---|---|---|---|---|---|---|
-| Today's rules, no controls | $1.90M |  |  |  |  |  |
-| C1 No instant payouts from young accounts | $1.93M | $25K | 2,219 | 360 | −$29K | no |
-| C2 Cooling-off for new or changed payees | $2.25M | $345K | 33 | 25 | $342K | yes |
-| C3 Cooling-off after a contact change or new device | $2.00M | $93K | 263 | 205 | $63K | yes |
-| C4 No instant payouts from money that can still come back | $2.14M | $232K | 10,537 | 2,613 | −$159K | no |
-| All four together | $2.27M | $366K | 12,332 | 2,743 | −$45K |  |
+| Today's rules, no controls | $1.94M |  |  |  |  |  |
+| C1 No instant payouts from young accounts | $1.95M | $14K | 2,177 | 357 | −$39K | no |
+| C2 Cooling-off for new or changed payees | $2.28M | $339K | 31 | 25 | $336K | yes |
+| C3 Cooling-off after a contact change or new device | $2.03M | $93K | 223 | 181 | $66K | yes |
+| C4 No instant payouts from money that can still come back | $2.17M | $237K | 10,588 | 2,621 | −$156K | no |
+| All four together | $2.29M | $349K | 12,295 | 2,747 | −$63K |  |
 <!-- launch-controls:end -->
 
 ## Threat model: what gets faster or bigger
@@ -26,13 +26,13 @@
 <!-- launch-threat:start -->
 | Fraud type (test months) | Stopped before launch | Cash-outs sent instant after launch | Stopped after launch, no controls |
 |---|---|---|---|
-| Check deposit fraud | 100% | 25 of 25 | 84% |
-| Vendor bank-detail change (BEC) | 100% | 5 of 7 | 59% |
-| Synthetic / shell businesses | 100% | 13 of 16 | 100% |
-| Money mules | 98% | 40 of 45 | 91% |
-| Account takeover | n/a | 17 of 18 | 63% |
-| ACH return fraud (emerging, month 12) | 86% | 59 of 64 | 46% |
-| Credit bust-out | 52% | 42 of 45 | 22% |
+| Check deposit fraud | 100% | 22 of 25 | 84% |
+| Vendor bank-detail change (BEC) | 100% | 6 of 7 | 43% |
+| Synthetic / shell businesses | 100% | 9 of 14 | 100% |
+| Money mules | 95% | 42 of 45 | 96% |
+| Account takeover | n/a | 18 of 19 | 63% |
+| ACH return fraud (emerging, month 12) | 86% | 53 of 60 | 47% |
+| Credit bust-out | 52% | 41 of 44 | 22% |
 <!-- launch-threat:end -->
 
 [Which fraud types move to instant, and the new attack surface: a cash-out finished before any alert exists.]
@@ -45,8 +45,8 @@
 | R1 Check money out fast | `CHK_OUT_FAST` | $790K |
 | R8 New device, contact change, new payee | `ATO_SEQUENCE` | $524K |
 | R5 Payment far above usual for payee | `PAYEE_AMOUNT_OUTLIER` | $405K |
-| R7 Many new senders, swept out | `MULE_FAN_IN` | $236K |
-| R4 First payment to changed bank details | `PAYEE_DETAILS_CHANGED` | $141K |
+| R7 Many new senders, swept out | `MULE_FAN_IN` | $200K |
+| R4 First payment to changed bank details | `PAYEE_DETAILS_CHANGED` | $135K |
 | R9 ACH debit money out fast | `ACH_DEBIT_OUT_FAST` | $71K |
 | R2 Check far above own baseline | `CHK_ABOVE_BASELINE` | $0 |
 | R3 Many new check payers | `CHK_NEW_PAYERS` | $0 |

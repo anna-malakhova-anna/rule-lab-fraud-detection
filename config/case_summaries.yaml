@@ -1,0 +1,9 @@
+# Case summaries for analysts (module G, ADR-025).
+# writer: which writer produces the summaries. Only `template` exists: deterministic, offline, no API key.
+#   A language-model writer can be added behind the same interface later; it would read its key from an
+#   environment variable and its output would go through the same citation check.
+writer: template
+# The guardrail is measured by corrupting the summaries of a sample of cases in known ways and counting what the
+# check catches.
+sample_size: 500
+seed: 42

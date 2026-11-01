@@ -8,8 +8,8 @@
 | Action | delay |
 | Fires when | days since the account opened <= 90 |
 | Why it exists | A young account has no history to judge; it waits for standard payments until it has some. |
-| Alerts per business day, rule alone (test months) | 17.6 |
-| Share that were fraud (test months) | 2.4% |
+| Alerts per business day, rule alone (test months) | 17.3 |
+| Share that were fraud (test months) | 2.2% |
 <!-- playbook-facts:end -->
 
 ## What to check

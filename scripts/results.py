@@ -39,7 +39,7 @@ TYPOLOGY_LABELS = {
 
 # Rules in reading order: R (detection) before C (launch controls) before V (vendors), then by number.
 RULE_ORDER = ("case left({col}, 1) when 'R' then 0 when 'C' then 1 else 2 end, "
-              "cast(regexp_extract({col}, '^[A-Z](\\d+)', 1) as integer)")
+              "try_cast(regexp_extract({col}, '^[A-Z](\\d+)', 1) as integer)")
 
 
 def rule_order(col: str = "rule_id") -> str:
@@ -257,6 +257,14 @@ def usd(x: float) -> str:
     return f"{sign}${x:,.0f}"
 
 
+def price(x: float | None, digits: int = 2) -> str:
+    """A per-unit price in dollars and cents, with a real minus sign."""
+    if x is None:
+        return "n/a"
+    sign = "\u2212" if x < -0.005 else ""
+    return f"{sign}${abs(x):,.{digits}f}"
+
+
 def pct(x: float | None, digits: int = 0) -> str:
     return "n/a" if x is None else f"{100 * x:.{digits}f}%"
 
@@ -374,3 +382,84 @@ def vendor_decisions() -> list[dict]:
         if r["vendor"] not in best or r["net_value"] > best[r["vendor"]]["net_value"]:
             best[r["vendor"]] = r
     return [dict(r, buy=r["net_value"] > 0) for r in best.values()]
+
+
+# ---------- Good-customer fast lane (module E) ----------
+
+def fast_lane_label(strategy_id: str) -> str:
+    if strategy_id == "challenger":
+        return "Recommended rules, no fast lane"
+    if strategy_id == "fast_lane_clear_all":
+        return "Clear every alert on fast-lane businesses"
+    cap = strategy_id.split(":", 1)[1]
+    return "Fast lane, any amount" if cap == "none" else f"Fast lane, below ${int(cap):,}"
+
+
+def fast_lane_tradeoff(period: str = "test") -> list[dict]:
+    """The challenger, then each fast-lane cap from the smallest, then no cap, then clearing every alert."""
+    return _rows("""
+        select * from backtest.bt_fast_lane_tradeoff where period = ?
+        order by case when strategy_id = 'challenger' then 0 when strategy_id = 'fast_lane_clear_all' then 2 else 1 end,
+                 max_amount nulls last""", [period])
+
+
+def fast_lane_typologies(period: str = "test") -> list[dict]:
+    return _rows("select * from backtest.bt_fast_lane_typologies where period = ? order by strategy_id, typology", [period])
+
+
+def fast_lane_segments(segment_type: str, period: str = "train") -> list[dict]:
+    return _rows("""select * from backtest.bt_fast_lane_segments where segment_type = ? and period = ?
+                    order by case when rule_id = 'all' then 0 else 1 end, """ + rule_order() + ", segment",
+                 [segment_type, period])
+
+
+def decline_bar(period: str = "test") -> list[dict]:
+    return _rows("select * from backtest.bt_onboarding_decline_bar where period = ? order by decline_at nulls last", [period])
+
+
+# ---------- Rule governance (module F) ----------
+
+def rule_inventory() -> list[dict]:
+    return _rows("select * from backtest.gov_rule_inventory order by " + rule_order())
+
+
+def quarterly_review() -> list[dict]:
+    return _rows("select * from backtest.gov_rule_quarterly order by quarter, " + rule_order())
+
+
+def rule_changes() -> list[dict]:
+    return _rows("select * from config.cfg_rule_changes order by change_no")
+
+
+def retirement_trigger(r: dict, reviews: int) -> str:
+    """The inventory's retirement trigger for a rule, from its break-even precision and the review policy."""
+    if not r["is_running"]:
+        return "not running: decided by its own review (launch or vendor)"
+    retune = (f"retune if precision falls below {pct(r['break_even_precision'], 2)}"
+              if r["break_even_precision"] is not None else "no false alarms on the training months to judge precision by")
+    return f"retire if it adds no fraud dollars on top of the other rules for {reviews} reviews in a row; {retune}"
+
+
+# ---------- Case summaries (module G) ----------
+
+def summary_checks() -> list[dict]:
+    return _rows("select * from analysis.summary_checks order by designed_to_catch desc, corruption")
+
+
+def summary_totals() -> dict:
+    return _rows("""select count(*) as summaries, count(*) filter (where problems > 0) as failing,
+                           any_value(writer) as writer from analysis.case_summaries""")[0]
+
+
+def summary_examples() -> list[dict]:
+    """One case per rule the summaries have a template for, the first in time whose strongest alert is that rule's:
+    the summary and the case record it cites."""
+    return _rows("""
+        with lead as (
+            select c.*, s.summary, split_part(c.alerts[1].rule_id, '_', 1) as rule_code
+            from cases.case_records as c join analysis.case_summaries as s using (case_id)
+        )
+        select * exclude (rn) from (
+            select *, row_number() over (partition by rule_code order by review_date, business_id) as rn from lead)
+        where rn = 1
+        order by cast(substr(rule_code, 2) as integer)""")

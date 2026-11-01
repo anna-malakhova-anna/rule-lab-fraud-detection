@@ -9,7 +9,7 @@
 | Fires when | last 30 days of inflow / average month of the 90 days before that >= 3 |
 | Why it exists | A line opening or limit increase asked for right after inflows jumped above the account's own history is how a bust-out earns a bigger line. |
 | Alerts per business day, rule alone (test months) | 0.4 |
-| Share that were fraud (test months) | 24.5% |
+| Share that were fraud (test months) | 24.0% |
 <!-- playbook-facts:end -->
 
 ## What to check

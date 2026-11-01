@@ -46,15 +46,15 @@ a { color: var(--brand); }
 
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
-.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 /* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand .logo { width: 40px; height: 40px; flex: none; }
-.links { display: flex; gap: 22px; flex-wrap: wrap; }
-.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
 .pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
@@ -125,6 +125,8 @@ svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); str
 details { margin-top: 8px; font-size: 14px; }
 summary { cursor: pointer; color: var(--ink-2); }
 .src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
@@ -149,11 +151,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html" aria-current="page">Launch review</a><a href="vendors.html">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html" aria-current="page">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">Launch review</h1><p class="subtitle">Instant payouts, launched 01 Mar 2026</p></div>
@@ -163,26 +165,26 @@ for fraudsters it removes the time between the money leaving and anyone noticing
 it is sent; on a standard payment there is still time to hold it, on an instant one there isn't. Fraudsters in the
 simulation adapt: most cash-outs switch to instant, and big ones are split under the per-payout cap.</p>
 <div class="stats">
-<div class="stat"><b>87%</b><span>of fraud dollars today's rules stopped before launch (test months)</span></div>
-<div class="stat"><b>56%</b><span>after launch, with no controls</span></div>
-<div class="stat"><b>$345K</b><span>added by the best single control (C2), slowing 25 good businesses</span></div>
+<div class="stat"><b>86%</b><span>of fraud dollars today's rules stopped before launch (test months)</span></div>
+<div class="stat"><b>57%</b><span>after launch, with no controls</span></div>
+<div class="stat"><b>$339K</b><span>added by the best single control (C2), slowing 25 good businesses</span></div>
 </div>
 
 <h2 id="controls">Controls to build in before launch</h2>
 <p>Each control is a check made before the payout is sent. When it trips, the payout simply goes the standard way, which
 gives the other rules their window back. Nobody is refused, but the customer waits about a day. Net value prices each
 good business slowed down like any good business flagged ($150, the stated cost in config/backtest.yaml).</p>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Control (after launch)</th><th class="n">Fraud $ added to today&#x27;s rules</th><th class="n">Good payouts slowed</th><th class="n">Good businesses slowed</th><th class="n">Net value</th><th class="">Launch with it?</th></tr></thead><tbody><tr><td class="">C1 No instant payouts from young accounts</td><td class="n">$25K</td><td class="n">2,219</td><td class="n">360</td><td class="n">−$29K</td><td class="">no</td></tr><tr><td class="">C2 Cooling-off for new or changed payees</td><td class="n">$345K</td><td class="n">33</td><td class="n">25</td><td class="n">$342K</td><td class="">yes</td></tr><tr><td class="">C3 Cooling-off after a contact change or new device</td><td class="n">$93K</td><td class="n">263</td><td class="n">205</td><td class="n">$63K</td><td class="">yes</td></tr><tr><td class="">C4 No instant payouts from money that can still come back</td><td class="n">$232K</td><td class="n">10,537</td><td class="n">2,613</td><td class="n">−$159K</td><td class="">no</td></tr><tr><td class="">All four together</td><td class="n">$366K</td><td class="n">12,332</td><td class="n">2,743</td><td class="n">−$45K</td><td class=""></td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Control (after launch)</th><th class="n">Fraud $ added to today&#x27;s rules</th><th class="n">Good payouts slowed</th><th class="n">Good businesses slowed</th><th class="n">Net value</th><th class="">Launch with it?</th></tr></thead><tbody><tr><td class="">C1 No instant payouts from young accounts</td><td class="n">$14K</td><td class="n">2,177</td><td class="n">357</td><td class="n">−$39K</td><td class="">no</td></tr><tr><td class="">C2 Cooling-off for new or changed payees</td><td class="n">$339K</td><td class="n">31</td><td class="n">25</td><td class="n">$336K</td><td class="">yes</td></tr><tr><td class="">C3 Cooling-off after a contact change or new device</td><td class="n">$93K</td><td class="n">223</td><td class="n">181</td><td class="n">$66K</td><td class="">yes</td></tr><tr><td class="">C4 No instant payouts from money that can still come back</td><td class="n">$237K</td><td class="n">10,588</td><td class="n">2,621</td><td class="n">−$156K</td><td class="">no</td></tr><tr><td class="">All four together</td><td class="n">$349K</td><td class="n">12,295</td><td class="n">2,747</td><td class="n">−$63K</td><td class=""></td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_launch_controls. Each control is also a rule with a playbook (docs/playbooks/C*.md).</p>
 
 <h2 id="threats">Threat model: what gets faster</h2>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Fraud type (test months)</th><th class="n">Stopped before launch</th><th class="n">Cash-outs sent instant</th><th class="n">Stopped after, no controls</th><th class="n">Stopped after, all controls</th></tr></thead><tbody><tr><td class="">Check deposit fraud</td><td class="n">100%</td><td class="n">25 of 25</td><td class="n">84%</td><td class="n">90%</td></tr><tr><td class="">Vendor bank-detail change (BEC)</td><td class="n">100%</td><td class="n">5 of 7</td><td class="n">59%</td><td class="n">89%</td></tr><tr><td class="">Synthetic / shell businesses</td><td class="n">100%</td><td class="n">13 of 16</td><td class="n">100%</td><td class="n">100%</td></tr><tr><td class="">Money mules</td><td class="n">98%</td><td class="n">40 of 45</td><td class="n">91%</td><td class="n">99%</td></tr><tr><td class="">Account takeover</td><td class="n">n/a</td><td class="n">17 of 18</td><td class="n">63%</td><td class="n">100%</td></tr><tr><td class="">ACH return fraud (emerging, month 12)</td><td class="n">86%</td><td class="n">59 of 64</td><td class="n">46%</td><td class="n">63%</td></tr><tr><td class="">Credit bust-out</td><td class="n">52%</td><td class="n">42 of 45</td><td class="n">22%</td><td class="n">22%</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Fraud type (test months)</th><th class="n">Stopped before launch</th><th class="n">Cash-outs sent instant</th><th class="n">Stopped after, no controls</th><th class="n">Stopped after, all controls</th></tr></thead><tbody><tr><td class="">Check deposit fraud</td><td class="n">100%</td><td class="n">22 of 25</td><td class="n">84%</td><td class="n">90%</td></tr><tr><td class="">Vendor bank-detail change (BEC)</td><td class="n">100%</td><td class="n">6 of 7</td><td class="n">43%</td><td class="n">89%</td></tr><tr><td class="">Synthetic / shell businesses</td><td class="n">100%</td><td class="n">9 of 14</td><td class="n">100%</td><td class="n">100%</td></tr><tr><td class="">Money mules</td><td class="n">95%</td><td class="n">42 of 45</td><td class="n">96%</td><td class="n">99%</td></tr><tr><td class="">Account takeover</td><td class="n">n/a</td><td class="n">18 of 19</td><td class="n">63%</td><td class="n">100%</td></tr><tr><td class="">ACH return fraud (emerging, month 12)</td><td class="n">86%</td><td class="n">53 of 60</td><td class="n">47%</td><td class="n">64%</td></tr><tr><td class="">Credit bust-out</td><td class="n">52%</td><td class="n">41 of 44</td><td class="n">22%</td><td class="n">22%</td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_launch_threat_model</p>
 
 <h2 id="blind">Rule blind spots</h2>
 <p>Fraud each running rule stopped before launch only by alerting on the cash-out payment itself, with no earlier alert on
 the case. Once that payment is instant, the alert arrives after the money has gone.</p>
-<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Running rule</th><th class="">Reason code</th><th class="n">Stopped only at the cash-out (before launch)</th></tr></thead><tbody><tr><td class="">R1 Check money out fast</td><td class="">CHK_OUT_FAST</td><td class="n">$790K</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">ATO_SEQUENCE</td><td class="n">$524K</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">PAYEE_AMOUNT_OUTLIER</td><td class="n">$405K</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">MULE_FAN_IN</td><td class="n">$236K</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">PAYEE_DETAILS_CHANGED</td><td class="n">$141K</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">ACH_DEBIT_OUT_FAST</td><td class="n">$71K</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">CHK_ABOVE_BASELINE</td><td class="n">$0</td></tr><tr><td class="">R3 Many new check payers</td><td class="">CHK_NEW_PAYERS</td><td class="n">$0</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">APP_SHARED_IDENTITY</td><td class="n">$0</td></tr></tbody></table></div></div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Running rule</th><th class="">Reason code</th><th class="n">Stopped only at the cash-out (before launch)</th></tr></thead><tbody><tr><td class="">R1 Check money out fast</td><td class="">CHK_OUT_FAST</td><td class="n">$790K</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">ATO_SEQUENCE</td><td class="n">$524K</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">PAYEE_AMOUNT_OUTLIER</td><td class="n">$405K</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">MULE_FAN_IN</td><td class="n">$200K</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">PAYEE_DETAILS_CHANGED</td><td class="n">$135K</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">ACH_DEBIT_OUT_FAST</td><td class="n">$71K</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">CHK_ABOVE_BASELINE</td><td class="n">$0</td></tr><tr><td class="">R3 Many new check payers</td><td class="">CHK_NEW_PAYERS</td><td class="n">$0</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">APP_SHARED_IDENTITY</td><td class="n">$0</td></tr></tbody></table></div></div>
 <p class="src">Source: backtest.bt_launch_blind_spots. Full review with the exec / ops / engineering parts: docs/launch/.</p>
 
 </main>

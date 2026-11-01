@@ -1,10 +1,10 @@
-.PHONY: all setup generate load config build backtest test site results isolation lint clean
+.PHONY: all setup generate load config build backtest summaries test site results isolation lint clean
 
 PY  := uv run python
 DBT := cd dbt && uv run dbt
 
 # The one full build from an empty checkout: synthetic data -> warehouse -> rules -> backtest -> outputs -> tests.
-all: generate load build backtest results site test
+all: generate load build backtest summaries results site test
 
 setup:
 	uv sync
@@ -31,6 +31,10 @@ build: config
 backtest:
 	$(PY) -m scripts.bootstrap
 	$(PY) -m scripts.queue_sim
+
+# Case summaries for analysts, checked against their case data, and the guardrail's measured catch rate (module G).
+summaries:
+	$(PY) -m scripts.case_summaries
 
 # README results table and the memo's numbers table, regenerated from the warehouse.
 results:

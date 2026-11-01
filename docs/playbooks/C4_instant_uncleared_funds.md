@@ -8,8 +8,8 @@
 | Action | delay |
 | Fires when | returnable money received in the last few days / the payout amount >= 0.5 |
 | Why it exists | Instant payouts must not spend money that can still come back (checks, ACH debits, fresh line draws). |
-| Alerts per business day, rule alone (test months) | 82.9 |
-| Share that were fraud (test months) | 1.5% |
+| Alerts per business day, rule alone (test months) | 83.2 |
+| Share that were fraud (test months) | 1.3% |
 <!-- playbook-facts:end -->
 
 ## What to check

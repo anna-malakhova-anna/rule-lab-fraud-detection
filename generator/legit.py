@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 
 from generator.common import DAY, HOUR, Calendar, Columns, lognormal_around, times_on
-from generator.world import Business, first_activity_day
+from generator.world import SUB_ACCOUNT_OPEN_DELAY_DAYS, Business, first_activity_day
 
 VENDOR_WORDS = ["Harbor", "Summit", "Maple", "Granite", "Cedar", "Atlas", "Beacon", "Willow", "Ridge", "Prairie",
                 "Copper", "Orchard", "Lantern", "Meadow", "Falcon", "Juniper", "Anchor", "Birch", "Delta", "Pioneer"]
@@ -129,6 +129,8 @@ def generate(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, tx
         share = icfg["payroll_share"]
         fridays = days[cal.at(cal.dow, days) == 4]
         fridays = fridays[int(rng.integers(0, 2))::2]
+        # The funding transfer lands once the payroll sub-account is open.
+        fridays = fridays[fridays - 1 >= max(lo, b.open_day + SUB_ACCOUNT_OPEN_DELAY_DAYS)]
         if len(fridays):
             # Payroll follows revenue loosely (staff hours flex with the season), not one to one.
             rev = daily_revenue(cfg, cal, b, fridays) * 30.4

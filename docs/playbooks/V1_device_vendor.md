@@ -9,7 +9,7 @@
 | Fires when | Tallowmere device risk score (0-100) >= 80 |
 | Why it exists | A device the vendor has seen behind fraud elsewhere, at onboarding or on a new-device login before a payment. |
 | Alerts per business day, rule alone (test months) | 0.4 |
-| Share that were fraud (test months) | 72.5% |
+| Share that were fraud (test months) | 65.3% |
 <!-- playbook-facts:end -->
 
 ## What to check

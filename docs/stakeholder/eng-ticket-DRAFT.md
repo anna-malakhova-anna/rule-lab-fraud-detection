@@ -28,8 +28,8 @@
 <!-- eng-rollout:start -->
 | Rule | Shadow mode | Expected cases/day | Kill switch if cases/day exceed |
 |---|---|---|---|
-| R10 Inflows ramped before a credit decision | 10 business days | 0.4 | 1.1 |
-| R11 Credit draw money out fast | 10 business days | 2.4 | 7.3 |
+| R10 Inflows ramped before a credit decision | 10 business days | 0.4 | 1.2 |
+| R11 Credit draw money out fast | 10 business days | 2.5 | 7.5 |
 | R12 Line drawn to limit soon after increase | 10 business days | 0.1 | 0.4 |
 <!-- eng-rollout:end -->
 

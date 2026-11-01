@@ -1,0 +1,24 @@
+# Rule governance (module F, ADR-024). Light and practical: an inventory, a change log (config/rule_changes.yaml)
+# and a quarterly review that flags rules to retune, retire or investigate.
+
+quarterly_review:
+  # The review runs this many days after a quarter ends, so a month of labels has come in (the same maturity
+  # monitoring uses, config/backtest.yaml monitoring.precision_maturity_days).
+  label_maturity_days: 30
+  # Below this many alerts a rule's precision is too noisy to judge.
+  min_alerts: 20
+  # Alert volume per business day this many times the previous quarter's (or 1 / this many times) is drift.
+  drift_ratio: 2.0
+  # A rule that added no fraud dollars on top of the other rules (leave-one-out) for this many reviews in a row is
+  # a candidate to retire.
+  reviews_without_added_value: 2
+
+# Some fraud is confirmed months after the alert, so those rules are judged on older alerts: the review after
+# quarter Q looks at their alerts from quarter Q minus lag. Mule cases are confirmed about 70 days after they end
+# (when victims' banks recall the money); credit bust-outs about 160 days after (at charge-off). Every other rule
+# is judged on the quarter just ended. The team knows these delays from its own confirmed cases.
+lag_quarters:
+  R7_mule_fan_in_sweep: 1
+  R10_credit_inflow_ramp: 2
+  R11_draw_then_fast_out: 2
+  R12_full_draw_after_increase: 2

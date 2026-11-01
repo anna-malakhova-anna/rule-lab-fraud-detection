@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fast lane · SMB Fraud Rule Lab</title>
+<style>
+/* Palette: slate #4C5C8A and its undertones for the page; a slightly more saturated slate and an amber for chart
+   marks (validated with the dataviz palette checker in both modes). */
+:root {
+  color-scheme: light;
+  --page: #F7F5EF; --surface: #FFFFFF; --header: #FBFAF6; --tint: #E7EAF4; --tint-2: #F0F2F8;
+  --ink: #161A26; --ink-2: #4A4F5E; --muted: #8A8D97;
+  --brand: #4C5C8A; --brand-deep: #2E3858; --brand-soft: #7F8DBA; --brand-wash: #D9DEEF;
+  --hero-a: #1B2030; --hero-b: #2E3858; --hero-c: #4C5C8A; --hero-ink: #F4F1E8;
+  --grid: #E3E1DA; --axis: #C6C4BB; --border: rgba(22,26,38,0.10);
+  --series-1: #4560AE; --series-2: #C26E1A; --banner: #E7EAF4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+    --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+    --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+    --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+    --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+    --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+  --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+  --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+  --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+  --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+  --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--brand); }
+.display, .hero h1, .stat b { font-family: "Avenir Next Condensed", "Helvetica Neue", "Arial Narrow", system-ui, sans-serif;
+  font-stretch: condensed; font-weight: 800; letter-spacing: -0.01em; }
+.serif { font-family: "Iowan Old Style", Charter, Georgia, serif; }
+
+/* Header: light bar, wordmark, links, two pill buttons */
+.topbar { background: var(--header); border-bottom: 1px solid var(--border); }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+/* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
+.wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
+  font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
+  letter-spacing: 0.04em; line-height: 1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand .logo { width: 40px; height: 40px; flex: none; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 15px; }
+.links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
+.pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
+  border: 1.5px solid var(--brand); color: var(--brand); white-space: nowrap; }
+.pill.solid { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--hero-ink); }
+
+.banner { background: var(--banner); color: var(--ink); font-size: 14px; }
+.banner-in { max-width: 1160px; margin: 0 auto; padding: 10px 16px; }
+
+main { max-width: 1160px; margin: 0 auto; padding: 8px 16px 64px; }
+
+/* Page titles: very large, uppercase, condensed, slate gradient */
+.title { text-align: center; padding: 40px 0 8px; }
+.display { font-size: clamp(44px, 9vw, 112px); line-height: 0.92; text-transform: uppercase; margin: 0;
+  background: linear-gradient(90deg, var(--brand-soft), var(--brand) 55%, var(--brand-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { font-size: clamp(20px, 3vw, 30px); font-weight: 700; color: var(--brand-deep); margin: 14px auto 0; max-width: none; }
+
+/* Category bar: serif links between two rules */
+.catbar { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); margin: 28px 0 32px; padding: 16px 8px;
+  text-align: center; font-family: "Iowan Old Style", Charter, Georgia, serif; font-size: 19px; line-height: 2; }
+.catbar a { color: var(--brand-deep); text-decoration: none; white-space: nowrap; }
+.catbar a:hover { text-decoration: underline; }
+.catbar .sep { color: var(--muted); padding: 0 10px; }
+
+/* Overview hero: dark slate gradient band */
+.hero { background: linear-gradient(170deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%); color: var(--hero-ink);
+  border-radius: 0 0 24px 24px; margin: 0 -16px 8px; padding: 48px 32px 40px; }
+.hero h1 { font-size: clamp(40px, 7vw, 84px); line-height: 0.95; text-transform: uppercase; margin: 0 0 18px; max-width: 17ch; }
+.hero p { color: var(--hero-ink); opacity: 0.88; font-size: 18px; max-width: 62ch; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 32px; }
+.feature { display: flex; gap: 14px; align-items: flex-start; }
+.feature .icon { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-wash); color: var(--brand-deep);
+  display: grid; place-items: center; }
+:root[data-theme="dark"] .feature .icon { color: var(--hero-ink); }
+.feature b { display: block; font-size: 22px; line-height: 1.15; }
+.feature span { font-size: 14px; opacity: 0.8; }
+
+h2 { font-size: 26px; line-height: 1.2; margin: 52px 0 10px; color: var(--ink); }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p, li { color: var(--ink-2); max-width: 74ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.card.tint { background: var(--tint); }
+.chip { display: inline-block; border: 1.5px solid var(--brand); color: var(--brand-deep); border-radius: 8px; padding: 3px 12px;
+  font-size: 14px; margin-bottom: 12px; }
+.typecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.typecard { background: var(--tint); border-radius: 16px; padding: 22px; text-decoration: none; display: block; }
+.typecard h3 { font-size: 26px; line-height: 1.15; color: var(--ink); font-weight: 600; margin: 0 0 8px; }
+.typecard p { margin: 0; color: var(--ink-2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat { background: var(--tint); border-radius: 16px; padding: 18px; }
+.stat b { display: block; font-size: 44px; line-height: 1; color: var(--brand-deep); }
+.stat span { font-size: 14px; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg .lbl { fill: var(--ink-2); }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; flex-wrap: wrap; }
+.key { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+details { margin-top: 8px; font-size: 14px; }
+summary { cursor: pointer; color: var(--ink-2); }
+.src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.summary { margin: 0 0 10px; line-height: 1.5; }
+.summary .cite { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
+@media (max-width: 640px) {
+  .topbar-in { gap: 12px; } .pills { margin-left: 0; } dl { grid-template-columns: 1fr; }
+  .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
+  .catbar a { display: inline-block; margin: 4px 10px; }
+  .hero { padding: 32px 18px 28px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+<a class="brand" href="index.html"><svg class="logo" viewBox="0 2 48 48" width="40" height="40" role="img" aria-label="Rule Lab logo: a flask pouring coins">
+<defs><clipPath id="logo-flask"><path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/></clipPath></defs>
+<path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z" fill="var(--brand-wash)"/>
+<rect x="-10" y="21" width="80" height="40" fill="var(--brand)" clip-path="url(#logo-flask)"/>
+<g transform="rotate(118 20 22)" fill="none" stroke="var(--brand-deep)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/><path d="M14.5 6 H25.5"/></g>
+<g stroke="var(--brand-deep)" stroke-width="1.5" fill="#E0A93B">
+<circle cx="37.5" cy="35.5" r="3.3"/><circle cx="34" cy="42" r="3.3"/><circle cx="41" cy="45.5" r="3.3"/></g>
+<g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
+<circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
+</svg><span class="wordmark">Rule Lab</span></a>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="rules.html">Rules</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="fastlane.html" aria-current="page">Fast lane</a><a href="monitoring.html">Monitoring</a><a href="summaries.html">Case summaries</a><a href="glossary.html">Glossary</a></nav>
+<div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
+</div></header>
+<div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
+12,000 businesses and 10,691,265 transactions. The 234 fraud cases were planted with an answer key.
+No number here is a real-world fraud rate.</div></div>
+<main>
+<div class="title"><h1 class="display">Fast lane</h1><p class="subtitle">Less friction for established, clean customers</p></div>
+<nav class="catbar"><a href="#where">Where alerts are false</a> <span class="sep">|</span> <a href="#tradeoff">The trade-off</a> <span class="sep">|</span> <a href="#through">What gets through</a> <span class="sep">|</span> <a href="#onboarding">Onboarding</a></nav>
+<p>A business is in the fast lane while it has been open at least 365 days and has had no returned
+item in the last 180. For those businesses, the rules aimed at a fraudster's own account
+(R1, R2, R9) send a document request instead of a hold, on amounts
+below a cap. Rules that protect a victim, and the credit rules, keep their action: established, clean businesses are
+exactly who takeovers, payment redirection and bust-outs target.</p>
+<div class="stats">
+<div class="stat"><b>2.7%</b><span>of alerts on established, clean businesses were fraud (training months), against 5.1% for everyone else</span></div>
+<div class="stat"><b>1,634</b><span>good customers' holds avoided with no fraud let through (fast lane, below $10,000, test months)</span></div>
+<div class="stat"><b>$1.99M</b><span>let through if every alert on them were simply cleared</span></div>
+</div>
+
+<h2 id="where">Where the alerts are mostly false</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule (training months)</th><th class="">Segment</th><th class="n">Alerts</th><th class="n">Precision</th><th class="n">Good customers&#x27; holds</th></tr></thead><tbody><tr><td class="">R1 Check money out fast</td><td class="">established, clean</td><td class="n">3,885</td><td class="n">0.9%</td><td class="n">3,850</td></tr><tr><td class="">R1 Check money out fast</td><td class="">everyone else</td><td class="n">3,067</td><td class="n">3.4%</td><td class="n">2,962</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">established, clean</td><td class="n">2,034</td><td class="n">1.2%</td><td class="n">2,010</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">everyone else</td><td class="n">1,104</td><td class="n">10.6%</td><td class="n">987</td></tr><tr><td class="">R3 Many new check payers</td><td class="">established, clean</td><td class="n">116</td><td class="n">20.7%</td><td class="n">1</td></tr><tr><td class="">R3 Many new check payers</td><td class="">everyone else</td><td class="n">4,820</td><td class="n">1.4%</td><td class="n">1</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">established, clean</td><td class="n">277</td><td class="n">3.6%</td><td class="n">267</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">everyone else</td><td class="n">110</td><td class="n">4.5%</td><td class="n">105</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">established, clean</td><td class="n">2,958</td><td class="n">0.2%</td><td class="n">456</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">everyone else</td><td class="n">1,205</td><td class="n">0.9%</td><td class="n">187</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">everyone else</td><td class="n">389</td><td class="n">8.2%</td><td class="n">0</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">established, clean</td><td class="n">274</td><td class="n">35.0%</td><td class="n">178</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">everyone else</td><td class="n">1,295</td><td class="n">22.2%</td><td class="n">1,008</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">established, clean</td><td class="n">11</td><td class="n">100.0%</td><td class="n">0</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">everyone else</td><td class="n">11</td><td class="n">100.0%</td><td class="n">0</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">established, clean</td><td class="n">693</td><td class="n">0.7%</td><td class="n">688</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">everyone else</td><td class="n">402</td><td class="n">1.7%</td><td class="n">395</td></tr><tr><td class="">R10 Inflows ramped before a credit decision</td><td class="">established, clean</td><td class="n">60</td><td class="n">31.7%</td><td class="n">0</td></tr><tr><td class="">R10 Inflows ramped before a credit decision</td><td class="">everyone else</td><td class="n">14</td><td class="n">14.3%</td><td class="n">0</td></tr><tr><td class="">R11 Credit draw money out fast</td><td class="">established, clean</td><td class="n">253</td><td class="n">10.3%</td><td class="n">227</td></tr><tr><td class="">R11 Credit draw money out fast</td><td class="">everyone else</td><td class="n">62</td><td class="n">8.1%</td><td class="n">57</td></tr><tr><td class="">R12 Line drawn to limit soon after increase</td><td class="">established, clean</td><td class="n">24</td><td class="n">100.0%</td><td class="n">0</td></tr><tr><td class="">R12 Line drawn to limit soon after increase</td><td class="">everyone else</td><td class="n">4</td><td class="n">100.0%</td><td class="n">0</td></tr></tbody></table></div></div>
+<details><summary>By industry (for discovery only: too few fraud cases per industry to set policy on)</summary>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Industry (training months)</th><th class="n">Alerts</th><th class="n">Of which fraud</th><th class="n">Precision</th></tr></thead><tbody><tr><td class="">construction</td><td class="n">5,904</td><td class="n">136</td><td class="n">2.3%</td></tr><tr><td class="">creative agency</td><td class="n">393</td><td class="n">55</td><td class="n">14.0%</td></tr><tr><td class="">ecommerce</td><td class="n">506</td><td class="n">56</td><td class="n">11.1%</td></tr><tr><td class="">education services</td><td class="n">773</td><td class="n">82</td><td class="n">10.6%</td></tr><tr><td class="">healthcare clinic</td><td class="n">2,512</td><td class="n">54</td><td class="n">2.1%</td></tr><tr><td class="">landscaping</td><td class="n">4,097</td><td class="n">33</td><td class="n">0.8%</td></tr><tr><td class="">professional services</td><td class="n">3,439</td><td class="n">161</td><td class="n">4.7%</td></tr><tr><td class="">restaurant</td><td class="n">725</td><td class="n">106</td><td class="n">14.6%</td></tr><tr><td class="">retail</td><td class="n">2,591</td><td class="n">125</td><td class="n">4.8%</td></tr><tr><td class="">trucking</td><td class="n">1,218</td><td class="n">81</td><td class="n">6.7%</td></tr></tbody></table></div></div></details>
+
+<h2 id="tradeoff">The trade-off, by cap</h2>
+<p>The cap is swept, not tuned. Under the stated costs a hold is priced only by the money it ties up, so net value
+can't choose it; the number to judge is the fraud let through for each hold avoided. The training months would have
+pointed to a higher cap than the test months support.</p>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Test months</th><th class="n">Good holds avoided</th><th class="n">Customer-hours saved</th><th class="n">Good businesses no longer held</th><th class="n">Fraud $ let through</th><th class="n">Fraud $ per hold avoided</th></tr></thead><tbody><tr><td class="">Fast lane, below $5,000</td><td class="n">949</td><td class="n">45,552</td><td class="n">248</td><td class="n">$0</td><td class="n">$0</td></tr><tr><td class="">Fast lane, below $10,000</td><td class="n">1,634</td><td class="n">78,432</td><td class="n">491</td><td class="n">$0</td><td class="n">$0</td></tr><tr><td class="">Fast lane, below $25,000</td><td class="n">2,717</td><td class="n">130,416</td><td class="n">963</td><td class="n">$222K</td><td class="n">$82</td></tr><tr><td class="">Fast lane, any amount</td><td class="n">4,047</td><td class="n">194,256</td><td class="n">1,548</td><td class="n">$455K</td><td class="n">$112</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="n">4,444</td><td class="n">213,312</td><td class="n">1,851</td><td class="n">$1.99M</td><td class="n">$449</td></tr></tbody></table></div></div>
+<details><summary>The same on the training months</summary>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Training months</th><th class="n">Good holds avoided</th><th class="n">Customer-hours saved</th><th class="n">Good businesses no longer held</th><th class="n">Fraud $ let through</th><th class="n">Fraud $ per hold avoided</th></tr></thead><tbody><tr><td class="">Fast lane, below $5,000</td><td class="n">1,494</td><td class="n">71,712</td><td class="n">246</td><td class="n">$0</td><td class="n">$0</td></tr><tr><td class="">Fast lane, below $10,000</td><td class="n">2,588</td><td class="n">124,224</td><td class="n">551</td><td class="n">$0</td><td class="n">$0</td></tr><tr><td class="">Fast lane, below $25,000</td><td class="n">4,341</td><td class="n">208,368</td><td class="n">1,050</td><td class="n">$0</td><td class="n">$0</td></tr><tr><td class="">Fast lane, any amount</td><td class="n">6,421</td><td class="n">308,208</td><td class="n">1,664</td><td class="n">$591K</td><td class="n">$92</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="n">7,093</td><td class="n">340,464</td><td class="n">2,043</td><td class="n">$3.65M</td><td class="n">$515</td></tr></tbody></table></div></div></details>
+<p class="src">Source: backtest.bt_fast_lane_tradeoff. Write-up: docs/fastlane/fast-lane-review-DRAFT.md</p>
+
+<h2 id="through">What gets through</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule set (test months)</th><th class="">Fraud type</th><th class="n">Fraud $ let through</th></tr></thead><tbody><tr><td class="">Fast lane, below $25,000</td><td class="">ACH return fraud (emerging, month 12)</td><td class="n">$85K</td></tr><tr><td class="">Fast lane, below $25,000</td><td class="">Check deposit fraud</td><td class="n">$138K</td></tr><tr><td class="">Fast lane, any amount</td><td class="">ACH return fraud (emerging, month 12)</td><td class="n">$85K</td></tr><tr><td class="">Fast lane, any amount</td><td class="">Check deposit fraud</td><td class="n">$361K</td></tr><tr><td class="">Fast lane, any amount</td><td class="">Credit bust-out</td><td class="n">$10K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">Account takeover</td><td class="n">$160K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">ACH return fraud (emerging, month 12)</td><td class="n">$169K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">Vendor bank-detail change (BEC)</td><td class="n">$74K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">Check deposit fraud</td><td class="n">$721K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">Credit bust-out</td><td class="n">$734K</td></tr><tr><td class="">Clear every alert on fast-lane businesses</td><td class="">Money mules</td><td class="n">$134K</td></tr></tbody></table></div></div>
+
+<h2 id="onboarding">Onboarding: approval rate vs. fraud</h2>
+<p>R6 declines an applicant who shares several identity details with earlier applicants and was incorporated only
+weeks before. Raising that bar approves a few more applicants. The approval rate counts every application, including
+those the bank's existing checks already decline, which dominate it.</p>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">R6 declines at score (test months)</th><th class="n">Declined by R6</th><th class="n">Good applicants declined</th><th class="n">Fraudulent applicants declined</th><th class="n">Approval rate</th><th class="n">Fraud $ let through vs today</th></tr></thead><tbody><tr><td class="">3 (today)</td><td class="n">10</td><td class="n">1</td><td class="n">9</td><td class="n">82.7%</td><td class="n">$0</td></tr><tr><td class="">4</td><td class="n">9</td><td class="n">1</td><td class="n">8</td><td class="n">82.7%</td><td class="n">$0</td></tr><tr><td class="">5</td><td class="n">7</td><td class="n">0</td><td class="n">7</td><td class="n">82.9%</td><td class="n">$0</td></tr><tr><td class="">never</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">83.5%</td><td class="n">$8K</td></tr></tbody></table></div></div>
+<p class="src">Source: backtest.bt_onboarding_decline_bar</p>
+
+</main>
+<footer><p><a href="limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built from the warehouse by <code>make site</code>. Synthetic data, seed 42.</p></footer>
+</body>
+</html>

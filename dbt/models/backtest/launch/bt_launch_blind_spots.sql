@@ -3,7 +3,7 @@
 -- what each rule stops catching once cash-outs go instant (ADR-021). Every graded month before launch, champion.
 with loss as (
     select l.*
-    from {{ ref('bt_launch_loss_credit') }} as l
+    from {{ ref('bt_loss_credit') }} as l
     where l.strategy_id = 'champion'
       and cast(l.txn_time as date) >= {{ window_value('window_start') }}
       and cast(l.txn_time as date) <  {{ window_value('instant_launch_date') }}

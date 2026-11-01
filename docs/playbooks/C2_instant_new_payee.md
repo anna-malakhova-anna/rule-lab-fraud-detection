@@ -9,7 +9,7 @@
 | Fires when | hours since the payee was added or its bank details last changed <= 72 |
 | Why it exists | Cash-outs go to payees added or changed hours earlier; a cooling-off period gives the payment rules time. |
 | Alerts per business day, rule alone (test months) | 1.3 |
-| Share that were fraud (test months) | 81.0% |
+| Share that were fraud (test months) | 81.4% |
 <!-- playbook-facts:end -->
 
 ## What to check

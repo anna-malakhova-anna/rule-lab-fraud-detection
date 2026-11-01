@@ -1,5 +1,6 @@
 -- The buying question for each vendor and call strategy (module D, ADR-022), test months:
---   incremental lift   fraud dollars prevented on top of today's rules, and cases ONLY the vendor caught
+--   incremental lift   fraud dollars prevented on top of today's rules; the cases behind them (caught earlier or
+--                      more fully than today's rules manage), and cases ONLY the vendor caught
 --   false-positive cost  extra good businesses flagged and extra reviews, priced with the stated costs
 --   cost                calls x price per call; cost per dollar of fraud prevented; the break-even price per call
 --   speed               whether the vendor answers inside a payment's decision budget
@@ -14,10 +15,20 @@ unique_catches as (
     group by c.strategy_id
 ),
 
+-- How many cases the added dollars rest on: few cases means a fragile buying decision.
+cases_improved as (
+    select v.strategy_id, count(*) as cases_caught_earlier
+    from {{ ref('bt_vendor_cases') }} as v
+    join {{ ref('bt_vendor_cases') }} as b on b.strategy_id = 'champion' and b.case_id = v.case_id
+    where v.period = 'test' and v.loss_prevented > b.loss_prevented + 0.005
+    group by v.strategy_id
+),
+
 joined as (
     select
         s.strategy_id, s.vendor, s.call_strategy, v.vendor_name, v.cost_per_call, v.latency_ms,
-        m.loss_prevented - b.loss_prevented                                  as added_fraud_prevented,
+        round(m.loss_prevented - b.loss_prevented, 2)                        as added_fraud_prevented,
+        coalesce(ci.cases_caught_earlier, 0)                                 as cases_caught_earlier,
         coalesce(u.cases_only_with_vendor, 0)                                as cases_only_with_vendor,
         m.good_businesses_flagged - b.good_businesses_flagged                as added_good_businesses_flagged,
         m.reviews - b.reviews                                                as added_reviews,
@@ -28,6 +39,7 @@ joined as (
     join {{ ref('bt_vendor_metrics') }} as m on m.strategy_id = s.strategy_id and m.period = 'test'
     cross join base as b
     left join unique_catches as u on u.strategy_id = s.strategy_id
+    left join cases_improved as ci on ci.strategy_id = s.strategy_id
     left join {{ ref('bt_vendor_calls') }} as k on k.strategy_id = s.strategy_id and k.period = 'test'
     where s.strategy_kind = 'vendor'
 )
@@ -37,7 +49,7 @@ select
     calls * cost_per_call                                                          as vendor_cost,
     {{ cost('review_cost') }} * added_reviews
       + {{ cost('good_customer_touch_cost') }} * added_good_businesses_flagged       as false_positive_cost,
-    calls * cost_per_call / nullif(added_fraud_prevented, 0)                       as cost_per_dollar_prevented,
+    case when added_fraud_prevented > 0 then calls * cost_per_call / added_fraud_prevented end as cost_per_dollar_prevented,
     -- The most this vendor could charge per call and still pay for itself here.
     (added_fraud_prevented - {{ cost('review_cost') }} * added_reviews
       - {{ cost('good_customer_touch_cost') }} * added_good_businesses_flagged) / nullif(calls, 0) as break_even_cost_per_call,

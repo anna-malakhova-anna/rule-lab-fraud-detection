@@ -23,3 +23,12 @@ from {{ ref('cand_' ~ rule_id) }} as c
 join {{ ref('cfg_rules') }} as r using (rule_id)
 where {{ passes('c.score', 'r.comparator', 'r.threshold') }}
 {%- endmacro %}
+
+{# Is the business in the good-customer fast lane at this time (module E, ADR-023)? #}
+{% macro in_fast_lane(business_id, event_time) -%}
+    not exists (
+        select 1 from {{ ref('feat_fast_lane_exclusions') }} as fx
+        where fx.business_id = {{ business_id }}
+          and {{ event_time }} >= fx.excluded_from and {{ event_time }} < fx.excluded_until
+    )
+{%- endmacro %}

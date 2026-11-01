@@ -1,4 +1,5 @@
--- Alerts become cases (module A, ADR-019): one case per business per review day, per rule set. A case carries
+-- Alerts become cases (module A, ADR-019): one case per business per review day, for the two rule sets the queue
+-- is simulated for (champion and challenger). A case carries
 -- everything an analyst queue needs, and a priority score = expected loss x likelihood:
 --   exposure   what is at stake if the case is fraud: the payment or deposit amount; for an application, the
 --              stated monthly revenue; for a credit decision, the line's current limit. Raw data only.
@@ -10,7 +11,7 @@ with hits as (
         g.*,
         unnest(string_split(g.rules, ','))                         as rule_id
     from {{ ref('bt_strategy_graded') }} as g
-    where g.period in ('train', 'test') and g.is_review          -- automatic actions (a launch control's delay) need no analyst
+    where g.strategy_id in ('champion', 'challenger') and g.period in ('train', 'test') and g.is_review          -- automatic actions (a launch control's delay) need no analyst
 ),
 
 -- One row per alerted entity per rule set: its exposure and the best likelihood among the rules that hit it.
