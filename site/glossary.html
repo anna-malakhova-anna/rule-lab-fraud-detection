@@ -127,7 +127,7 @@ dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 @media (max-width: 640px) {
-  .topbar-in { gap: 12px; } .pills { display: none; } dl { grid-template-columns: 1fr; }
+  .topbar-in { gap: 12px; } .pills { margin-left: 0; } dl { grid-template-columns: 1fr; }
   .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
   .catbar a { display: inline-block; margin: 4px 10px; }
   .hero { padding: 32px 18px 28px; }
@@ -137,8 +137,8 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <body>
 <header class="topbar"><div class="topbar-in">
 <a class="wordmark" href="index.html">Rule Lab</a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="types.html">Fraud types</a><a href="monitoring.html">Monitoring</a><a href="limitations.html">How sure are we</a><a href="glossary.html" aria-current="page">Glossary</a></nav>
-<div class="pills"><a class="pill" href="limitations.html">How sure are we</a><a class="pill solid" href="types.html">Fraud types</a></div>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="monitoring.html">Monitoring</a><a href="limitations.html">How sure are we</a><a href="glossary.html" aria-current="page">Glossary</a></nav>
+<div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
 12,000 businesses and 10,688,609 transactions. The 234 fraud cases were planted with an answer key.

@@ -140,7 +140,7 @@ dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
 dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
 footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 @media (max-width: 640px) {
-  .topbar-in { gap: 12px; } .pills { display: none; } dl { grid-template-columns: 1fr; }
+  .topbar-in { gap: 12px; } .pills { margin-left: 0; } dl { grid-template-columns: 1fr; }
   .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
   .catbar a { display: inline-block; margin: 4px 10px; }
   .hero { padding: 32px 18px 28px; }
@@ -338,8 +338,9 @@ def catbar(links: list[tuple[str, str]]) -> str:
 
 def shell(title: str, body: str, depth: int = 0, current: str = "") -> str:
     up = "../" * depth
+    # Fraud types is the button on the right, so the text links skip it.
     links = "".join(f'<a href="{up}{href}"{" aria-current=\"page\"" if href == current else ""}>{esc(name)}</a>'
-                    for href, name in NAV[1:])
+                    for href, name in NAV[1:] if href != "types.html")
     w, t = R.window(), R.totals()
     return f"""<!doctype html>
 <html lang="en">
@@ -353,7 +354,7 @@ def shell(title: str, body: str, depth: int = 0, current: str = "") -> str:
 <header class="topbar"><div class="topbar-in">
 <a class="wordmark" href="{up}index.html">Rule Lab</a>
 <nav class="links">{links}</nav>
-<div class="pills"><a class="pill" href="{up}limitations.html">How sure are we</a><a class="pill solid" href="{up}types.html">Fraud types</a></div>
+<div class="pills"><a class="pill solid" href="{up}types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> {esc(w["bank_name"])} is invented, and so are its
 {t["businesses"]:,} businesses and {t["transactions"]:,} transactions. The {t["cases"]} fraud cases were planted with an answer key.
