@@ -60,8 +60,10 @@ a { color: var(--brand); }
 /* Header: light bar, wordmark, links, two pill buttons */
 .topbar { background: var(--header); border-bottom: 1px solid var(--border); }
 .topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
-.wordmark { font-family: "Iowan Old Style", Charter, Georgia, serif; font-style: italic; font-weight: 700; font-size: 26px;
-  color: var(--brand); text-decoration: none; letter-spacing: -0.02em; }
+/* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
+.wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
+  font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
+  letter-spacing: 0.04em; line-height: 1; }
 .links { display: flex; gap: 22px; flex-wrap: wrap; }
 .links a { color: var(--ink); text-decoration: none; font-size: 16px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
