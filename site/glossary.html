@@ -137,7 +137,7 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <body>
 <header class="topbar"><div class="topbar-in">
 <a class="wordmark" href="index.html">Rule Lab</a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="monitoring.html">Monitoring</a><a href="limitations.html">How sure are we</a><a href="glossary.html" aria-current="page">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="monitoring.html">Monitoring</a><a href="glossary.html" aria-current="page">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
@@ -146,6 +146,7 @@ No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">Glossary</h1><p class="subtitle">The words on these pages, in plain terms</p></div><div class="card"><dl><dt>RFI</dt><dd>Request for information: ask the customer for documents. The payment is not stopped.</dd><dt>Hold</dt><dd>Delay the payment, the deposited funds or the credit draw until reviewed (assumed 2 days for a good customer).</dd><dt>Block</dt><dd>At onboarding: decline the application. R6 declines only strong identity links at newly incorporated businesses.</dd><dt>Precision</dt><dd>Share of alerts that landed on fraud (a fraudulent transaction or a fraudster&#x27;s account).</dd><dt>Recall</dt><dd>Share of fraud cases (or fraud dollars) the rules caught.</dd><dt>Dollar-days held</dt><dd>Good customers&#x27; money held × days held. $10,000 held for 2 days is 20,000 dollar-days.</dd><dt>Champion / challenger</dt><dd>The current rule set and a proposed one, graded on the same held-out months.</dd><dt>Label delay</dt><dd>The time between a fraud happening and the bank confirming it was fraud.</dd><dt>Alarm</dt><dd>A week where a monitored series is far above its own recent normal.</dd><dt>Bust-out</dt><dd>Building a clean credit history, raising the limit, then drawing everything and disappearing.</dd><dt>Charge-off</dt><dd>The bank writing off a balance it no longer expects to collect (here, 120 days after a missed payment).</dd><dt>First-party fraud</dt><dd>Fraud by the customer themselves, as opposed to someone impersonating or exploiting them.</dd></dl></div>
 </main>
-<footer><p class="src">Built 2026-10-31 from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
+<footer><p><a href="limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built 2026-10-31 from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
 </body>
 </html>

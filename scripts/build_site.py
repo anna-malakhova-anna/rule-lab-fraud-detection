@@ -338,9 +338,9 @@ def catbar(links: list[tuple[str, str]]) -> str:
 
 def shell(title: str, body: str, depth: int = 0, current: str = "") -> str:
     up = "../" * depth
-    # Fraud types is the button on the right, so the text links skip it.
+    # Fraud types is the button on the right; How sure are we lives in the footer. The text links skip both.
     links = "".join(f'<a href="{up}{href}"{" aria-current=\"page\"" if href == current else ""}>{esc(name)}</a>'
-                    for href, name in NAV[1:] if href != "types.html")
+                    for href, name in NAV[1:] if href not in ("types.html", "limitations.html"))
     w, t = R.window(), R.totals()
     return f"""<!doctype html>
 <html lang="en">
@@ -362,7 +362,8 @@ No number here is a real-world fraud rate.</div></div>
 <main>
 {body}
 </main>
-<footer><p class="src">Built {date.today():%Y-%m-%d} from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
+<footer><p><a href="{up}limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built {date.today():%Y-%m-%d} from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
 </body>
 </html>
 """

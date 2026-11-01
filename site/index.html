@@ -137,7 +137,7 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <body>
 <header class="topbar"><div class="topbar-in">
 <a class="wordmark" href="index.html">Rule Lab</a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="monitoring.html">Monitoring</a><a href="limitations.html">How sure are we</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
@@ -184,6 +184,7 @@ fraud prevented. Holding a struggling customer's payments still counts as harm.<
 <div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule</th><th class="">Action</th><th class="">Champion</th><th class="">Challenger</th></tr></thead><tbody><tr><td class="">R1 Check money out fast</td><td class="">hold</td><td class="">&gt;= 0.4</td><td class="">&gt;= 0.4</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">hold</td><td class="">&gt;= 0.5</td><td class="">&gt;= 0.5</td></tr><tr><td class="">R3 Many new check payers</td><td class="">rfi</td><td class="">&gt;= 5</td><td class="">&gt;= 5</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">hold</td><td class="">&lt;= 7</td><td class="">&lt;= 7</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">rfi</td><td class="">&gt;= 4</td><td class="">&gt;= 4</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">rfi; block at &gt;= 3</td><td class="">&gt;= 1</td><td class="">&gt;= 1</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">hold</td><td class="">&gt;= 5</td><td class="">&gt;= 5</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">hold</td><td class="">&lt;= 12</td><td class="">&lt;= 12</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">hold</td><td class="">&gt;= 0.4</td><td class="">&gt;= 0.4</td></tr><tr><td class="">R10 Inflows ramped before a credit decision</td><td class="">rfi</td><td class="">not running</td><td class="">&gt;= 3 (tuned)</td></tr><tr><td class="">R11 Credit draw money out fast</td><td class="">hold</td><td class="">not running</td><td class="">&gt;= 0.3 (tuned)</td></tr><tr><td class="">R12 Line drawn to limit soon after increase</td><td class="">hold</td><td class="">not running</td><td class="">&lt;= 60 (tuned)</td></tr></tbody></table></div></div>
 
 </main>
-<footer><p class="src">Built 2026-10-31 from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
+<footer><p><a href="limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built 2026-10-31 from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
 </body>
 </html>
