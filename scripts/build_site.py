@@ -64,6 +64,8 @@ a { color: var(--brand); }
 .wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
   font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
   letter-spacing: 0.04em; line-height: 1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand .logo { width: 40px; height: 40px; flex: none; }
 .links { display: flex; gap: 22px; flex-wrap: wrap; }
 .links a { color: var(--ink); text-decoration: none; font-size: 16px; }
 .links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
@@ -326,6 +328,22 @@ ICONS = {
 }
 
 
+# The logo: a lab flask tipped over, its liquid running to the neck and coins pouring out. Drawn here as inline
+# SVG in the site's own colour tokens (so it follows dark mode); no image file, no third-party mark.
+FLASK = "M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"
+LOGO = f"""<svg class="logo" viewBox="0 2 48 48" width="40" height="40" role="img" aria-label="Rule Lab logo: a flask pouring coins">
+<defs><clipPath id="logo-flask"><path transform="rotate(118 20 22)" d="{FLASK}"/></clipPath></defs>
+<path transform="rotate(118 20 22)" d="{FLASK}" fill="var(--brand-wash)"/>
+<rect x="-10" y="21" width="80" height="40" fill="var(--brand)" clip-path="url(#logo-flask)"/>
+<g transform="rotate(118 20 22)" fill="none" stroke="var(--brand-deep)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="{FLASK}"/><path d="M14.5 6 H25.5"/></g>
+<g stroke="var(--brand-deep)" stroke-width="1.5" fill="#E0A93B">
+<circle cx="37.5" cy="35.5" r="3.3"/><circle cx="34" cy="42" r="3.3"/><circle cx="41" cy="45.5" r="3.3"/></g>
+<g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
+<circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
+</svg>"""
+
+
 def page_title(title: str, subtitle: str = "") -> str:
     sub = f'<p class="subtitle">{esc(subtitle)}</p>' if subtitle else ""
     return f'<div class="title"><h1 class="display">{esc(title)}</h1>{sub}</div>'
@@ -352,7 +370,7 @@ def shell(title: str, body: str, depth: int = 0, current: str = "") -> str:
 </head>
 <body>
 <header class="topbar"><div class="topbar-in">
-<a class="wordmark" href="{up}index.html">Rule Lab</a>
+<a class="brand" href="{up}index.html">{LOGO}<span class="wordmark">Rule Lab</span></a>
 <nav class="links">{links}</nav>
 <div class="pills"><a class="pill solid" href="{up}types.html">Fraud types</a></div>
 </div></header>
