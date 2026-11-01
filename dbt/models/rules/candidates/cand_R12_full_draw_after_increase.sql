@@ -8,6 +8,7 @@ select
     amount,
     days_since_limit_increase                 as score,
     true                                      as escalation_eligible,
+    json_object('amount', amount, 'utilisation_after', utilisation_after, 'current_limit', current_limit, 'days_since_limit_increase', days_since_limit_increase) as evidence,
     printf('draw of $%,.0f takes the line to %.0f%% of a $%,.0f limit raised %.1f days ago', amount,
            100 * utilisation_after, current_limit, days_since_limit_increase) as detail
 from {{ ref('feat_credit_draws') }}

@@ -35,6 +35,25 @@ monitoring:
   investigation_business_days: 10  # from first alarm to a new rule in production
   precision_maturity_days: 30      # monitoring precision counts labels known within 30 days of the week
 
+# Risk Ops (module A, ADR-019): alerts become cases, worked by analysts at the capacity above.
+ops:
+  # How long a case can wait before its action lapses: an unreviewed hold auto-releases, an RFI goes stale.
+  review_window_business_days: {hold: 2, rfi: 5, block: 2}
+  # A case reviewed at day d is decided at this hour (one shift). Customer wait is measured to this time.
+  decision_hour: 13
+  # Exposure for alerts that are not payments: an application is worth its stated monthly revenue;
+  # a credit decision is worth the line's current limit.
+  application_exposure_months_of_revenue: 1.0
+  # Analyst decisions become labels (the feedback loop), with error.
+  analyst_miss_rate: 0.10          # fraud cases an analyst clears by mistake
+  analyst_false_flag_rate: 0.02    # good cases an analyst marks as fraud
+  seed: 42
+
+# Rollout plan for a proposed rule (module B engineering ticket, ADR-020).
+rollout:
+  shadow_business_days: 10        # the rule logs what it would have done, without acting
+  kill_switch_multiple: 3         # turn the rule off if its daily cases exceed this multiple of the backtest's expectation
+
 bootstrap:
   iterations: 1000
   seed: 42

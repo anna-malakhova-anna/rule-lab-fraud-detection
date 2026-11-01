@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk Ops · SMB Fraud Rule Lab</title>
+<style>
+/* Palette: slate #4C5C8A and its undertones for the page; a slightly more saturated slate and an amber for chart
+   marks (validated with the dataviz palette checker in both modes). */
+:root {
+  color-scheme: light;
+  --page: #F7F5EF; --surface: #FFFFFF; --header: #FBFAF6; --tint: #E7EAF4; --tint-2: #F0F2F8;
+  --ink: #161A26; --ink-2: #4A4F5E; --muted: #8A8D97;
+  --brand: #4C5C8A; --brand-deep: #2E3858; --brand-soft: #7F8DBA; --brand-wash: #D9DEEF;
+  --hero-a: #1B2030; --hero-b: #2E3858; --hero-c: #4C5C8A; --hero-ink: #F4F1E8;
+  --grid: #E3E1DA; --axis: #C6C4BB; --border: rgba(22,26,38,0.10);
+  --series-1: #4560AE; --series-2: #C26E1A; --banner: #E7EAF4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+    --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+    --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+    --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+    --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+    --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+  --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+  --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+  --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+  --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+  --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--brand); }
+.display, .hero h1, .stat b { font-family: "Avenir Next Condensed", "Helvetica Neue", "Arial Narrow", system-ui, sans-serif;
+  font-stretch: condensed; font-weight: 800; letter-spacing: -0.01em; }
+.serif { font-family: "Iowan Old Style", Charter, Georgia, serif; }
+
+/* Header: light bar, wordmark, links, two pill buttons */
+.topbar { background: var(--header); border-bottom: 1px solid var(--border); }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+/* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
+.wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
+  font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
+  letter-spacing: 0.04em; line-height: 1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand .logo { width: 40px; height: 40px; flex: none; }
+.links { display: flex; gap: 22px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
+.pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
+  border: 1.5px solid var(--brand); color: var(--brand); white-space: nowrap; }
+.pill.solid { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--hero-ink); }
+
+.banner { background: var(--banner); color: var(--ink); font-size: 14px; }
+.banner-in { max-width: 1160px; margin: 0 auto; padding: 10px 16px; }
+
+main { max-width: 1160px; margin: 0 auto; padding: 8px 16px 64px; }
+
+/* Page titles: very large, uppercase, condensed, slate gradient */
+.title { text-align: center; padding: 40px 0 8px; }
+.display { font-size: clamp(44px, 9vw, 112px); line-height: 0.92; text-transform: uppercase; margin: 0;
+  background: linear-gradient(90deg, var(--brand-soft), var(--brand) 55%, var(--brand-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { font-size: clamp(20px, 3vw, 30px); font-weight: 700; color: var(--brand-deep); margin: 14px auto 0; max-width: none; }
+
+/* Category bar: serif links between two rules */
+.catbar { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); margin: 28px 0 32px; padding: 16px 8px;
+  text-align: center; font-family: "Iowan Old Style", Charter, Georgia, serif; font-size: 19px; line-height: 2; }
+.catbar a { color: var(--brand-deep); text-decoration: none; white-space: nowrap; }
+.catbar a:hover { text-decoration: underline; }
+.catbar .sep { color: var(--muted); padding: 0 10px; }
+
+/* Overview hero: dark slate gradient band */
+.hero { background: linear-gradient(170deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%); color: var(--hero-ink);
+  border-radius: 0 0 24px 24px; margin: 0 -16px 8px; padding: 48px 32px 40px; }
+.hero h1 { font-size: clamp(40px, 7vw, 84px); line-height: 0.95; text-transform: uppercase; margin: 0 0 18px; max-width: 17ch; }
+.hero p { color: var(--hero-ink); opacity: 0.88; font-size: 18px; max-width: 62ch; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 32px; }
+.feature { display: flex; gap: 14px; align-items: flex-start; }
+.feature .icon { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-wash); color: var(--brand-deep);
+  display: grid; place-items: center; }
+:root[data-theme="dark"] .feature .icon { color: var(--hero-ink); }
+.feature b { display: block; font-size: 22px; line-height: 1.15; }
+.feature span { font-size: 14px; opacity: 0.8; }
+
+h2 { font-size: 26px; line-height: 1.2; margin: 52px 0 10px; color: var(--ink); }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p, li { color: var(--ink-2); max-width: 74ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.card.tint { background: var(--tint); }
+.chip { display: inline-block; border: 1.5px solid var(--brand); color: var(--brand-deep); border-radius: 8px; padding: 3px 12px;
+  font-size: 14px; margin-bottom: 12px; }
+.typecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.typecard { background: var(--tint); border-radius: 16px; padding: 22px; text-decoration: none; display: block; }
+.typecard h3 { font-size: 26px; line-height: 1.15; color: var(--ink); font-weight: 600; margin: 0 0 8px; }
+.typecard p { margin: 0; color: var(--ink-2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat { background: var(--tint); border-radius: 16px; padding: 18px; }
+.stat b { display: block; font-size: 44px; line-height: 1; color: var(--brand-deep); }
+.stat span { font-size: 14px; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg .lbl { fill: var(--ink-2); }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; flex-wrap: wrap; }
+.key { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+details { margin-top: 8px; font-size: 14px; }
+summary { cursor: pointer; color: var(--ink-2); }
+.src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
+@media (max-width: 640px) {
+  .topbar-in { gap: 12px; } .pills { margin-left: 0; } dl { grid-template-columns: 1fr; }
+  .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
+  .catbar a { display: inline-block; margin: 4px 10px; }
+  .hero { padding: 32px 18px 28px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+<a class="brand" href="index.html"><svg class="logo" viewBox="0 2 48 48" width="40" height="40" role="img" aria-label="Rule Lab logo: a flask pouring coins">
+<defs><clipPath id="logo-flask"><path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/></clipPath></defs>
+<path transform="rotate(118 20 22)" d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z" fill="var(--brand-wash)"/>
+<rect x="-10" y="21" width="80" height="40" fill="var(--brand)" clip-path="url(#logo-flask)"/>
+<g transform="rotate(118 20 22)" fill="none" stroke="var(--brand-deep)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M17 6 V16 L8 33 Q6.5 37 10.5 37 H29.5 Q33.5 37 32 33 L23 16 V6 Z"/><path d="M14.5 6 H25.5"/></g>
+<g stroke="var(--brand-deep)" stroke-width="1.5" fill="#E0A93B">
+<circle cx="37.5" cy="35.5" r="3.3"/><circle cx="34" cy="42" r="3.3"/><circle cx="41" cy="45.5" r="3.3"/></g>
+<g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
+<circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
+</svg><span class="wordmark">Rule Lab</span></a>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html" aria-current="page">Risk Ops</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
+</div></header>
+<div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
+12,000 businesses and 10,688,609 transactions. The 234 fraud cases were planted with an answer key.
+No number here is a real-world fraud rate.</div></div>
+<main>
+<div class="title"><h1 class="display">Risk Ops</h1><p class="subtitle">From alerts to decisions a small team can actually make</p></div>
+<nav class="catbar"><a href="#queue">Prioritized vs first-in-first-out</a> <span class="sep">|</span> <a href="#backlog">Backlog</a> <span class="sep">|</span> <a href="#challenger">With the credit rules</a> <span class="sep">|</span> <a href="#feedback">Analyst labels</a></nav>
+
+<h2 id="queue">Same team, different order</h2>
+<p>Every alert becomes a case: one per business per review day. Each case gets a priority score: what is at stake
+(the payment, the application's stated revenue, or the credit line) times how often that rule's alerts turned out to
+be fraud in the tuning months, as known at the time. Neither part reads the answer key. The team works
+90 cases per business day. A hold that nobody reviews within two business days lapses and
+the money moves.</p>
+<div class="stats">
+<div class="stat"><b>$600K</b><span>more fraud prevented in the test months by working the highest-priority cases first instead of the oldest</span></div>
+<div class="stat"><b>2,519</b><span>fewer good customers left waiting more than 24 hours on a hold</span></div>
+</div>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Order (champion, test months)</th><th class="n">Fraud $ prevented</th><th class="n">Cases reviewed</th><th class="n">Cases that lapsed</th><th class="n">Good customers held &gt; 24h</th><th class="n">Good-customer hours held</th><th class="n">Hours to decision, median / p90</th><th class="n">Days ending with a backlog</th></tr></thead><tbody><tr><td class="">Prioritized</td><td class="n">$4.01M</td><td class="n">9,854</td><td class="n">1,228</td><td class="n">491</td><td class="n">42,869</td><td class="n">0.4 / 4.9</td><td class="n">75 of 129</td></tr><tr><td class="">First in, first out</td><td class="n">$3.41M</td><td class="n">9,936</td><td class="n">1,146</td><td class="n">3,010</td><td class="n">183,616</td><td class="n">21.5 / 74.0</td><td class="n">77 of 129</td></tr><tr><td class="">Unlimited reviewers (reference)</td><td class="n">$4.01M</td><td class="n">11,082</td><td class="n">0</td><td class="n">142</td><td class="n">14,896</td><td class="n">0.2 / 3.8</td><td class="n">0 of 129</td></tr></tbody></table></div></div>
+<p class="src">Source: analysis.queue_summary (scripts/queue_sim.py over backtest.ops_cases)</p>
+
+<h2 id="backlog">Backlog</h2>
+<p>Either way, the queue backs up in the spring peak. Prioritizing doesn't make the backlog smaller; it changes who waits.</p>
+<div class="card"><div class="legend"><span><span class="key" style="background:var(--series-1)"></span>Prioritized</span><span><span class="key" style="background:var(--series-2)"></span>First in, first out</span></div><svg viewBox="0 0 960 260" role="img" aria-label="Cases waiting at the end of the day, weekly average"><line x1="40" x2="870" y1="232.0" y2="232.0" stroke="var(--grid)"/><text x="34" y="236.0" text-anchor="end">0</text><line x1="40" x2="870" y1="178.0" y2="178.0" stroke="var(--grid)"/><text x="34" y="182.0" text-anchor="end">50</text><line x1="40" x2="870" y1="124.0" y2="124.0" stroke="var(--grid)"/><text x="34" y="128.0" text-anchor="end">100</text><line x1="40" x2="870" y1="70.0" y2="70.0" stroke="var(--grid)"/><text x="34" y="74.0" text-anchor="end">150</text><line x1="40" x2="870" y1="16.0" y2="16.0" stroke="var(--grid)"/><text x="34" y="20.0" text-anchor="end">200</text><text x="71.9" y="248" text-anchor="middle">Jan 26</text><text x="327.3" y="248" text-anchor="middle">Mar 26</text><text x="614.6" y="248" text-anchor="middle">May 26</text><path d="M40.0,232.0 L71.9,232.0 L103.8,232.0 L135.8,232.0 L167.7,232.0 L199.6,232.0 L231.5,232.0 L263.5,232.0 L295.4,230.5 L327.3,223.1 L359.2,215.2 L391.2,221.0 L423.1,225.3 L455.0,182.8 L486.9,61.8 L518.8,60.7 L550.8,86.2 L582.7,125.3 L614.6,105.6 L646.5,104.6 L678.5,103.9 L710.4,160.1 L742.3,171.3 L774.2,168.5 L806.2,194.2 L838.1,201.8 L870.0,229.3" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><g><title>Prioritized, week of 29 Dec 2025: 0 cases waiting at day end on average, 0 at most</title><circle cx="40.0" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 05 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="71.9" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 12 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="103.8" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 19 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="135.8" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 26 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="167.7" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 02 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="199.6" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 09 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="231.5" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 16 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="263.5" cy="232.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 23 Feb 2026: 1 cases waiting at day end on average, 7 at most</title><circle cx="295.4" cy="230.5" r="6" fill="transparent"/></g><g><title>Prioritized, week of 02 Mar 2026: 8 cases waiting at day end on average, 24 at most</title><circle cx="327.3" cy="223.1" r="6" fill="transparent"/></g><g><title>Prioritized, week of 09 Mar 2026: 16 cases waiting at day end on average, 28 at most</title><circle cx="359.2" cy="215.2" r="6" fill="transparent"/></g><g><title>Prioritized, week of 16 Mar 2026: 10 cases waiting at day end on average, 28 at most</title><circle cx="391.2" cy="221.0" r="6" fill="transparent"/></g><g><title>Prioritized, week of 23 Mar 2026: 6 cases waiting at day end on average, 24 at most</title><circle cx="423.1" cy="225.3" r="6" fill="transparent"/></g><g><title>Prioritized, week of 30 Mar 2026: 46 cases waiting at day end on average, 131 at most</title><circle cx="455.0" cy="182.8" r="6" fill="transparent"/></g><g><title>Prioritized, week of 06 Apr 2026: 158 cases waiting at day end on average, 199 at most</title><circle cx="486.9" cy="61.8" r="6" fill="transparent"/></g><g><title>Prioritized, week of 13 Apr 2026: 159 cases waiting at day end on average, 184 at most</title><circle cx="518.8" cy="60.7" r="6" fill="transparent"/></g><g><title>Prioritized, week of 20 Apr 2026: 135 cases waiting at day end on average, 195 at most</title><circle cx="550.8" cy="86.2" r="6" fill="transparent"/></g><g><title>Prioritized, week of 27 Apr 2026: 99 cases waiting at day end on average, 142 at most</title><circle cx="582.7" cy="125.3" r="6" fill="transparent"/></g><g><title>Prioritized, week of 04 May 2026: 117 cases waiting at day end on average, 131 at most</title><circle cx="614.6" cy="105.6" r="6" fill="transparent"/></g><g><title>Prioritized, week of 11 May 2026: 118 cases waiting at day end on average, 138 at most</title><circle cx="646.5" cy="104.6" r="6" fill="transparent"/></g><g><title>Prioritized, week of 18 May 2026: 119 cases waiting at day end on average, 161 at most</title><circle cx="678.5" cy="103.9" r="6" fill="transparent"/></g><g><title>Prioritized, week of 25 May 2026: 67 cases waiting at day end on average, 107 at most</title><circle cx="710.4" cy="160.1" r="6" fill="transparent"/></g><g><title>Prioritized, week of 01 Jun 2026: 56 cases waiting at day end on average, 86 at most</title><circle cx="742.3" cy="171.3" r="6" fill="transparent"/></g><g><title>Prioritized, week of 08 Jun 2026: 59 cases waiting at day end on average, 99 at most</title><circle cx="774.2" cy="168.5" r="6" fill="transparent"/></g><g><title>Prioritized, week of 15 Jun 2026: 35 cases waiting at day end on average, 84 at most</title><circle cx="806.2" cy="194.2" r="6" fill="transparent"/></g><g><title>Prioritized, week of 22 Jun 2026: 28 cases waiting at day end on average, 51 at most</title><circle cx="838.1" cy="201.8" r="6" fill="transparent"/></g><g><title>Prioritized, week of 29 Jun 2026: 2 cases waiting at day end on average, 5 at most</title><circle cx="870.0" cy="229.3" r="6" fill="transparent"/></g><text x="876.0" y="225.3" class="lbl">Prioritized</text><path d="M40.0,232.0 L71.9,232.0 L103.8,232.0 L135.8,232.0 L167.7,232.0 L199.6,232.0 L231.5,232.0 L263.5,232.0 L295.4,230.5 L327.3,222.5 L359.2,210.6 L391.2,217.5 L423.1,222.3 L455.0,182.8 L486.9,65.2 L518.8,61.4 L550.8,74.1 L582.7,90.3 L614.6,76.0 L646.5,85.8 L678.5,88.1 L710.4,115.1 L742.3,120.5 L774.2,131.6 L806.2,149.5 L838.1,164.4 L870.0,207.7" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><g><title>First in, first out, week of 29 Dec 2025: 0 cases waiting at day end on average, 0 at most</title><circle cx="40.0" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 05 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="71.9" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 12 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="103.8" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 19 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="135.8" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 26 Jan 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="167.7" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 02 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="199.6" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 09 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="231.5" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 16 Feb 2026: 0 cases waiting at day end on average, 0 at most</title><circle cx="263.5" cy="232.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 23 Feb 2026: 1 cases waiting at day end on average, 7 at most</title><circle cx="295.4" cy="230.5" r="6" fill="transparent"/></g><g><title>First in, first out, week of 02 Mar 2026: 9 cases waiting at day end on average, 24 at most</title><circle cx="327.3" cy="222.5" r="6" fill="transparent"/></g><g><title>First in, first out, week of 09 Mar 2026: 20 cases waiting at day end on average, 29 at most</title><circle cx="359.2" cy="210.6" r="6" fill="transparent"/></g><g><title>First in, first out, week of 16 Mar 2026: 13 cases waiting at day end on average, 36 at most</title><circle cx="391.2" cy="217.5" r="6" fill="transparent"/></g><g><title>First in, first out, week of 23 Mar 2026: 9 cases waiting at day end on average, 31 at most</title><circle cx="423.1" cy="222.3" r="6" fill="transparent"/></g><g><title>First in, first out, week of 30 Mar 2026: 46 cases waiting at day end on average, 131 at most</title><circle cx="455.0" cy="182.8" r="6" fill="transparent"/></g><g><title>First in, first out, week of 06 Apr 2026: 154 cases waiting at day end on average, 194 at most</title><circle cx="486.9" cy="65.2" r="6" fill="transparent"/></g><g><title>First in, first out, week of 13 Apr 2026: 158 cases waiting at day end on average, 195 at most</title><circle cx="518.8" cy="61.4" r="6" fill="transparent"/></g><g><title>First in, first out, week of 20 Apr 2026: 146 cases waiting at day end on average, 204 at most</title><circle cx="550.8" cy="74.1" r="6" fill="transparent"/></g><g><title>First in, first out, week of 27 Apr 2026: 131 cases waiting at day end on average, 175 at most</title><circle cx="582.7" cy="90.3" r="6" fill="transparent"/></g><g><title>First in, first out, week of 04 May 2026: 144 cases waiting at day end on average, 187 at most</title><circle cx="614.6" cy="76.0" r="6" fill="transparent"/></g><g><title>First in, first out, week of 11 May 2026: 135 cases waiting at day end on average, 167 at most</title><circle cx="646.5" cy="85.8" r="6" fill="transparent"/></g><g><title>First in, first out, week of 18 May 2026: 133 cases waiting at day end on average, 182 at most</title><circle cx="678.5" cy="88.1" r="6" fill="transparent"/></g><g><title>First in, first out, week of 25 May 2026: 108 cases waiting at day end on average, 159 at most</title><circle cx="710.4" cy="115.1" r="6" fill="transparent"/></g><g><title>First in, first out, week of 01 Jun 2026: 103 cases waiting at day end on average, 144 at most</title><circle cx="742.3" cy="120.5" r="6" fill="transparent"/></g><g><title>First in, first out, week of 08 Jun 2026: 93 cases waiting at day end on average, 144 at most</title><circle cx="774.2" cy="131.6" r="6" fill="transparent"/></g><g><title>First in, first out, week of 15 Jun 2026: 76 cases waiting at day end on average, 139 at most</title><circle cx="806.2" cy="149.5" r="6" fill="transparent"/></g><g><title>First in, first out, week of 22 Jun 2026: 63 cases waiting at day end on average, 85 at most</title><circle cx="838.1" cy="164.4" r="6" fill="transparent"/></g><g><title>First in, first out, week of 29 Jun 2026: 22 cases waiting at day end on average, 45 at most</title><circle cx="870.0" cy="207.7" r="6" fill="transparent"/></g><text x="876.0" y="219.7" class="lbl">First in, first out</text></svg></div>
+<p class="src">Source: analysis.queue_daily</p>
+
+<h2 id="challenger">With the credit rules added (prioritized queue)</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule set</th><th class="n">Fraud $ prevented</th><th class="n">Cases</th><th class="n">Cases that lapsed</th><th class="n">Good customers held &gt; 24h</th></tr></thead><tbody><tr><td class="">Champion</td><td class="n">$4.01M</td><td class="n">11,082</td><td class="n">1,228</td><td class="n">491</td></tr><tr><td class="">Challenger</td><td class="n">$4.89M</td><td class="n">11,414</td><td class="n">1,388</td><td class="n">542</td></tr></tbody></table></div></div>
+
+<h2 id="feedback">Analyst decisions become labels</h2>
+<p>Reviewed cases are labelled on the day of the decision, with error: analysts clear 10% of fraud cases by mistake
+and mark 2% of good ones as fraud. Cases nobody reviewed are labelled only when the fraud is confirmed some other way.
+For noisy rules, analyst error inflates measured precision far more than label delay deflates it.</p>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule (champion, test months)</th><th class="">Known after</th><th class="n">Cases</th><th class="n">True precision</th><th class="n">Measured precision</th><th class="n">Share labelled</th></tr></thead><tbody><tr><td class="">R1 Check money out fast</td><td class="">7 days</td><td class="n">3,762</td><td class="n">1.2%</td><td class="n">2.4%</td><td class="n">95%</td></tr><tr><td class="">R1 Check money out fast</td><td class="">30 days</td><td class="n">3,762</td><td class="n">1.2%</td><td class="n">2.6%</td><td class="n">95%</td></tr><tr><td class="">R1 Check money out fast</td><td class="">90 days</td><td class="n">3,762</td><td class="n">1.2%</td><td class="n">2.6%</td><td class="n">95%</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">7 days</td><td class="n">2,128</td><td class="n">0.9%</td><td class="n">2.4%</td><td class="n">100%</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">30 days</td><td class="n">2,128</td><td class="n">0.9%</td><td class="n">2.5%</td><td class="n">100%</td></tr><tr><td class="">R2 Check far above own baseline</td><td class="">90 days</td><td class="n">2,128</td><td class="n">0.9%</td><td class="n">2.5%</td><td class="n">100%</td></tr><tr><td class="">R3 Many new check payers</td><td class="">7 days</td><td class="n">880</td><td class="n">1.7%</td><td class="n">3.2%</td><td class="n">86%</td></tr><tr><td class="">R3 Many new check payers</td><td class="">30 days</td><td class="n">880</td><td class="n">1.7%</td><td class="n">3.3%</td><td class="n">86%</td></tr><tr><td class="">R3 Many new check payers</td><td class="">90 days</td><td class="n">880</td><td class="n">1.7%</td><td class="n">3.3%</td><td class="n">86%</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">7 days</td><td class="n">226</td><td class="n">2.2%</td><td class="n">3.1%</td><td class="n">100%</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">30 days</td><td class="n">226</td><td class="n">2.2%</td><td class="n">3.1%</td><td class="n">100%</td></tr><tr><td class="">R4 First payment to changed bank details</td><td class="">90 days</td><td class="n">226</td><td class="n">2.2%</td><td class="n">3.1%</td><td class="n">100%</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">7 days</td><td class="n">3,646</td><td class="n">0.4%</td><td class="n">2.1%</td><td class="n">75%</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">30 days</td><td class="n">3,646</td><td class="n">0.4%</td><td class="n">2.1%</td><td class="n">75%</td></tr><tr><td class="">R5 Payment far above usual for payee</td><td class="">90 days</td><td class="n">3,646</td><td class="n">0.4%</td><td class="n">2.1%</td><td class="n">75%</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">7 days</td><td class="n">190</td><td class="n">6.8%</td><td class="n">8.9%</td><td class="n">100%</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">30 days</td><td class="n">190</td><td class="n">6.8%</td><td class="n">8.9%</td><td class="n">100%</td></tr><tr><td class="">R6 Applicant shares identity with others</td><td class="">90 days</td><td class="n">190</td><td class="n">6.8%</td><td class="n">9.5%</td><td class="n">100%</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">7 days</td><td class="n">481</td><td class="n">20.2%</td><td class="n">20.6%</td><td class="n">99%</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">30 days</td><td class="n">481</td><td class="n">20.2%</td><td class="n">20.6%</td><td class="n">99%</td></tr><tr><td class="">R7 Many new senders, swept out</td><td class="">90 days</td><td class="n">481</td><td class="n">20.2%</td><td class="n">21.4%</td><td class="n">99%</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">7 days</td><td class="n">8</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">100%</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">30 days</td><td class="n">8</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">100%</td></tr><tr><td class="">R8 New device, contact change, new payee</td><td class="">90 days</td><td class="n">8</td><td class="n">100.0%</td><td class="n">100.0%</td><td class="n">100%</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">7 days</td><td class="n">548</td><td class="n">5.1%</td><td class="n">5.7%</td><td class="n">95%</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">30 days</td><td class="n">548</td><td class="n">5.1%</td><td class="n">6.6%</td><td class="n">95%</td></tr><tr><td class="">R9 ACH debit money out fast</td><td class="">90 days</td><td class="n">548</td><td class="n">5.1%</td><td class="n">6.6%</td><td class="n">95%</td></tr></tbody></table></div></div>
+<p class="src">Source: analysis.feedback_precision. Playbooks for each rule: docs/playbooks/.</p>
+
+</main>
+<footer><p><a href="limitations.html">How sure are we?</a> What flatters these numbers, and what they leave out.</p>
+<p class="src">Built from the warehouse by <code>make site</code>. Synthetic data, seed 42.</p></footer>
+</body>
+</html>

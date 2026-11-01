@@ -1,8 +1,6 @@
 """The synthetic world: reproducible, realistic in the ways that matter, and honest about prevalence."""
 import hashlib
 
-import pytest
-
 from generator.common import load_config
 from generator.main import generate
 

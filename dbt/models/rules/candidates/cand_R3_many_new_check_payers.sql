@@ -9,6 +9,7 @@ select
     amount,
     new_payers_7d_industry_z                  as score,
     true                                      as escalation_eligible,
+    json_object('new_payers_7d', new_payers_7d, 'industry', industry, 'new_payers_7d_industry_z', new_payers_7d_industry_z) as evidence,
     printf('%d first-time payers in 7 days (%s)', new_payers_7d, industry) as detail
 from {{ ref('feat_check_deposits') }}
 where new_payers_7d >= {{ rule_param('R3_many_new_check_payers', 'min_new_payers') }}

@@ -272,3 +272,45 @@ def markdown_table(header: list[str], rows: list[tuple]) -> str:
     lines = ["| " + " | ".join(header) + " |", "|" + "|".join("---" for _ in header) + "|"]
     lines += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
     return "\n".join(lines)
+
+
+# ---------- Risk Ops (module A) ----------
+
+def queue_summary(period: str = "test") -> dict[tuple[str, str], dict]:
+    return {(r["strategy_id"], r["policy"]): r for r in _rows(
+        "select * from analysis.queue_summary where period = ?", [period])}
+
+
+def queue_backlog(strategy: str = "champion") -> list[dict]:
+    return _rows("""
+        select policy, cast(date_trunc('week', business_date) as date) as week, avg(backlog) as avg_backlog,
+               max(backlog) as max_backlog
+        from analysis.queue_daily where strategy_id = ? and policy <> 'unlimited'
+          and business_date >= (select train_end from config.cfg_window)
+        group by all order by policy, week""", [strategy])
+
+
+def queue_backlog_days(strategy: str = "champion") -> dict[str, dict]:
+    return {r["policy"]: r for r in _rows("""
+        select policy, count(*) filter (where backlog > 0) as days_with_backlog, max(backlog) as max_backlog,
+               count(*) as business_days
+        from analysis.queue_daily where strategy_id = ? and business_date >= (select train_end from config.cfg_window)
+        group by policy""", [strategy])}
+
+
+def feedback_precision(strategy: str = "champion") -> list[dict]:
+    return _rows("""
+        select * from analysis.feedback_precision where strategy_id = ?
+        order by cast(regexp_extract(rule_id, 'R(\\d+)', 1) as integer), horizon_days""", [strategy])
+
+
+def rule_volumes(strategy: str, period: str = "test") -> dict[str, dict]:
+    """Alerts and cases per business day for each rule in a rule set, plus its known likelihood."""
+    return {r["rule_id"]: r for r in _rows("""
+        with days as (select count(*) as n from backtest.bt_business_days where period = ?),
+        per_rule as (
+            select unnest(rule_list) as rule_id from backtest.ops_cases where strategy_id = ? and period = ?)
+        select p.rule_id, count(*) as cases, count(*) / any_value(d.n) as cases_per_day, any_value(l.likelihood) as likelihood
+        from per_rule p cross join days d
+        left join backtest.ops_rule_likelihood l on l.strategy_id = ? and l.rule_id = p.rule_id
+        group by p.rule_id""", [period, strategy, period, strategy])}

@@ -10,6 +10,7 @@ select
     0.0                                       as amount,
     inflow_ramp_ratio                         as score,
     true                                      as escalation_eligible,
+    json_object('event_type', event_type, 'inflow_last_30d', inflow_last_30d, 'baseline_monthly_inflow_31_120d', baseline_monthly_inflow_31_120d, 'share_last_30d_from_new_payers', share_last_30d_from_new_payers) as evidence,
     printf('%s: $%,.0f in last 30 days vs $%,.0f/month before; %.0f%% of it from payers new in 60 days', event_type,
            inflow_last_30d, baseline_monthly_inflow_31_120d, 100 * coalesce(share_last_30d_from_new_payers, 0)) as detail
 from {{ ref('feat_credit_events') }}

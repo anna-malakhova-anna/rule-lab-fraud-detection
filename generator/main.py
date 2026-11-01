@@ -18,10 +18,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from generator import credit, events, legit
-from generator.common import (CREDIT_EVENT_ID_BASE, DAY, EVENT_SCHEMA, INBOUND, ROOT, TXN_SCHEMA, Calendar, Columns,
-                              load_config, rng_for)
-from generator.typologies import (account_takeover, ach_return_fraud, bec_vendor_change, check_deposit_fraud,
-                                  money_mule, synthetic_shell)
+from generator.common import CREDIT_EVENT_ID_BASE, DAY, EVENT_SCHEMA, INBOUND, ROOT, TXN_SCHEMA, Calendar, Columns, load_config, rng_for
+from generator.typologies import account_takeover, ach_return_fraud, bec_vendor_change, check_deposit_fraud, money_mule, synthetic_shell
 from generator.world import account_rows, build_businesses, build_identities, business_rows
 
 TYPOLOGIES = {"check_deposit_fraud": check_deposit_fraud, "bec_vendor_change": bec_vendor_change,

@@ -14,6 +14,7 @@ select
     -- Only a newly incorporated applicant can be declined; an established business with strong links (usually
     -- the same owner's second business) gets an RFI instead (ADR-015).
     days_incorporated <= {{ rule_param('R6_onboarding_shared_identity', 'young_incorporation_days') }} as escalation_eligible,
+    json_object('most_shared_attributes', most_shared_attributes, 'linked_applications', linked_applications, 'linked_declined_applications', linked_declined_applications, 'days_incorporated', days_incorporated) as evidence,
     printf('shares %s with an earlier applicant; %d linked applications (%d declined); incorporated %d days before applying',
            coalesce(most_shared_attributes, 'nothing'), linked_applications, linked_declined_applications, days_incorporated) as detail
 from {{ ref('feat_applications') }}

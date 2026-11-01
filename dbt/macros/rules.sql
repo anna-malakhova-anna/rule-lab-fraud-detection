@@ -1,6 +1,7 @@
 {#
   Turn a rule's candidates into hits at the champion threshold from config/rules.yaml.
-  Output contract (every rule): rule_id, entity_id, event_time, action, reason, plus context columns.
+  Output contract (every rule): rule_id, entity_id, event_time, action, reason, then reason_code and evidence
+  (a JSON object of the fields behind the hit), plus context columns.
 #}
 {% macro rule_hits(rule_id) -%}
 select
@@ -10,6 +11,8 @@ select
     {{ hit_action('c.score') }} as action,
     printf('%s: %s = %.2f (cutoff %s %s)', c.rule_id, r.score_description, c.score, r.comparator, cast(r.threshold as varchar))
         || coalesce('; ' || c.detail, '') as reason,
+    r.reason_code,
+    c.evidence,
     r.status,
     c.business_id,
     c.txn_type,

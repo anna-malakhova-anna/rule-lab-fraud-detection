@@ -57,8 +57,13 @@ Synthetic data: 12,000 businesses, 10,688,609 transactions, 234 planted fraud ca
   It includes a threshold sweep and a champion/challenger comparison on held-out months.
 - **Monitoring** (`dbt/models/monitoring/`): weekly alarms on returned payments that use no fraud labels.
   This is how the month-12 pattern was found (`docs/investigations/INV-001-ach-debit-returns.md`).
-- **A results site** (`make site`, written to `site/`): overview, trade-off curves, one page per fraud type,
-  monitoring, a limitations page and a glossary.
+- **Risk Ops** (`dbt/models/backtest/ops/`, `scripts/queue_sim.py`): alerts become cases with a priority score.
+  A queue at the team's real capacity shows what working the highest-priority cases first is worth compared with
+  working the oldest first. Each rule has an analyst playbook in `docs/playbooks/`.
+- **A stakeholder pack** (`docs/stakeholder/`): the current recommendation written three ways, for an executive,
+  for the ops team and as an engineering ticket. The numbers are generated and the prose is a draft.
+- **A results site** (`make site`, committed in `site/`): overview, trade-off curves, Risk Ops, one page per
+  fraud type, monitoring, a limitations page and a glossary.
 - **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`: one per phase. Earlier
   phases' numbers are frozen at the commit that produced them.
 

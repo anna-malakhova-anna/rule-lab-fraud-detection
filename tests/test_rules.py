@@ -66,3 +66,12 @@ def test_escalation_only_on_strong_hits(con):
             where rule_id = ? and ((action = ?) <> (score {op} ? and escalation_eligible))""",
             [rid, esc["action"], esc["at"]]).fetchone()[0]
         assert bad == 0, rid
+
+
+def test_reason_codes_are_unique_and_emitted(con):
+    codes = [r["reason_code"] for r in RULES.values()]
+    assert len(codes) == len(set(codes)) and all(re.fullmatch(r"[A-Z][A-Z0-9_]+", c) for c in codes)
+    missing = con.execute("""
+        select rule_id, count(*) from rules.rule_hits
+        where reason_code is null or evidence is null or json_type(evidence) <> 'OBJECT' group by 1""").fetchall()
+    assert missing == []

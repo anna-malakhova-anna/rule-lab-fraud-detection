@@ -1,4 +1,4 @@
-"""Regenerate the numbers blocks in README.md and the memo draft from the warehouse.
+"""Regenerate the numbers blocks in every generated document (README, memo, playbooks, stakeholder pack).
 
   uv run python -m scripts.render_results           # rewrite the blocks
   uv run python -m scripts.render_results --check   # exit 1 if a block is out of date (used by the tests)
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 
 from scripts import results as R
 from scripts.common import ROOT
@@ -111,14 +112,26 @@ def replace_block(text: str, name: str, body: str) -> str:
     return pattern.sub(lambda m: m.group(1) + body + "\n" + m.group(2), text)
 
 
-def render() -> dict:
-    out = {README: replace_block(README.read_text(), "results", readme_block())}
-    blocks = memo_blocks()
-    for path in (MEMO,):
+def documents() -> dict[Path, dict[str, str]]:
+    """Every generated document: path -> {block name: generated markdown}. Each file is hand-written except
+    between its markers; a marker without a block, or a block without a marker, is an error."""
+    from scripts import docs_playbooks, docs_stakeholder
+
+    docs = {README: {"results": readme_block()}, MEMO: memo_blocks()}
+    docs.update(docs_playbooks.documents())
+    docs.update(docs_stakeholder.documents())
+    return docs
+
+
+def render() -> dict[Path, str]:
+    out = {}
+    for path, blocks in documents().items():
         text = path.read_text()
+        markers = set(re.findall(r"<!-- ([a-z0-9-]+):start -->", text))
+        if markers != set(blocks):
+            raise SystemExit(f"{path.relative_to(ROOT)}: markers {sorted(markers)} != generated blocks {sorted(blocks)}")
         for name, body in blocks.items():
-            if f"<!-- {name}:start -->" in text:
-                text = replace_block(text, name, body)
+            text = replace_block(text, name, body)
         out[path] = text
     return out
 

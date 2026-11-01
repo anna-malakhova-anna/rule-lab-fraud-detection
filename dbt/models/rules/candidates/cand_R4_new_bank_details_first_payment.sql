@@ -9,6 +9,7 @@ select
     amount,
     days_since_bank_details_change            as score,
     true                                      as escalation_eligible,
+    json_object('days_since_bank_details_change', days_since_bank_details_change, 'amount', amount, 'payee_median_last6', payee_median_last6) as evidence,
     printf('first payment to details changed %.1f days ago; $%,.0f (usual $%,.0f)', days_since_bank_details_change,
            amount, coalesce(payee_median_last6, 0)) as detail
 from {{ ref('feat_outbound_payments') }}

@@ -23,6 +23,7 @@ select
     amount,
     amount / nullif(reference_monthly_inflow, 0) as score,
     true                                      as escalation_eligible,
+    json_object('amount', amount, 'reference_monthly_inflow', reference_monthly_inflow, 'uses_stated_revenue', uses_stated_revenue) as evidence,
     printf('$%,.0f check vs $%,.0f/month %s', amount, reference_monthly_inflow,
            case when uses_stated_revenue then 'stated revenue' else 'trailing inflow' end) as detail
 from scored

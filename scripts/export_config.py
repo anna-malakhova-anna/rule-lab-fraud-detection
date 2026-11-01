@@ -32,12 +32,16 @@ def main() -> None:
     _write("cfg_window", ["window_start", "train_end", "window_end", "reviews_capacity_per_day", "bank_name"], [[
         start, add_months(start, w["train_months"]), add_months(start, w["months"]),
         cap["analysts"] * cap["reviews_per_analyst_day"], gen["bank_name"]]])
+    ops = bt["ops"]
+    flat = {f"review_window_{k}": v for k, v in ops["review_window_business_days"].items()}
+    flat.update({k: v for k, v in ops.items() if k != "review_window_business_days"})
+    _write("cfg_ops", ["param", "value"], [[k, v] for k, v in flat.items()])
     mon = bt["monitoring"]
     _write("cfg_monitoring", ["baseline_weeks", "sigma", "min_count", "investigation_business_days", "precision_maturity_days"],
            [[mon["baseline_weeks"], mon["sigma"], mon["min_count"], mon["investigation_business_days"], mon["precision_maturity_days"]]])
-    _write("cfg_rules", ["rule_id", "status", "tune", "effective_from_alarm", "action", "escalate_action", "escalate_at",
-                         "comparator", "threshold", "score_description", "rationale"],
-           [[rid, r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"],
+    _write("cfg_rules", ["rule_id", "reason_code", "status", "tune", "effective_from_alarm", "action", "escalate_action",
+                         "escalate_at", "comparator", "threshold", "score_description", "rationale"],
+           [[rid, r["reason_code"], r["status"], bool(r.get("tune", False)), r.get("effective_from_alarm", ""), r["action"],
              r.get("escalate", {}).get("action", ""), r.get("escalate", {}).get("at", ""),
              r["comparator"], r["threshold"], r["score"], r["rationale"]] for rid, r in rules["rules"].items()])
     _write("cfg_rule_params", ["rule_id", "param", "value"],

@@ -11,11 +11,14 @@
 #           investigation time, not from day one (ADR-014).
 # escalate   optional stronger action for strong hits: {action, at}. A hit whose score also passes `at`, and that
 #           its candidate model marks escalation_eligible, gets that action instead of the rule's own (ADR-015).
+# reason_code  a stable code for queues, playbooks and reporting; `reason` is the human-readable text and
+#           `evidence` (a JSON object built by each candidate model) the fields an analyst or summary can cite.
 # A rule fires when score <comparator> cutoff and every gate passes.
 
 rules:
   R1_check_then_fast_out:
     status: champion
+    reason_code: CHK_OUT_FAST
     rationale: Money leaving within hours of check deposits that have not had time to clear is how deposit fraud turns into loss.
     applies_to: outbound ACH and wire payments (payroll excluded, ADR-009)
     score: share of the last 72 hours of check deposits that left in the last 48 hours on top of a normal week of the account's spending
@@ -28,6 +31,7 @@ rules:
 
   R2_check_vs_own_baseline:
     status: champion
+    reason_code: CHK_ABOVE_BASELINE
     rationale: A single check worth more than the account normally takes in over a month is out of character for that account.
     applies_to: mobile check deposits
     score: deposit amount / the account's trailing 90-day average monthly inflow (stated revenue when history is under 30 days)
@@ -41,6 +45,7 @@ rules:
 
   R3_many_new_check_payers:
     status: champion
+    reason_code: CHK_NEW_PAYERS
     rationale: Checks from many payers the business has never been paid by before, compared with what is normal for its industry.
     applies_to: mobile check deposits
     score: industry z-score of distinct first-time check payers in the last 7 days
@@ -53,6 +58,7 @@ rules:
 
   R4_new_bank_details_first_payment:
     status: champion
+    reason_code: PAYEE_DETAILS_CHANGED
     rationale: The first payment to a known payee's newly changed bank details is the moment a vendor-impersonation scam pays out.
     applies_to: outbound payments to vendors and other payees
     score: days since the payee's bank details were changed
@@ -65,6 +71,7 @@ rules:
 
   R5_payee_amount_out_of_pattern:
     status: champion
+    reason_code: PAYEE_AMOUNT_OUTLIER
     rationale: A payment far above what this business usually pays this payee suggests an altered or fake invoice.
     applies_to: outbound payments to payees with at least 3 earlier payments
     score: amount / median of the last 6 payments to the same payee
@@ -78,6 +85,7 @@ rules:
 
   R6_onboarding_shared_identity:
     status: champion
+    reason_code: APP_SHARED_IDENTITY
     rationale: Applicants who share a device, phone, address or business email domain with earlier applicants, and are freshly incorporated, look like a ring of synthetic businesses.
     applies_to: approved applications, before the account opens
     score: most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days
@@ -91,6 +99,7 @@ rules:
 
   R7_mule_fan_in_sweep:
     status: champion
+    reason_code: MULE_FAN_IN
     rationale: Many first-time senders paying in, and most of it paid straight back out, is how a mule account moves scam proceeds.
     applies_to: outbound ACH and wire payments
     score: distinct first-time senders of ACH or wire payments in the last 14 days
@@ -104,6 +113,7 @@ rules:
 
   R8_ato_new_device_sequence:
     status: champion
+    reason_code: ATO_SEQUENCE
     rationale: A new device, then a change to the email or phone on file, then a first payment to a payee added after that login, is the account-takeover sequence.
     applies_to: first payments to a payee
     score: hours since the first login from a device never seen on this account
@@ -116,6 +126,7 @@ rules:
 
   R9_ach_pull_then_fast_out:
     status: champion                 # written after the month-12 alarm (ADR-014, INV-001); shipped in Phase 2
+    reason_code: ACH_DEBIT_OUT_FAST
     rationale: Money pulled in by ACH debit and paid straight back out, above normal spending, is R1's pattern on a rail R1 never watched.
     applies_to: outbound ACH and wire payments (payroll excluded)
     score: share of the last 5 days of ACH debits pulled in that left in the last 48 hours on top of a normal week of the account's spending
@@ -129,6 +140,7 @@ rules:
   # ---- Phase 3: the line of credit (ADR-016) ----
   R10_credit_inflow_ramp:
     status: challenger
+    reason_code: CREDIT_INFLOW_RAMP
     tune: true
     rationale: A line opening or limit increase asked for right after inflows jumped above the account's own history is how a bust-out earns a bigger line.
     applies_to: line openings and limit-increase requests
@@ -142,6 +154,7 @@ rules:
 
   R11_draw_then_fast_out:
     status: challenger
+    reason_code: CREDIT_DRAW_OUT_FAST
     tune: true
     rationale: Money drawn on the line and sent straight back out, above normal spending, is the moment a bust-out cashes out.
     applies_to: outbound ACH and wire payments (payroll excluded)
@@ -155,6 +168,7 @@ rules:
 
   R12_full_draw_after_increase:
     status: challenger
+    reason_code: CREDIT_FULL_DRAW
     tune: true
     rationale: Drawing the line to its limit days after it was raised is the bust-out's signature.
     applies_to: draws on the line of credit

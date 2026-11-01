@@ -23,3 +23,8 @@
               and {{ passes(score, r ~ '.comparator', r ~ '.escalate_at') }}
          then {{ r }}.escalate_action else {{ r }}.action end
 {%- endmacro %}
+
+{# A Risk Ops setting from config/backtest.yaml `ops` (exported to seed cfg_ops). #}
+{% macro ops_param(name) -%}
+    (select value from {{ ref('cfg_ops') }} where param = '{{ name }}')
+{%- endmacro %}

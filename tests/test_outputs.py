@@ -9,8 +9,8 @@ def test_readme_and_memo_match_warehouse(con):
         assert path.read_text() == text, f"{path.name} is stale: run `make results`"
 
 
-def test_memos_are_marked_draft():
-    for p in (ROOT / "docs" / "memo").glob("*.md"):
+def test_memos_and_stakeholder_pack_are_marked_draft():
+    for p in list((ROOT / "docs" / "memo").glob("*.md")) + list((ROOT / "docs" / "stakeholder").glob("*.md")):
         assert "DRAFT" in p.read_text().splitlines()[0], p.name
 
 
@@ -44,7 +44,7 @@ def test_no_real_company_or_personal_context_in_repo():
 
 
 def test_site_has_every_page():
-    for page in ("index", "tradeoffs", "types", "monitoring", "limitations", "glossary"):
+    for page in ("index", "tradeoffs", "riskops", "types", "monitoring", "limitations", "glossary"):
         assert (ROOT / "site" / f"{page}.html").exists(), page
     assert len(list((ROOT / "site" / "types").glob("*.html"))) == 7
 
@@ -52,3 +52,30 @@ def test_site_has_every_page():
 def test_duckdb_pinned_below_2():
     import duckdb
     assert int(duckdb.__version__.split(".")[0]) < 2, "see ADR-017"
+
+
+def test_committed_site_matches_a_fresh_build(con, tmp_path):
+    """The site is committed and deployed from the repo, so it must never drift from the code and warehouse."""
+    from scripts import build_site
+    build_site.build(tmp_path)
+    fresh = {p.relative_to(tmp_path): p.read_text() for p in tmp_path.rglob("*.html")}
+    committed = {p.relative_to(ROOT / "site"): p.read_text() for p in (ROOT / "site").rglob("*.html")}
+    assert fresh.keys() == committed.keys()
+    stale = [str(k) for k in fresh if fresh[k] != committed[k]]
+    assert not stale, f"site is stale ({stale[:3]}...): run `make site` and commit site/"
+
+
+def test_every_rule_has_a_playbook_with_its_reason_code():
+    from scripts.common import load_yaml
+    for rid, rule in load_yaml("rules.yaml")["rules"].items():
+        page = ROOT / "docs" / "playbooks" / f"{rid}.md"
+        assert page.exists(), rid
+        text = page.read_text()
+        assert rule["reason_code"] in text
+        for section in ("## What to check", "## What clears the case", "## What escalates it", "## What to ask the customer"):
+            assert section in text, (rid, section)
+
+
+def test_stakeholder_pack_has_all_three_documents():
+    names = {p.name for p in (ROOT / "docs" / "stakeholder").glob("*.md")}
+    assert names == {"exec-one-pager-DRAFT.md", "ops-brief-DRAFT.md", "eng-ticket-DRAFT.md"}

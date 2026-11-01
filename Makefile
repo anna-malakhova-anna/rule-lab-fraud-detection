@@ -1,4 +1,4 @@
-.PHONY: all setup generate load config build backtest test site results isolation clean
+.PHONY: all setup generate load config build backtest test site results isolation lint clean
 
 PY  := uv run python
 DBT := cd dbt && uv run dbt
@@ -26,9 +26,11 @@ build: config
 	$(DBT) run --profiles-dir . --exclude path:models/backtest
 	$(DBT) run --profiles-dir . --select path:models/backtest
 
-# Threshold sweep and champion/challenger are dbt models (built above); this adds bootstrap ranges.
+# Threshold sweep and champion/challenger are dbt models (built above); this adds bootstrap ranges and the
+# Risk Ops queue simulation (module A).
 backtest:
 	$(PY) -m scripts.bootstrap
+	$(PY) -m scripts.queue_sim
 
 # README results table and the memo's numbers table, regenerated from the warehouse.
 results:
@@ -42,7 +44,10 @@ isolation:
 	$(DBT) parse --profiles-dir .
 	$(PY) -m scripts.check_answer_key_isolation
 
-test: isolation
+lint:
+	uv run ruff check generator loader scripts tests
+
+test: lint isolation
 	$(DBT) test --profiles-dir .
 	uv run pytest -q
 

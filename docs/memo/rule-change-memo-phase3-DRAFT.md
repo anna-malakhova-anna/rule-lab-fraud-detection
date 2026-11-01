@@ -73,7 +73,7 @@
 | R9 ACH debit money out fast | hold | >= 0.4 | >= 0.4 |
 | R10 Inflows ramped before a credit decision | rfi | not running | >= 3 (tuned) |
 | R11 Credit draw money out fast | hold | not running | >= 0.3 (tuned) |
-| R12 Line drawn to limit soon after increase | hold | not running | <= 60 (tuned) |
+| R12 Line drawn to limit soon after increase | hold | not running | <= 14 (tuned) |
 <!-- memo-thresholds:end -->
 
 <!-- memo-rules:start -->
@@ -111,7 +111,7 @@ Review capacity: 90 reviews per business day. Days over capacity in the test mon
 |---|---|---|---|---|---|---|
 | R10 Inflows ramped before a credit decision | 3 | 120 of 154 | $380K | $753K | 13.5% | 28.4% |
 | R11 Credit draw money out fast | 0.3 | 120 of 154 | $507K | $1.24M | 4.5% | 9.9% |
-| R12 Line drawn to limit soon after increase | 60 | 120 of 154 | $527K | $1.25M | 42.9% | 100.0% |
+| R12 Line drawn to limit soon after increase | 14 | 120 of 154 | $527K | $1.25M | 42.9% | 100.0% |
 <!-- memo-label-delay:end -->
 
 ### Overlap between rules
