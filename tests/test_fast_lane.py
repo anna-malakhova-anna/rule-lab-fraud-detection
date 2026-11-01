@@ -54,3 +54,10 @@ def test_never_declining_declines_nobody(con):
         select count(*) from backtest.bt_strategy_hits
         where strategy_id = 'decline_at:never' and txn_type = 'application' and action = 'block'""").fetchone()[0]
     assert declined == 0
+
+
+def test_recommended_cap_is_a_swept_cap(con):
+    assert FL["recommended_max_amount"] in FL["max_amount_sweep"]
+    n = con.execute("select count(*) from backtest.bt_strategies where strategy_id = ?",
+                    [f"fast_lane:{FL['recommended_max_amount']}"]).fetchone()[0]
+    assert n == 1

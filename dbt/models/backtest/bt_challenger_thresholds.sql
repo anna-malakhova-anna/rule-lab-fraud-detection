@@ -1,7 +1,8 @@
 -- Challenger cutoffs for the proposed rules (status = challenger, tune = true), chosen on the TRAINING months
 -- with only the labels known by the end of them (ADR-002, ADR-008, ADR-013):
 --   1. drop cutoffs where the rule alone would use more than its share of daily review capacity;
---   2. keep the cutoff with the highest net value (fraud prevented minus stated costs);
+--   2. keep the cutoff with the highest net value (fraud prevented minus stated costs), compared to the cent so
+--      float summation noise between equal results never decides;
 --   3. ties go to the stricter cutoff: fewer alerts, then the cutoff itself (highest for ">=", lowest for "<=")
 --      so the choice never depends on row order.
 -- A rule whose best net value is not positive is left out of the challenger.
@@ -22,7 +23,7 @@ ranked as (
     select
         *,
         row_number() over (partition by rule_id
-                           order by net_value desc, alerts asc,
+                           order by round(net_value, 2) desc, alerts asc,
                                     case comparator when '>=' then -cutoff else cutoff end asc) as rnk
     from eligible
 )

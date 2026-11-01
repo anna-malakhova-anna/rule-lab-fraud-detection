@@ -78,3 +78,11 @@ changes:
      decision: ADR-022, backtest: "bt_vendor_bakeoff"}
   - {date: 2026-10-31, rule_id: V3_registry_vendor, change: added, threshold: 50, action: rfi,
      decision: ADR-022, backtest: "bt_vendor_bakeoff"}
+
+  # Good-customer fast lane: proposed on top of the challenger, not running.
+  - {date: 2026-11-01, rule_id: R1_check_then_fast_out, change: scope,
+     decision: ADR-023, backtest: "fast lane: RFI instead of hold below $10,000 for established, clean businesses; bt_fast_lane_tradeoff (fast_lane:10000)"}
+  - {date: 2026-11-01, rule_id: R2_check_vs_own_baseline, change: scope,
+     decision: ADR-023, backtest: "fast lane: RFI instead of hold below $10,000 for established, clean businesses; bt_fast_lane_tradeoff (fast_lane:10000)"}
+  - {date: 2026-11-01, rule_id: R9_ach_pull_then_fast_out, change: scope,
+     decision: ADR-023, backtest: "fast lane: RFI instead of hold below $10,000 for established, clean businesses; bt_fast_lane_tradeoff (fast_lane:10000)"}

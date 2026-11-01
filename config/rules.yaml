@@ -307,12 +307,16 @@ rules:
 # Fraud let through by established accounts is concentrated in large payments, so the cap is where the trade-off
 # lives. It is swept, not tuned: under the stated costs a hold is priced only by the money it ties up, so net
 # value cannot pick a cap. The result is the fraud let through per hold avoided, the price of a hold to judge.
+# The recommended cap is set by hand below.
 fast_lane:
   min_tenure_days: 365
   clean_days: 180
   soften_to: rfi
   softened_rules: [R1_check_then_fast_out, R2_check_vs_own_baseline, R9_ach_pull_then_fast_out]
   max_amount_sweep: [5000, 10000, 25000, none]
+  # The cap recommended for the fast lane, chosen by judgement (ADR-023): no fraud let through on the training or the
+  # test months. Chosen after seeing the test months, so it is not an out-of-sample result.
+  recommended_max_amount: 10000
 
 # Onboarding approval rate (module E): the R6 score at which an applicant is declined instead of asked for
 # documents, swept on top of the challenger. 3 is today's bar (ADR-015); `never` declines nobody.

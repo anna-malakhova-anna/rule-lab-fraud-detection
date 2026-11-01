@@ -22,7 +22,12 @@ $10,000, $25,000, none). Two reasons it is not chosen automatically:
   established, clean customer is worth is a business decision.
 - The training months show no fraud let through at $25,000; the test months show about $200K. Choosing on the
   training months would have picked the cap that fails out of sample.
-No cap is configured as the recommendation. The `fast_lane:<cap>` rule sets are there to show the curve.
+The `fast_lane:<cap>` rule sets show the whole curve.
+
+**Decision: recommend the $10,000 cap** (`recommended_max_amount`). It lets no fraud through on either the training or
+the test months, while sparing about 1,600 good customers' holds and about 490 good businesses in the test months. It
+was chosen after seeing the test months, so its clean test result is not an out-of-sample confirmation; the next
+quarterly review (ADR-024) is the first honest check. R1, R2 and R9 carry a `scope` entry in the change log for it.
 
 **Onboarding approval rate** (`bt_onboarding_decline_bar`): R6's decline bar swept at 3 (today), 4, 5 and never,
 on top of the challenger. The approval rate counts every application, including those the bank's existing checks

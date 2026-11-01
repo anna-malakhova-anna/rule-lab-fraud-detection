@@ -74,7 +74,7 @@ value cannot choose it. The column to judge is fraud let through per hold avoide
 | Rule set (test months) | Good holds avoided | Customer-hours of waiting saved | Good businesses no longer held | Fraud $ let through | Fraud $ per hold avoided | Net value change |
 |---|---|---|---|---|---|---|
 | Fast lane, below $5,000 | 949 | 45,552 | 248 | $0 | $0 | $2K |
-| Fast lane, below $10,000 | 1,634 | 78,432 | 491 | $0 | $0 | $7K |
+| Fast lane, below $10,000 (recommended) | 1,634 | 78,432 | 491 | $0 | $0 | $7K |
 | Fast lane, below $25,000 | 2,717 | 130,416 | 963 | $222K | $82 | −$197K |
 | Fast lane, any amount | 4,047 | 194,256 | 1,548 | $455K | $112 | −$367K |
 | Clear every alert on fast-lane businesses | 4,444 | 213,312 | 1,851 | $1.99M | $449 | −$1.40M |
@@ -86,14 +86,17 @@ value cannot choose it. The column to judge is fraud let through per hold avoide
 | Rule set (train months) | Good holds avoided | Customer-hours of waiting saved | Good businesses no longer held | Fraud $ let through | Fraud $ per hold avoided | Net value change |
 |---|---|---|---|---|---|---|
 | Fast lane, below $5,000 | 1,494 | 71,712 | 246 | $0 | $0 | $3K |
-| Fast lane, below $10,000 | 2,588 | 124,224 | 551 | $0 | $0 | $11K |
+| Fast lane, below $10,000 (recommended) | 2,588 | 124,224 | 551 | $0 | $0 | $11K |
 | Fast lane, below $25,000 | 4,341 | 208,368 | 1,050 | $0 | $0 | $41K |
 | Fast lane, any amount | 6,421 | 308,208 | 1,664 | $591K | $92 | −$454K |
 | Clear every alert on fast-lane businesses | 7,093 | 340,464 | 2,043 | $3.65M | $515 | −$2.89M |
 <!-- fast-lane-tradeoff-train:end -->
 
-[The training months show no fraud let through at the $25,000 cap; the test months do. Say what that means for
-choosing a cap, and which cap you recommend.]
+Recommendation: the $10,000 cap (ADR-023). It was chosen after seeing the test months, so its clean test result is
+not an independent check.
+
+[The training months show no fraud let through at the $25,000 cap; the test months do. Say why $10,000, and what
+the first quarterly review after launch should look at.]
 
 ### Which fraud gets through
 

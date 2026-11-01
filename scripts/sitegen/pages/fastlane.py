@@ -23,15 +23,16 @@ def fastlane() -> str:
     industries = [[s["segment"].replace("_", " "), f'{s["alerts"]:,}', s["alerts_on_fraud"], R.pct(s["precision"], 1)]
                   for s in R.fast_lane_segments("industry") if s["rule_id"] == "all"]
     trade = {r["strategy_id"]: r for r in R.fast_lane_tradeoff("test")}
-    best = max((r for k, r in trade.items() if k.startswith("fast_lane:") and r["fraud_let_through"] < 0.5),
-               key=lambda r: r["good_holds_avoided"], default=None)
+    rec = trade[R.fast_lane_recommended()]
+    rec_train = {r["strategy_id"]: r for r in R.fast_lane_tradeoff("train")}[R.fast_lane_recommended()]
     typ = [[R.fast_lane_label(r["strategy_id"]), R.TYPOLOGY_LABELS[r["typology"]], R.usd(r["fraud_let_through"])]
            for r in R.fast_lane_typologies() if r["fraud_let_through"] > 0.5]
     bars = [["never" if r["decline_at"] is None else f'{r["decline_at"]:g}' + (" (today)" if r["strategy_id"] == "decline_at:3" else ""),
              r["declined_by_r6"], r["good_applicants_declined"], r["fraud_applicants_declined"], R.pct(r["approval_rate"], 1),
              R.usd(r["fraud_let_through_vs_today"])] for r in R.decline_bar()]
-    best_tile = (f'<div class="stat"><b>{best["good_holds_avoided"]:,}</b><span>good customers\' holds avoided with no fraud let '
-                 f'through ({R.fast_lane_label(best["strategy_id"]).lower()}, test months)</span></div>') if best else ""
+    cap = f'${fl["recommended_max_amount"]:,}'
+    rec_tile = (f'<div class="stat"><b>{rec["good_holds_avoided"]:,}</b><span>good customers\' holds avoided at the recommended '
+                f'{cap} cap, with {R.usd(rec["fraud_let_through"])} of fraud let through (test months)</span></div>')
     return f"""{page_title("Fast lane", "Less friction for established, clean customers")}
 {catbar([("#where", "Where alerts are false"), ("#tradeoff", "The trade-off"), ("#through", "What gets through"), ("#onboarding", "Onboarding")])}
 <p>A business is in the fast lane while it has been open at least {fl["min_tenure_days"]} days and has had no returned
@@ -41,7 +42,7 @@ below a cap. Rules that protect a victim, and the credit rules, keep their actio
 exactly who takeovers, payment redirection and bust-outs target.</p>
 <div class="stats">
 <div class="stat"><b>{R.pct(est["precision"], 1)}</b><span>of alerts on established, clean businesses were fraud (training months), against {R.pct(rest["precision"], 1)} for everyone else</span></div>
-{best_tile}
+{rec_tile}
 <div class="stat"><b>{R.usd(trade["fast_lane_clear_all"]["fraud_let_through"])}</b><span>let through if every alert on them were simply cleared</span></div>
 </div>
 
@@ -54,6 +55,10 @@ exactly who takeovers, payment redirection and bust-outs target.</p>
 <p>The cap is swept, not tuned. Under the stated costs a hold is priced only by the money it ties up, so net value
 can't choose it; the number to judge is the fraud let through for each hold avoided. The training months would have
 pointed to a higher cap than the test months support.</p>
+<p><b>Recommendation: a {cap} cap.</b> It let {R.usd(rec_train["fraud_let_through"])} of fraud through in the training months
+and {R.usd(rec["fraud_let_through"])} in the test months, and spares {rec["good_businesses_no_longer_held"]:,} good businesses a hold.
+It was chosen after seeing the test months, so that clean result isn't an independent check; the first quarterly review
+after it ships is.</p>
 <div class="card">{table(["Test months", "Good holds avoided", "Customer-hours saved", "Good businesses no longer held",
                          "Fraud $ let through", "Fraud $ per hold avoided"], _tradeoff("test"), {1, 2, 3, 4, 5})}</div>
 <details><summary>The same on the training months</summary>

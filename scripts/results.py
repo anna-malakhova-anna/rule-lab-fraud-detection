@@ -3,7 +3,7 @@ functions, so a number cannot drift between them.
 """
 from __future__ import annotations
 
-from scripts.common import connect
+from scripts.common import connect, load_yaml
 
 RULE_LABELS = {
     "R1_check_then_fast_out": "R1 Check money out fast",
@@ -392,7 +392,15 @@ def fast_lane_label(strategy_id: str) -> str:
     if strategy_id == "fast_lane_clear_all":
         return "Clear every alert on fast-lane businesses"
     cap = strategy_id.split(":", 1)[1]
-    return "Fast lane, any amount" if cap == "none" else f"Fast lane, below ${int(cap):,}"
+    if cap == "none":
+        return "Fast lane, any amount"
+    recommended = int(cap) == load_yaml("rules.yaml")["fast_lane"]["recommended_max_amount"]
+    return f"Fast lane, below ${int(cap):,}" + (" (recommended)" if recommended else "")
+
+
+def fast_lane_recommended() -> str:
+    """The strategy_id of the recommended fast-lane cap (config fast_lane.recommended_max_amount)."""
+    return f"fast_lane:{load_yaml('rules.yaml')['fast_lane']['recommended_max_amount']}"
 
 
 def fast_lane_tradeoff(period: str = "test") -> list[dict]:
