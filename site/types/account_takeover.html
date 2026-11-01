@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account takeover · SMB Fraud Rule Lab</title>
+<style>
+/* Palette: slate #4C5C8A and its undertones for the page; a slightly more saturated slate and an amber for chart
+   marks (validated with the dataviz palette checker in both modes). */
+:root {
+  color-scheme: light;
+  --page: #F7F5EF; --surface: #FFFFFF; --header: #FBFAF6; --tint: #E7EAF4; --tint-2: #F0F2F8;
+  --ink: #161A26; --ink-2: #4A4F5E; --muted: #8A8D97;
+  --brand: #4C5C8A; --brand-deep: #2E3858; --brand-soft: #7F8DBA; --brand-wash: #D9DEEF;
+  --hero-a: #1B2030; --hero-b: #2E3858; --hero-c: #4C5C8A; --hero-ink: #F4F1E8;
+  --grid: #E3E1DA; --axis: #C6C4BB; --border: rgba(22,26,38,0.10);
+  --series-1: #4560AE; --series-2: #C26E1A; --banner: #E7EAF4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+    --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+    --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+    --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+    --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+    --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #12151F; --surface: #1C2030; --header: #161A26; --tint: #262C42; --tint-2: #1F2436;
+  --ink: #EEF0F6; --ink-2: #C3C7D4; --muted: #8E93A3;
+  --brand: #9AA8D6; --brand-deep: #C9D1EE; --brand-soft: #7F8DBA; --brand-wash: #2E3858;
+  --hero-a: #0E1018; --hero-b: #1F2640; --hero-c: #3A4770; --hero-ink: #F4F1E8;
+  --grid: #2A2F40; --axis: #3A4054; --border: rgba(255,255,255,0.10);
+  --series-1: #6F84D2; --series-2: #C98236; --banner: #262C42;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--brand); }
+.display, .hero h1, .stat b { font-family: "Avenir Next Condensed", "Helvetica Neue", "Arial Narrow", system-ui, sans-serif;
+  font-stretch: condensed; font-weight: 800; letter-spacing: -0.01em; }
+.serif { font-family: "Iowan Old Style", Charter, Georgia, serif; }
+
+/* Header: light bar, wordmark, links, two pill buttons */
+.topbar { background: var(--header); border-bottom: 1px solid var(--border); }
+.topbar-in { max-width: 1160px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+/* Same family as the headlines, but the regular (wider, rounder) width instead of the condensed cut. */
+.wordmark { font-family: "Avenir Next", "Helvetica Neue", "Arial", system-ui, sans-serif; font-stretch: expanded;
+  font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--brand); text-decoration: none;
+  letter-spacing: 0.04em; line-height: 1; }
+.links { display: flex; gap: 22px; flex-wrap: wrap; }
+.links a { color: var(--ink); text-decoration: none; font-size: 16px; }
+.links a:hover, .links a[aria-current] { color: var(--brand); text-decoration: underline; text-underline-offset: 6px; }
+.pills { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-block; padding: 9px 20px; border-radius: 999px; font-size: 15px; text-decoration: none;
+  border: 1.5px solid var(--brand); color: var(--brand); white-space: nowrap; }
+.pill.solid { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--hero-ink); }
+
+.banner { background: var(--banner); color: var(--ink); font-size: 14px; }
+.banner-in { max-width: 1160px; margin: 0 auto; padding: 10px 16px; }
+
+main { max-width: 1160px; margin: 0 auto; padding: 8px 16px 64px; }
+
+/* Page titles: very large, uppercase, condensed, slate gradient */
+.title { text-align: center; padding: 40px 0 8px; }
+.display { font-size: clamp(44px, 9vw, 112px); line-height: 0.92; text-transform: uppercase; margin: 0;
+  background: linear-gradient(90deg, var(--brand-soft), var(--brand) 55%, var(--brand-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { font-size: clamp(20px, 3vw, 30px); font-weight: 700; color: var(--brand-deep); margin: 14px auto 0; max-width: none; }
+
+/* Category bar: serif links between two rules */
+.catbar { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); margin: 28px 0 32px; padding: 16px 8px;
+  text-align: center; font-family: "Iowan Old Style", Charter, Georgia, serif; font-size: 19px; line-height: 2; }
+.catbar a { color: var(--brand-deep); text-decoration: none; white-space: nowrap; }
+.catbar a:hover { text-decoration: underline; }
+.catbar .sep { color: var(--muted); padding: 0 10px; }
+
+/* Overview hero: dark slate gradient band */
+.hero { background: linear-gradient(170deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%); color: var(--hero-ink);
+  border-radius: 0 0 24px 24px; margin: 0 -16px 8px; padding: 48px 32px 40px; }
+.hero h1 { font-size: clamp(40px, 7vw, 84px); line-height: 0.95; text-transform: uppercase; margin: 0 0 18px; max-width: 17ch; }
+.hero p { color: var(--hero-ink); opacity: 0.88; font-size: 18px; max-width: 62ch; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 32px; }
+.feature { display: flex; gap: 14px; align-items: flex-start; }
+.feature .icon { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-wash); color: var(--brand-deep);
+  display: grid; place-items: center; }
+:root[data-theme="dark"] .feature .icon { color: var(--hero-ink); }
+.feature b { display: block; font-size: 22px; line-height: 1.15; }
+.feature span { font-size: 14px; opacity: 0.8; }
+
+h2 { font-size: 26px; line-height: 1.2; margin: 52px 0 10px; color: var(--ink); }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p, li { color: var(--ink-2); max-width: 74ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.card.tint { background: var(--tint); }
+.chip { display: inline-block; border: 1.5px solid var(--brand); color: var(--brand-deep); border-radius: 8px; padding: 3px 12px;
+  font-size: 14px; margin-bottom: 12px; }
+.typecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.typecard { background: var(--tint); border-radius: 16px; padding: 22px; text-decoration: none; display: block; }
+.typecard h3 { font-size: 26px; line-height: 1.15; color: var(--ink); font-weight: 600; margin: 0 0 8px; }
+.typecard p { margin: 0; color: var(--ink-2); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat { background: var(--tint); border-radius: 16px; padding: 18px; }
+.stat b { display: block; font-size: 44px; line-height: 1; color: var(--brand-deep); }
+.stat span { font-size: 14px; color: var(--ink-2); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg .lbl { fill: var(--ink-2); }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg text.strong, svg text.lbl { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; flex-wrap: wrap; }
+.key { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+details { margin-top: 8px; font-size: 14px; }
+summary { cursor: pointer; color: var(--ink-2); }
+.src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
+@media (max-width: 640px) {
+  .topbar-in { gap: 12px; } .pills { display: none; } dl { grid-template-columns: 1fr; }
+  .catbar { font-size: 17px; line-height: 1.5; } .catbar .sep { display: none; }
+  .catbar a { display: inline-block; margin: 4px 10px; }
+  .hero { padding: 32px 18px 28px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+<a class="wordmark" href="../index.html">Rule Lab</a>
+<nav class="links"><a href="../tradeoffs.html">Trade-offs</a><a href="../types.html">Fraud types</a><a href="../monitoring.html">Monitoring</a><a href="../limitations.html">How sure are we</a><a href="../glossary.html">Glossary</a></nav>
+<div class="pills"><a class="pill" href="../limitations.html">How sure are we</a><a class="pill solid" href="../types.html">Fraud types</a></div>
+</div></header>
+<div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
+12,000 businesses and 10,688,609 transactions. The 234 fraud cases were planted with an answer key.
+No number here is a real-world fraud rate.</div></div>
+<main>
+<div class="title"><h1 class="display">Account takeover</h1><p class="subtitle">Account usage</p></div>
+<nav class="catbar"><a href="check_deposit_fraud.html">Check deposit fraud</a> <span class="sep">|</span> <a href="bec_vendor_change.html">Vendor bank-detail change (BEC)</a> <span class="sep">|</span> <a href="synthetic_shell.html">Synthetic / shell businesses</a> <span class="sep">|</span> <a href="money_mule.html">Money mules</a> <span class="sep">|</span> <a href="account_takeover.html">Account takeover</a> <span class="sep">|</span> <a href="ach_return_fraud.html">ACH return fraud (emerging, month 12)</a> <span class="sep">|</span> <a href="credit_bust_out.html">Credit bust-out</a></nav>
+<div class="card tint"><span class="chip">Account usage</span><p style="margin:0">A login from a new device, a change to the email or phone on file, a new payee, and payouts, all within hours. The owner notices days later.</p></div>
+<h2>Outcomes</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Period</th><th class="n">Cases</th><th class="n">Detected: champion</th><th class="n">Detected: challenger</th><th class="n">Loss at stake</th><th class="n">Prevented: champion</th><th class="n">Prevented: challenger</th></tr></thead><tbody><tr><td class="">test months</td><td class="n">8</td><td class="n">8</td><td class="n">8</td><td class="n">$253K</td><td class="n">$253K</td><td class="n">$253K</td></tr><tr><td class="">train months</td><td class="n">22</td><td class="n">22</td><td class="n">22</td><td class="n">$956K</td><td class="n">$956K</td><td class="n">$956K</td></tr></tbody></table></div></div>
+<h2>Rules that touched these cases (challenger)</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Rule</th><th class="n">Test cases</th><th class="n">Training cases</th></tr></thead><tbody><tr><td class="">R8 New device, contact change, new payee</td><td class="n">8</td><td class="n">22</td></tr><tr><td class="">R1 Check money out fast</td><td class="n">1</td><td class="n">2</td></tr></tbody></table></div></div>
+<h2>By variant (challenger, test months)</h2>
+<div class="card"><div class="table-wrap"><table><thead><tr><th class="">Variant</th><th class="n">Cases</th><th class="n">Detected</th><th class="n">Loss at stake</th><th class="n">Prevented</th><th class="n">Median hours to first alert</th></tr></thead><tbody><tr><td class="">email and phone</td><td class="n">3</td><td class="n">3</td><td class="n">$88K</td><td class="n">$88K</td><td class="n">4.7</td></tr><tr><td class="">email only</td><td class="n">5</td><td class="n">5</td><td class="n">$165K</td><td class="n">$165K</td><td class="n">4.1</td></tr></tbody></table></div></div>
+
+</main>
+<footer><p class="src">Built 2026-10-31 from the warehouse by scripts/build_site.py. Synthetic data, seed 42.</p></footer>
+</body>
+</html>

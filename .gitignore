@@ -20,8 +20,7 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
-# Generated site
-site/
+# The built results site (site/) IS committed so it can be browsed on GitHub; rebuild with `make site`.
 
 # Working briefs (local only)
 HANDOVER.md
