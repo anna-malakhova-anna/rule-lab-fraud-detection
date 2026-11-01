@@ -10,6 +10,9 @@ sources:
       - name: events
       - name: credit_lines
       - name: credit_line_events
+      - name: vendor_tallowmere
+      - name: vendor_quenchwire
+      - name: vendor_larchstone
       - name: accounts
       - name: payees
       - name: payee_events

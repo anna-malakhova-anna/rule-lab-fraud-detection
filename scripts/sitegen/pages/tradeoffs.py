@@ -9,7 +9,8 @@ from scripts.sitegen.components import catbar, page_title, table
 def tradeoffs() -> str:
     w = R.window()
     sweep = R.sweep("train")
-    panels = "".join(tradeoff_panel(rid, [p for p in sweep if p["rule_id"] == rid]) for rid in R.RULE_LABELS)
+    # Launch controls stop nothing on their own and vendors have their own page: curves for the rule sets' rules.
+    panels = "".join(tradeoff_panel(r["rule_id"], [p for p in sweep if p["rule_id"] == r["rule_id"]]) for r in R.rule_set_rules())
     overlap = [[R.RULE_LABELS[o["rule_id"]], o["cases_detected"], o["cases_only_this_rule"]]
                for o in R.overlap("challenger") if o["period"] == "test"]
     harm = [[h["archetype"].replace("_", " "), f'{h["good_alerts"]:,}', R.usd(h["dollar_days"])] for h in R.harm_by_archetype("challenger")]

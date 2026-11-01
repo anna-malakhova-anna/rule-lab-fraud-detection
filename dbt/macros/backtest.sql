@@ -20,9 +20,12 @@ with deduped as (
         any_value(h.txn_type)                           as txn_type,
         any_value(h.amount)                             as amount,
         arg_max(h.action, a.severity)                   as action,
-        string_agg(h.rule_id, ',' order by h.rule_id)   as rules
+        string_agg(h.rule_id, ',' order by h.rule_id)   as rules,
+        -- A launch control turned this instant payout into a standard one (ADR-021).
+        bool_or(r.status = 'launch_control')            as downgraded_by_control
     from {{ hits }} as h
     join {{ ref('cfg_actions') }} as a using (action)
+    join {{ ref('cfg_rules') }} as r using (rule_id)
     group by h.strategy_id, h.txn_id
 )
 
@@ -57,9 +60,15 @@ left join {{ ref('bt_cases') }} as c using (business_id)
 {#
   case_outcomes(graded, strategies): per strategy and case, how much of the loss the strategy prevented.
   A loss transaction is prevented (in proportion to the action's `prevents`) by the strongest action that
-  landed on the same case at or before it. ADR-003.
+  landed on the same case at or before it (ADR-003). An INSTANT payout is gone in seconds, so only an alert
+  strictly before it counts, unless a launch control sent that payout the standard way (ADR-021).
 #}
-{% macro case_outcomes(graded, strategies, label_as_of=none) -%}
+{#
+  loss_credit(graded, strategies, label_as_of): one row per strategy and loss transaction, with the share of it
+  the strategy prevented (`prevents`) and whether it was still instant. case_outcomes aggregates this; the
+  launch review (module C) reads it directly.
+#}
+{% macro loss_credit(graded, strategies, label_as_of=none) -%}
 with loss_txns as (
     -- With label_as_of, only the cases the bank had confirmed by then exist (ADR-013).
     select l.*
@@ -68,20 +77,40 @@ with loss_txns as (
     {% if label_as_of %}where c.label_known_at <= {{ label_as_of }}{% endif %}
 ),
 
-credit as (
+-- Per rule set: is each loss still instant, or did a launch control send it the standard way?
+loss_speed as (
     select
         s.strategy_id,
-        l.case_id,
-        l.txn_id,
-        l.loss_amount,
-        coalesce(max(g.prevents), 0)    as prevents
+        l.*,
+        l.is_instant and not exists (
+            select 1 from {{ graded }} as c
+            where c.strategy_id = s.strategy_id and c.txn_id = l.txn_id and c.downgraded_by_control
+        ) as still_instant
     from {{ strategies }} as s
     cross join loss_txns as l
-    left join {{ graded }} as g
-        on  g.strategy_id = s.strategy_id
-        and g.case_id     = l.case_id
-        and g.event_time <= l.txn_time
-    group by s.strategy_id, l.case_id, l.txn_id, l.loss_amount
+)
+
+select
+    l.strategy_id,
+    l.case_id,
+    l.txn_id,
+    l.txn_time,
+    l.loss_amount,
+    l.is_instant,
+    l.still_instant,
+    coalesce(max(g.prevents), 0)    as prevents
+from loss_speed as l
+left join {{ graded }} as g
+    on  g.strategy_id = l.strategy_id
+    and g.case_id     = l.case_id
+    and (g.event_time < l.txn_time or (g.event_time = l.txn_time and not l.still_instant))
+group by all
+{%- endmacro %}
+
+
+{% macro case_outcomes(graded, strategies, label_as_of=none) -%}
+with credit as (
+    {{ loss_credit(graded, strategies, label_as_of) }}
 ),
 
 first_hit as (

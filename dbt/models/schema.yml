@@ -31,7 +31,8 @@ models:
       - name: action
         data_tests:
           - not_null
-          - accepted_values: {arguments: {values: ['allow', 'rfi', 'hold', 'block']}}
+          # Every action must be one defined in config/backtest.yaml (exported as cfg_actions).
+          - relationships: {arguments: {to: ref('cfg_actions'), field: action}}
       - name: reason
         data_tests: [not_null]
 

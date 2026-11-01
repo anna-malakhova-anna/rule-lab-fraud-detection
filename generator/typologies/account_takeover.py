@@ -30,7 +30,7 @@ def plant(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, txns:
     t_contact = t0 + int(rng.uniform(*t["contact_change_hours"]) * HOUR)
     kinds = ["email_changed"] + (["phone_changed"] if b.fraud_variant == "email_and_phone" else [])
     ev.append(business_id=bid, owner_id=owner, t=[t0] + [t_contact + i * 600 for i in range(len(kinds))],
-              event_type=["login"] + kinds, device_id=[dev] * (1 + len(kinds)))
+              event_type=["login"] + kinds, device_id=[dev] * (1 + len(kinds)), is_fraud=True)
 
     pid = bid * 1000 + 993
     t_payee = t0 + int(rng.uniform(*t["new_payee_hours"]) * HOUR)
@@ -42,7 +42,7 @@ def plant(cfg: dict, cal: Calendar, b: Business, rng: np.random.Generator, txns:
     amt = np.round(total * rng.dirichlet(np.ones(k) * 2), 2)
     txns.append(business_id=bid, account_id=op, t=pay_t, txn_type=np.where(rng.random(k) < 0.6, "wire_out", "ach_out"),
                 amount=amt, payee_id=pid, case_id=case_id, role="loss", loss_amount=amt)
-    ev.append(business_id=bid, owner_id=owner, t=pay_t - 120, event_type="login", device_id=dev)
+    ev.append(business_id=bid, owner_id=owner, t=pay_t - 120, event_type="login", device_id=dev, is_fraud=True)
     t_report = int(pay_t[-1] + rng.uniform(*t["owner_notices_days"]) * DAY)
     return {"case_id": case_id, "business_id": bid, "typology": "account_takeover", "variant": b.fraud_variant,
             "account_is_fraudulent": False, "case_start_t": t0, "case_end_t": t_report,

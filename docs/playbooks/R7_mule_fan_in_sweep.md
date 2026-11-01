@@ -8,8 +8,8 @@
 | Action | hold |
 | Fires when | distinct first-time senders of ACH or wire payments in the last 14 days >= 5 |
 | Why it exists | Many first-time senders paying in, and most of it paid straight back out, is how a mule account moves scam proceeds. |
-| Cases per business day (test months) | 3.7 |
-| Share that were fraud (test months) | 20.0% |
+| Alerts per business day, rule alone (test months) | 5.0 |
+| Share that were fraud (test months) | 20.6% |
 <!-- playbook-facts:end -->
 
 ## What to check

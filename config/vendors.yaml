@@ -1,0 +1,49 @@
+# Module D (ADR-022): three INVENTED external data vendors. Names, prices and accuracy are made up.
+# Each vendor answers at its call points. Its score (0-100) is generated from the planted truth with noise:
+# a vendor knows things the bank doesn't, but imperfectly, and not for everyone (coverage).
+# Commercial terms (cost_per_call, latency_ms) are what the bake-off weighs against the lift.
+
+vendors:
+  tallowmere:
+    name: Tallowmere Device Risk
+    rule_id: V1_device_vendor
+    kind: device risk score
+    call_points: [application, new_device_login]
+    coverage: 0.85
+    latency_ms: 250
+    cost_per_call: 0.05
+    signal: {bad_mean: 78, good_mean: 22, sd: 14}
+    # Devices that sign in to many accounts look risky to a device vendor, even a bookkeeper's.
+    shared_device_bump: 35
+  quenchwire:
+    name: Quenchwire Contact Signals
+    rule_id: V2_contact_vendor
+    kind: email and phone risk score
+    call_points: [application, contact_change]
+    coverage: 0.90
+    latency_ms: 400
+    cost_per_call: 0.10
+    signal: {bad_mean: 70, good_mean: 25, sd: 16}
+    # Brand-new email domains score high: rings use them, and so do some new honest businesses.
+    business_domain_bump: 15
+  larchstone:
+    name: Larchstone Registry Check
+    rule_id: V3_registry_vendor
+    kind: business registry verification (KYB)
+    call_points: [application]
+    coverage: 0.75
+    latency_ms: 2200
+    cost_per_call: 1.50
+    # Result is verified / mismatch / not_found. Shells fail often; honest businesses rarely (registry gaps).
+    fail_rate_bad: 0.60
+    fail_rate_good: 0.03
+
+# Call strategies compared for every vendor (ADR-022).
+call_strategies:
+  always: every call point the vendor supports
+  onboarding_only: applications only
+  risk_gated: only where in-house signals already point at risk (an application sharing identity with an earlier
+    one; a new-device login within 72 hours of a contact change, or the reverse)
+
+# A decision has a time budget: a vendor slower than this can't be used at that point without delaying it.
+latency_budget_ms: {application: 5000, payment: 500}

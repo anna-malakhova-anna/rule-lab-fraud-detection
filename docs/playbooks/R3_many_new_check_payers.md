@@ -8,7 +8,7 @@
 | Action | rfi |
 | Fires when | industry z-score of distinct first-time check payers in the last 7 days >= 5 |
 | Why it exists | Checks from many payers the business has never been paid by before, compared with what is normal for its industry. |
-| Cases per business day (test months) | 6.8 |
+| Alerts per business day, rule alone (test months) | 20.0 |
 | Share that were fraud (test months) | 1.8% |
 <!-- playbook-facts:end -->
 

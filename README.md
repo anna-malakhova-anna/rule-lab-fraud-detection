@@ -14,14 +14,14 @@ I know the truth.
 ## Headline
 
 <!-- results:start -->
-Synthetic data: 12,000 businesses, 10,688,609 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
+Synthetic data: 12,000 businesses, 10,688,674 transactions, 234 planted fraud cases (80 start in the held-out test months, Jan 2026 onward). Ranges are 90% bootstrap ranges over businesses.
 
 | Test months (held out) | Champion | Challenger |
 |---|---|---|
-| Fraud $ prevented (90% range) | $3.86M ($2.84M to $5.02M) | $4.47M ($3.40M to $5.67M) |
-| Share of fraud $ prevented | 80% (72% to 87%) | 92% (88% to 96%) |
+| Fraud $ prevented (90% range) | $3.31M ($2.36M to $4.33M) | $3.86M ($2.89M to $4.94M) |
+| Share of fraud $ prevented | 68% (60% to 76%) | 80% (74% to 85%) |
 | Fraud cases detected | 68 of 80 | 79 of 80 |
-| Alerts that were fraud (precision) | 2.4% | 2.7% |
+| Alerts that were fraud (precision) | 2.6% | 2.9% |
 | Good businesses flagged | 3,670 | 3,826 |
 | Good businesses with money held | 3,039 | 3,195 |
 | Good applicants declined | 1 | 1 |
@@ -62,8 +62,13 @@ Synthetic data: 12,000 businesses, 10,688,609 transactions, 234 planted fraud ca
   working the oldest first. Each rule has an analyst playbook in `docs/playbooks/`.
 - **A stakeholder pack** (`docs/stakeholder/`): the current recommendation written three ways, for an executive,
   for the ops team and as an engineering ticket. The numbers are generated and the prose is a draft.
-- **A results site** (`make site`, committed in `site/`): overview, trade-off curves, Risk Ops, one page per
-  fraud type, monitoring, a limitations page and a glossary.
+- **A pre-launch risk review** (`docs/launch/`): instant payouts simulated from a launch date, with fraudsters
+  adapting to them. It covers which rules stop working when money leaves in seconds, and which launch controls
+  are worth their friction.
+- **A vendor bake-off** (`docs/vendors/`): three invented data vendors, graded on what they add on top of my rules
+  under three call strategies, with a buy / don't-buy line.
+- **A results site** (`make site`, committed in `site/`): overview, trade-off curves, Risk Ops, launch review,
+  vendors, one page per fraud type, monitoring, a limitations page and a glossary.
 - **Decisions** are in `docs/decisions/`. **Draft rule-change memos** are in `docs/memo/`: one per phase. Earlier
   phases' numbers are frozen at the commit that produced them.
 

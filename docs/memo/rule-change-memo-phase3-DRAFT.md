@@ -15,10 +15,10 @@
 <!-- memo-headline:start -->
 | Measure (test months) | Champion (today) | Challenger (proposed) |
 |---|---|---|
-| Fraud $ prevented (90% range) | $3.86M ($2.84M to $5.02M) | $4.47M ($3.40M to $5.67M) |
-| Share of fraud $ prevented | 80% (72% to 87%) | 92% (88% to 96%) |
+| Fraud $ prevented (90% range) | $3.31M ($2.36M to $4.33M) | $3.86M ($2.89M to $4.94M) |
+| Share of fraud $ prevented | 68% (60% to 76%) | 80% (74% to 85%) |
 | Fraud cases detected | 68 of 80 | 79 of 80 |
-| Alerts that were fraud (precision) | 2.4% | 2.7% |
+| Alerts that were fraud (precision) | 2.6% | 2.9% |
 | Good businesses flagged | 3,670 | 3,826 |
 | Good businesses with money held | 3,039 | 3,195 |
 | Good applicants declined | 1 | 1 |
@@ -33,13 +33,13 @@
 <!-- memo-typology:start -->
 | Fraud type (test months) | Cases | Detected: champion | Detected: challenger | Loss at stake | Prevented: champion | Prevented: challenger |
 |---|---|---|---|---|---|---|
-| Check deposit fraud | 10 | 10 | 10 | $991K | $991K | $991K |
-| Vendor bank-detail change (BEC) | 6 | 5 | 5 | $81K | $80K | $80K |
+| Check deposit fraud | 10 | 10 | 10 | $991K | $918K | $918K |
+| Vendor bank-detail change (BEC) | 6 | 5 | 5 | $81K | $76K | $76K |
 | Synthetic / shell businesses | 9 | 9 | 9 | $581K | $581K | $581K |
-| Money mules | 10 | 10 | 10 | $631K | $622K | $622K |
-| Account takeover | 8 | 8 | 8 | $253K | $253K | $253K |
-| ACH return fraud (emerging, month 12) | 22 | 22 | 22 | $1.33M | $1.02M | $1.02M |
-| Credit bust-out | 15 | 4 | 15 | $970K | $321K | $930K |
+| Money mules | 10 | 10 | 10 | $631K | $584K | $584K |
+| Account takeover | 8 | 8 | 8 | $253K | $160K | $160K |
+| ACH return fraud (emerging, month 12) | 22 | 22 | 22 | $1.33M | $670K | $670K |
+| Credit bust-out | 15 | 4 | 15 | $970K | $318K | $875K |
 <!-- memo-typology:end -->
 
 ### Credit losses that are not fraud
@@ -79,17 +79,17 @@
 <!-- memo-rules:start -->
 | Rule alone, challenger cutoff (test months) | Cases touched | Fraud $ prevented | Good businesses flagged | Good applicants declined | Reviews/day |
 |---|---|---|---|---|---|
-| R1 Check money out fast | 29 of 80 | $2.08M | 2,132 | 0 | 29.2 |
+| R1 Check money out fast | 29 of 80 | $1.86M | 2,132 | 0 | 29.2 |
 | R2 Check far above own baseline | 17 of 80 | $1.04M | 1,064 | 0 | 16.5 |
 | R3 Many new check payers | 9 of 80 | $272K | 203 | 0 | 6.8 |
-| R4 First payment to changed bank details | 5 of 80 | $80K | 216 | 0 | 1.8 |
-| R5 Payment far above usual for payee | 12 of 80 | $238K | 958 | 0 | 28.3 |
+| R4 First payment to changed bank details | 5 of 80 | $76K | 216 | 0 | 1.8 |
+| R5 Payment far above usual for payee | 13 of 80 | $222K | 958 | 0 | 28.3 |
 | R6 Applicant shares identity with others | 17 of 80 | $801K | 177 | 1 | 1.5 |
-| R7 Many new senders, swept out | 10 of 80 | $622K | 69 | 0 | 3.7 |
-| R8 New device, contact change, new payee | 8 of 80 | $253K | 0 | 0 | 0.1 |
-| R9 ACH debit money out fast | 23 of 80 | $964K | 277 | 0 | 4.2 |
+| R7 Many new senders, swept out | 10 of 80 | $567K | 69 | 0 | 3.7 |
+| R8 New device, contact change, new payee | 8 of 80 | $160K | 0 | 0 | 0.1 |
+| R9 ACH debit money out fast | 23 of 80 | $527K | 277 | 0 | 4.2 |
 | R10 Inflows ramped before a credit decision | 9 of 80 | $291K | 37 | 0 | 0.4 |
-| R11 Credit draw money out fast | 14 of 80 | $809K | 233 | 0 | 2.4 |
+| R11 Credit draw money out fast | 14 of 80 | $320K | 233 | 0 | 2.4 |
 | R12 Line drawn to limit soon after increase | 15 of 80 | $792K | 0 | 0 | 0.1 |
 <!-- memo-rules:end -->
 
@@ -123,7 +123,7 @@ Review capacity: 90 reviews per business day. Days over capacity in the test mon
 | R2 Check far above own baseline | 17 | 0 |
 | R3 Many new check payers | 9 | 0 |
 | R4 First payment to changed bank details | 5 | 1 |
-| R5 Payment far above usual for payee | 12 | 0 |
+| R5 Payment far above usual for payee | 13 | 0 |
 | R6 Applicant shares identity with others | 17 | 0 |
 | R7 Many new senders, swept out | 10 | 6 |
 | R8 New device, contact change, new payee | 8 | 7 |

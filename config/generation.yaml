@@ -296,3 +296,13 @@ typologies:
     draw_share_of_available: [0.9, 1.0]
     wire_out_hours: [1, 24]
     wire_share: 0.6
+
+# Module C (ADR-021): the bank launches instant payouts. Money leaves in seconds instead of on the next settlement
+# cycle, so an alert on the payout itself is too late to stop it.
+instant_payouts:
+  launch_date: "2026-03-01"
+  per_payout_cap: 25000           # product limit per instant payout
+  legit_adoption: 0.30            # businesses that start using instant payouts
+  legit_share_of_payments: [0.1, 0.5]   # of their eligible vendor/owner payments, once adopted
+  fraud_adoption: 0.85            # fraud cash-outs after launch that switch to instant
+  split_gap_minutes: [2, 20]      # fraudsters split a big cash-out into payouts under the cap

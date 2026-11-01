@@ -291,9 +291,11 @@ def build_identities(cfg: dict, cal: Calendar, businesses: list[Business]) -> tu
             person = {"full_name": f"{first} {last}", "email": f"{first.lower()}.{last.lower()}@{r['domain']}",
                       "phone": r["phones"][rng.integers(2)], "address": r["address"], "device_id": r["devices"][rng.integers(2)]}
             day = anchor - rng.uniform(1, 20)
-            apps.append(_application(None, day * DAY, "declined", names[rng.integers(len(names))],
-                                     round(float(rng.uniform(*t["stated_revenue"])), -2), int(day - rng.uniform(5, 60)),
-                                     STATES[rng.integers(len(STATES))], person, person["address"], person["device_id"]))
+            app = _application(None, day * DAY, "declined", names[rng.integers(len(names))],
+                               round(float(rng.uniform(*t["stated_revenue"])), -2), int(day - rng.uniform(5, 60)),
+                               STATES[rng.integers(len(STATES))], person, person["address"], person["device_id"])
+            app["ring"] = True          # internal truth for external vendors' signals (generator/vendors.py)
+            apps.append(app)
     apps.sort(key=lambda a: (a["applied_t"], a["business_id"] or 0, a["email"]))
     for i, a in enumerate(apps):
         a["application_id"] = APPLICATION_ID_BASE + i + 1
@@ -304,7 +306,7 @@ def _application(bid, applied_t, decision, industry, revenue, inc_day, state, pe
     return {"business_id": bid, "applied_t": int(applied_t), "decision": decision, "industry": industry,
             "stated_monthly_revenue": revenue, "incorporation_day": inc_day, "state": state,
             "applicant_name": person["full_name"], "email": person["email"], "phone": person["phone"],
-            "address": address, "device_id": device}
+            "address": address, "device_id": device, "ring": False}
 
 
 def business_rows(cal: Calendar, businesses: list[Business]) -> list[dict]:

@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | deposit amount / the account's trailing 90-day average monthly inflow (stated revenue when history is under 30 days) >= 0.5 |
 | Why it exists | A single check worth more than the account normally takes in over a month is out of character for that account. |
-| Cases per business day (test months) | 16.5 |
+| Alerts per business day, rule alone (test months) | 16.9 |
 | Share that were fraud (test months) | 1.8% |
 <!-- playbook-facts:end -->
 

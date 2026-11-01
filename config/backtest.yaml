@@ -5,11 +5,14 @@
 # prevents: share of the case's later loss stopped when this action lands on real fraud (ADR-003).
 # hold_days: how long a good customer's money waits when this action lands on them. An RFI asks for
 #   documents without stopping the payment, so it holds nothing.
+# delay: a launch control sends an instant payout the standard way instead (ADR-021). It stops nothing by itself;
+#   it gives the other rules their review window back. Automatic, so no analyst review; the customer waits a day.
 actions:
   allow: {severity: 0, prevents: 0.0, hold_days: 0, review: false}
   rfi:   {severity: 1, prevents: 0.5, hold_days: 0, review: true}
-  hold:  {severity: 2, prevents: 1.0, hold_days: 2, review: true}
-  block: {severity: 3, prevents: 1.0, hold_days: 5, review: true}
+  delay: {severity: 2, prevents: 0.0, hold_days: 1, review: false}
+  hold:  {severity: 3, prevents: 1.0, hold_days: 2, review: true}
+  block: {severity: 4, prevents: 1.0, hold_days: 5, review: true}
 
 # Review capacity sized to the book (ADR-004): reviews land on the next business day.
 capacity:

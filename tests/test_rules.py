@@ -4,6 +4,7 @@ import re
 from scripts.common import ROOT, load_yaml
 
 RULES = load_yaml("rules.yaml")["rules"]
+ACTIONS = set(load_yaml("backtest.yaml")["actions"])
 CAND = ROOT / "dbt" / "models" / "rules" / "candidates"
 
 
@@ -13,16 +14,16 @@ def test_every_configured_rule_has_models_and_vice_versa():
     for rid in RULES:
         assert (ROOT / "dbt" / "models" / "rules" / f"rule_{rid}.sql").exists()
     macro = (ROOT / "dbt" / "macros" / "rule_ids.sql").read_text()
-    assert set(re.findall(r"'(R\d+_[a-z0-9_]+)'", macro)) == set(RULES)
+    assert set(re.findall(r"'([RCV]\d+_[a-z0-9_]+)'", macro)) == set(RULES)
 
 
 def test_rule_config_is_complete():
     for rid, r in RULES.items():
-        assert r["rationale"].strip() and r["action"] in {"allow", "rfi", "hold", "block"}
+        assert r["rationale"].strip() and r["action"] in ACTIONS
         assert r["comparator"] in {">=", "<="}
-        assert len(r["sweep"]) >= 5, f"{rid}: the sweep needs 5+ cutoffs"
+        assert r.get("binary_score") or len(r["sweep"]) >= 5, f"{rid}: the sweep needs 5+ cutoffs"
         assert r["threshold"] in r["sweep"], f"{rid}: the configured cutoff must be a sweep point"
-        assert r["status"] in {"champion", "challenger"}
+        assert r["status"] in {"champion", "challenger", "launch_control", "vendor"}
         if r["status"] == "champion":
             assert not r.get("tune") and not r.get("effective_from_alarm"), f"{rid}: champion rules are fixed"
 
@@ -45,7 +46,7 @@ def test_rule_output_contract(con):
         rcols = [r[0] for r in con.execute(f"describe rules.rule_{rid}").fetchall()]
         assert rcols[:5] == cols[:5], rid
     actions = {r[0] for r in con.execute("select distinct action from rules.rule_hits").fetchall()}
-    assert actions <= {"allow", "rfi", "hold", "block"}
+    assert actions <= ACTIONS
 
 
 def test_seeds_match_yaml(con):
@@ -71,6 +72,10 @@ def test_escalation_only_on_strong_hits(con):
 def test_reason_codes_are_unique_and_emitted(con):
     codes = [r["reason_code"] for r in RULES.values()]
     assert len(codes) == len(set(codes)) and all(re.fullmatch(r"[A-Z][A-Z0-9_]+", c) for c in codes)
+    # Every rule id starts with its family letter: R detection, C launch control, V vendor.
+    family = {"champion": "R", "challenger": "R", "launch_control": "C", "vendor": "V"}
+    for rid, r in RULES.items():
+        assert rid[0] == family[r["status"]], rid
     missing = con.execute("""
         select rule_id, count(*) from rules.rule_hits
         where reason_code is null or evidence is null or json_type(evidence) <> 'OBJECT' group by 1""").fetchall()

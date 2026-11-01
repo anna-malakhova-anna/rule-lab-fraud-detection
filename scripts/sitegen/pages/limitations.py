@@ -19,6 +19,8 @@ def limitations() -> str:
 <ul>
 <li><strong>Small samples.</strong> The test months hold {t["test_cases"]} cases across seven fraud types, 6 to 22 each. One case moves a fraud type's numbers a lot; the headline carries bootstrap ranges for that reason.</li>
 <li><strong>Invented costs.</strong> Cutoffs are chosen with costs I made up (config/backtest.yaml): $30 a review, $150 per good business flagged, $1,000 per delayed payroll, $300 per good applicant declined. Different costs pick different cutoffs.</li>
+<li><strong>Vendors that know the answer.</strong> The invented vendors' scores are drawn from the planted truth with noise. A real vendor's signal is murkier, and whether it adds anything depends on how much the in-house rules already cover.</li>
+<li><strong>Fraudsters adapt once.</strong> After the instant-payout launch, fraudsters switch to instant and split cash-outs under the cap, but they don't yet adapt to the launch controls themselves.</li>
 <li><strong>A simple queue.</strong> The Risk Ops simulation assumes the same capacity every day, one decision per case, no escalation tier, and invented analyst error rates (10% of fraud cleared by mistake, 2% of good cases flagged).</li>
 <li><strong>Simplified mechanics.</strong> There are no account balances or overdrafts, an RFI is assumed to stop half the fraud, and a hold is assumed to stop all of it.</li>
 <li><strong>A thin tuning set for credit.</strong> Bust-out labels arrive about five months after the money leaves, so tuning in month 12 saw only a handful of confirmed bust-outs.</li>

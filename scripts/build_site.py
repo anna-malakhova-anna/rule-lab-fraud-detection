@@ -15,7 +15,7 @@ from pathlib import Path
 from scripts import results as R
 from scripts.common import ROOT
 from scripts.sitegen.components import shell
-from scripts.sitegen.pages import glossary, limitations, monitoring, overview, riskops, tradeoffs, types
+from scripts.sitegen.pages import glossary, launch, limitations, monitoring, overview, riskops, tradeoffs, types, vendors
 
 SITE = ROOT / "site"
 
@@ -27,6 +27,8 @@ def pages() -> dict[str, tuple[str, str, int]]:
         "tradeoffs.html": ("Trade-offs", tradeoffs.tradeoffs(), 0),
         "types.html": ("Fraud types", types.types_index(), 0),
         "riskops.html": ("Risk Ops", riskops.riskops(), 0),
+        "launch.html": ("Launch review", launch.launch(), 0),
+        "vendors.html": ("Vendors", vendors.vendors(), 0),
         "monitoring.html": ("Monitoring", monitoring.monitoring(), 0),
         "limitations.html": ("How sure are we", limitations.limitations(), 0),
         "glossary.html": ("Glossary", glossary.glossary(), 0),

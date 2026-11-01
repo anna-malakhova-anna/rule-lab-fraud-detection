@@ -8,7 +8,7 @@
 | Action | rfi; block when the score is >= 3 and the case is eligible |
 | Fires when | most identity attributes (device, phone, address, business email domain) shared with any one earlier application, plus 1 if incorporated within young_incorporation_days >= 1 |
 | Why it exists | Applicants who share a device, phone, address or business email domain with earlier applicants, and are freshly incorporated, look like a ring of synthetic businesses. |
-| Cases per business day (test months) | 1.5 |
+| Alerts per business day, rule alone (test months) | 1.5 |
 | Share that were fraud (test months) | 6.8% |
 <!-- playbook-facts:end -->
 

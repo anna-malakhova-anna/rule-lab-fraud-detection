@@ -18,6 +18,13 @@ RULE_LABELS = {
     "R10_credit_inflow_ramp": "R10 Inflows ramped before a credit decision",
     "R11_draw_then_fast_out": "R11 Credit draw money out fast",
     "R12_full_draw_after_increase": "R12 Line drawn to limit soon after increase",
+    "C1_instant_new_account": "C1 No instant payouts from young accounts",
+    "C2_instant_new_payee": "C2 Cooling-off for new or changed payees",
+    "C3_instant_after_contact_change": "C3 Cooling-off after a contact change or new device",
+    "C4_instant_uncleared_funds": "C4 No instant payouts from money that can still come back",
+    "V1_device_vendor": "V1 Device vendor score",
+    "V2_contact_vendor": "V2 Contact vendor score",
+    "V3_registry_vendor": "V3 Registry check",
 }
 TYPOLOGY_LABELS = {
     "check_deposit_fraud": "Check deposit fraud",
@@ -30,6 +37,15 @@ TYPOLOGY_LABELS = {
 }
 
 
+# Rules in reading order: R (detection) before C (launch controls) before V (vendors), then by number.
+RULE_ORDER = ("case left({col}, 1) when 'R' then 0 when 'C' then 1 else 2 end, "
+              "cast(regexp_extract({col}, '^[A-Z](\\d+)', 1) as integer)")
+
+
+def rule_order(col: str = "rule_id") -> str:
+    return RULE_ORDER.format(col=col)
+
+
 def _rows(sql: str, params: list | None = None) -> list[dict]:
     con = connect()
     cur = con.execute(sql, params or [])
@@ -37,6 +53,11 @@ def _rows(sql: str, params: list | None = None) -> list[dict]:
     out = [dict(zip(cols, r)) for r in cur.fetchall()]
     con.close()
     return out
+
+
+def rule_set_rules() -> list[dict]:
+    """The rules in the champion and challenger rule sets (not launch controls or vendor signals)."""
+    return [r for r in challenger_thresholds() if r["status"] in ("champion", "challenger")]
 
 
 def challenger_cell(r: dict) -> str:
@@ -82,7 +103,7 @@ def challenger_thresholds() -> list[dict]:
         from config.cfg_rules r
         left join backtest.bt_challenger_thresholds t using (rule_id)
         left join monitoring.mon_rule_effective_from e using (rule_id)
-        order by cast(regexp_extract(r.rule_id, 'R(\\d+)', 1) as integer)""")
+        order by """ + rule_order("r.rule_id"))
 
 
 def sweep(period: str = "train") -> list[dict]:
@@ -154,6 +175,7 @@ def monthly_precision() -> list[dict]:
                sum(fraud_alerts_eventually) / sum(alerts) as precision_eventually
         from backtest.bt_monitoring_precision
         where week >= (select window_start from config.cfg_window)
+          and rule_id in (select rule_id from config.cfg_rules where status in ('champion', 'challenger'))
         group by all order by rule_id, month""")
 
 
@@ -161,7 +183,7 @@ def overlap(strategy: str = "champion") -> list[dict]:
     return _rows("""
         select rule_id, period, cases_detected, cases_only_this_rule, loss_in_cases_only_this_rule
         from backtest.bt_rule_overlap where strategy_id = ? and period is not null
-        order by cast(regexp_extract(rule_id, 'R(\\d+)', 1) as integer), period""", [strategy])
+        order by """ + rule_order() + ", period", [strategy])
 
 
 def harm_by_archetype(strategy: str = "champion") -> list[dict]:
@@ -227,11 +249,12 @@ def totals() -> dict:
 
 def usd(x: float) -> str:
     x = float(x or 0)
-    if abs(x) >= 1e6:
-        return f"${x / 1e6:,.2f}M"
-    if abs(x) >= 1e3:
-        return f"${x / 1e3:,.0f}K"
-    return f"${x:,.0f}"
+    sign, x = ("\u2212" if x < -0.5 else ""), abs(x)
+    if x >= 1e6:
+        return f"{sign}${x / 1e6:,.2f}M"
+    if x >= 1e3:
+        return f"{sign}${x / 1e3:,.0f}K"
+    return f"{sign}${x:,.0f}"
 
 
 def pct(x: float | None, digits: int = 0) -> str:
@@ -301,7 +324,7 @@ def queue_backlog_days(strategy: str = "champion") -> dict[str, dict]:
 def feedback_precision(strategy: str = "champion") -> list[dict]:
     return _rows("""
         select * from analysis.feedback_precision where strategy_id = ?
-        order by cast(regexp_extract(rule_id, 'R(\\d+)', 1) as integer), horizon_days""", [strategy])
+        order by """ + rule_order() + ", horizon_days", [strategy])
 
 
 def rule_volumes(strategy: str, period: str = "test") -> dict[str, dict]:
@@ -314,3 +337,40 @@ def rule_volumes(strategy: str, period: str = "test") -> dict[str, dict]:
         from per_rule p cross join days d
         left join backtest.ops_rule_likelihood l on l.strategy_id = ? and l.rule_id = p.rule_id
         group by p.rule_id""", [period, strategy, period, strategy])}
+
+
+# ---------- New product launch: instant payouts (module C) ----------
+
+def launch_controls() -> list[dict]:
+    return _rows("select * from backtest.bt_launch_controls order by strategy_id")
+
+
+def launch_threat_model() -> list[dict]:
+    return _rows("select * from backtest.bt_launch_threat_model order by typology, launch_phase desc, strategy_id")
+
+
+def launch_blind_spots() -> list[dict]:
+    return _rows("""select * from backtest.bt_launch_blind_spots
+                    order by stopped_only_at_the_payment desc, """ + rule_order())
+
+
+def launch_date():
+    return window()["instant_launch_date"]
+
+
+# ---------- Vendor bake-off (module D) ----------
+
+CALL_STRATEGY_LABELS = {"always": "Every call point", "onboarding_only": "Onboarding only", "risk_gated": "Only when already risky"}
+
+
+def vendor_bakeoff() -> list[dict]:
+    return _rows("select * from backtest.bt_vendor_bakeoff order by vendor, call_strategy")
+
+
+def vendor_decisions() -> list[dict]:
+    """Per vendor: the call strategy with the best net value, and whether that is worth buying."""
+    best = {}
+    for r in vendor_bakeoff():
+        if r["vendor"] not in best or r["net_value"] > best[r["vendor"]]["net_value"]:
+            best[r["vendor"]] = r
+    return [dict(r, buy=r["net_value"] > 0) for r in best.values()]

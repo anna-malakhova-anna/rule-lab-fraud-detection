@@ -149,11 +149,11 @@ footer { max-width: 1160px; margin: 0 auto; padding: 0 16px 40px; }
 <g stroke="var(--brand-deep)" stroke-width="0.9" fill="none">
 <circle cx="37.5" cy="35.5" r="1.7"/><circle cx="34" cy="42" r="1.7"/><circle cx="41" cy="45.5" r="1.7"/></g>
 </svg><span class="wordmark">Rule Lab</span></a>
-<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
+<nav class="links"><a href="tradeoffs.html">Trade-offs</a><a href="riskops.html">Risk Ops</a><a href="launch.html">Launch review</a><a href="vendors.html">Vendors</a><a href="monitoring.html">Monitoring</a><a href="glossary.html">Glossary</a></nav>
 <div class="pills"><a class="pill solid" href="types.html">Fraud types</a></div>
 </div></header>
 <div class="banner"><div class="banner-in"><strong>All data is synthetic.</strong> Bramblewick Business Banking is invented, and so are its
-12,000 businesses and 10,688,609 transactions. The 234 fraud cases were planted with an answer key.
+12,000 businesses and 10,688,674 transactions. The 234 fraud cases were planted with an answer key.
 No number here is a real-world fraud rate.</div></div>
 <main>
 <div class="title"><h1 class="display">How sure are we?</h1><p class="subtitle">What flatters these numbers, and what they leave out</p></div>
@@ -168,6 +168,8 @@ No number here is a real-world fraud rate.</div></div>
 <ul>
 <li><strong>Small samples.</strong> The test months hold 80 cases across seven fraud types, 6 to 22 each. One case moves a fraud type's numbers a lot; the headline carries bootstrap ranges for that reason.</li>
 <li><strong>Invented costs.</strong> Cutoffs are chosen with costs I made up (config/backtest.yaml): $30 a review, $150 per good business flagged, $1,000 per delayed payroll, $300 per good applicant declined. Different costs pick different cutoffs.</li>
+<li><strong>Vendors that know the answer.</strong> The invented vendors' scores are drawn from the planted truth with noise. A real vendor's signal is murkier, and whether it adds anything depends on how much the in-house rules already cover.</li>
+<li><strong>Fraudsters adapt once.</strong> After the instant-payout launch, fraudsters switch to instant and split cash-outs under the cap, but they don't yet adapt to the launch controls themselves.</li>
 <li><strong>A simple queue.</strong> The Risk Ops simulation assumes the same capacity every day, one decision per case, no escalation tier, and invented analyst error rates (10% of fraud cleared by mistake, 2% of good cases flagged).</li>
 <li><strong>Simplified mechanics.</strong> There are no account balances or overdrafts, an RFI is assumed to stop half the fraud, and a hold is assumed to stop all of it.</li>
 <li><strong>A thin tuning set for credit.</strong> Bust-out labels arrive about five months after the money leaves, so tuning in month 12 saw only a handful of confirmed bust-outs.</li>

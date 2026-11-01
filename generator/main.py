@@ -17,7 +17,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from generator import credit, events, legit
+from generator import credit, events, instant, legit, vendors
 from generator.common import CREDIT_EVENT_ID_BASE, DAY, EVENT_SCHEMA, INBOUND, ROOT, TXN_SCHEMA, Calendar, Columns, load_config, rng_for
 from generator.typologies import account_takeover, ach_return_fraud, bec_vendor_change, check_deposit_fraud, money_mule, synthetic_shell
 from generator.world import account_rows, build_businesses, build_identities, business_rows
@@ -80,6 +80,7 @@ def generate(cfg: dict, out: Path) -> dict:
         parts.append(tx)
 
     tx = {c: np.concatenate([p[c] for p in parts if len(p[c])]) for c in TXN_SCHEMA}
+    tx = instant.apply(cfg, cal, rng_for(cfg["seed"], "instant"), tx, len(businesses))
     # Stable transaction ids: by time, then business, then account, then amount.
     order = np.lexsort((tx["amount"], tx["account_id"], tx["business_id"], tx["t"]))
     tx = {c: v[order] for c, v in tx.items()}
@@ -135,10 +136,20 @@ def generate(cfg: dict, out: Path) -> dict:
             "balance": pa.array([e[4] for e in line_events], type=pa.float64())}, raw / "credit_line_events.parquet")
     e = ev.finish()
     eo = np.lexsort((e["event_type"].astype(str), e["business_id"], e["t"]))
-    _write({"event_id": np.arange(1, len(eo) + 1), "business_id": e["business_id"][eo].astype(np.int64),
-            "owner_id": e["owner_id"][eo].astype(np.int64), "event_time": _ts(cal, e["t"][eo]),
-            "event_type": e["event_type"][eo].astype(str), "device_id": e["device_id"][eo].astype(str)},
+    e = {k: v[eo] for k, v in e.items()}
+    e["event_id"] = np.arange(1, len(eo) + 1)
+    _write({"event_id": e["event_id"], "business_id": e["business_id"].astype(np.int64),
+            "owner_id": e["owner_id"].astype(np.int64), "event_time": _ts(cal, e["t"]),
+            "event_type": e["event_type"].astype(str), "device_id": e["device_id"].astype(str)},
            raw / "events.parquet")
+
+    # External vendors' answers at every call point (module D). Raw: what the bank would get back if it called.
+    for vendor_key, r in vendors.responses(cfg["seed"], vendors.call_points(applications, businesses, e)).items():
+        _write({"call_point": r["call_point"].astype(str), "call_point_id": r["call_point_id"].astype(np.int64),
+                "business_id": pa.array(r["business_id"].astype(np.int64), mask=r["business_id"] < 0),
+                "called_at": _ts(cal, r["t"]), "covered": r["covered"].astype(bool),
+                "score": pa.array(r["score"], mask=np.isnan(r["score"])), "result": r["result"].astype(str),
+                "latency_ms": r["latency_ms"].astype(np.int64)}, raw / f"vendor_{vendor_key}.parquet")
     _write(account_rows(cal, businesses), raw / "accounts.parquet")
     pay = sorted(payees.rows, key=lambda r: r["payee_id"])
     _write({"payee_id": [r["payee_id"] for r in pay], "business_id": [r["business_id"] for r in pay],

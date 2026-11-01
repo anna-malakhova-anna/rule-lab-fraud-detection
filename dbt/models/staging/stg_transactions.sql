@@ -13,6 +13,7 @@ select
     t.payee_id,
     t.bank_details_id,
     t.txn_type like 'internal_transfer%'                           as is_internal,
-    t.txn_type in ('ach_out', 'wire_out', 'payroll')               as is_payment_out,
+    t.txn_type in ('ach_out', 'wire_out', 'payroll', 'instant_payout') as is_payment_out,
+    t.txn_type = 'instant_payout'                                  as is_instant,
     t.txn_type = 'mobile_check_deposit'                            as is_check_deposit
 from {{ source('raw', 'transactions') }} as t

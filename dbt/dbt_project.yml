@@ -24,6 +24,9 @@ models:
     monitoring:
       +materialized: table
       +schema: monitoring
+    vendors:
+      +materialized: table
+      +schema: vendors
     backtest:
       +materialized: table
       +schema: backtest
@@ -32,7 +35,7 @@ seeds:
   smb_fraud_rule_lab:
     +schema: config
     cfg_window:
-      +column_types: {window_start: date, train_end: date, window_end: date}
+      +column_types: {window_start: date, train_end: date, window_end: date, instant_launch_date: date}
     cfg_rules:
       +column_types: {reason_code: varchar, threshold: double, tune: boolean, effective_from_alarm: varchar, escalate_action: varchar, escalate_at: double}
     cfg_rule_params:
@@ -43,3 +46,5 @@ seeds:
       +column_types: {value: double}
     cfg_ops:
       +column_types: {value: double}
+    cfg_vendors:
+      +column_types: {cost_per_call: double, latency_ms: double, coverage: double}

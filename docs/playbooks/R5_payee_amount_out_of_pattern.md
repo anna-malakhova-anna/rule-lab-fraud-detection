@@ -8,8 +8,8 @@
 | Action | rfi |
 | Fires when | amount / median of the last 6 payments to the same payee >= 4 |
 | Why it exists | A payment far above what this business usually pays this payee suggests an altered or fake invoice. |
-| Cases per business day (test months) | 28.3 |
-| Share that were fraud (test months) | 0.4% |
+| Alerts per business day, rule alone (test months) | 30.7 |
+| Share that were fraud (test months) | 0.6% |
 <!-- playbook-facts:end -->
 
 ## What to check

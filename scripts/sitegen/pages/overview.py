@@ -7,7 +7,7 @@ from scripts.sitegen.components import ICONS, table
 
 def overview() -> str:
     t = R.totals()
-    rules = R.challenger_thresholds()
+    rules = R.rule_set_rules()
     champ, chall = R.typology_totals("champion"), R.typology_totals("challenger")
     typ = [[label, champ[k]["cases"], champ[k]["detected"], chall[k]["detected"], R.usd(champ[k]["loss"]),
             R.usd(champ[k]["prevented"]), R.usd(chall[k]["prevented"])] for k, label in R.TYPOLOGY_LABELS.items() if k in champ]

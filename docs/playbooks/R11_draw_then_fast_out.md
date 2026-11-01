@@ -8,8 +8,8 @@
 | Action | hold |
 | Fires when | share of the last 72 hours of line draws that left in the last 48 hours on top of a normal week of the account's spending >= 0.3 |
 | Why it exists | Money drawn on the line and sent straight back out, above normal spending, is the moment a bust-out cashes out. |
-| Cases per business day (test months) | 2.4 |
-| Share that were fraud (test months) | 7.4% |
+| Alerts per business day, rule alone (test months) | 2.9 |
+| Share that were fraud (test months) | 7.6% |
 <!-- playbook-facts:end -->
 
 ## What to check

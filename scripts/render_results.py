@@ -1,4 +1,5 @@
-"""Regenerate the numbers blocks in every generated document (README, memo, playbooks, stakeholder pack).
+"""Regenerate the numbers blocks in every generated document (README, memo, playbooks, stakeholder pack,
+launch review, vendor bake-off).
 
   uv run python -m scripts.render_results           # rewrite the blocks
   uv run python -m scripts.render_results --check   # exit 1 if a block is out of date (used by the tests)
@@ -30,7 +31,7 @@ def memo_blocks() -> dict[str, str]:
     m_test = R.strategy_metrics("test")
     headline = R.markdown_table(["Measure (test months)", "Champion (today)", "Challenger (proposed)"], R.headline_rows())
 
-    rules = R.challenger_thresholds()
+    rules = R.rule_set_rules()
     thresholds = R.markdown_table(
         ["Rule", "Action", "Champion", "Challenger"],
         [(R.RULE_LABELS[r["rule_id"]], R.action_cell(r), R.champion_cell(r), R.challenger_cell(r)) for r in rules])
@@ -115,11 +116,11 @@ def replace_block(text: str, name: str, body: str) -> str:
 def documents() -> dict[Path, dict[str, str]]:
     """Every generated document: path -> {block name: generated markdown}. Each file is hand-written except
     between its markers; a marker without a block, or a block without a marker, is an error."""
-    from scripts import docs_playbooks, docs_stakeholder
+    from scripts import docs_launch, docs_playbooks, docs_stakeholder, docs_vendors
 
     docs = {README: {"results": readme_block()}, MEMO: memo_blocks()}
-    docs.update(docs_playbooks.documents())
-    docs.update(docs_stakeholder.documents())
+    for module in (docs_playbooks, docs_stakeholder, docs_launch, docs_vendors):
+        docs.update(module.documents())
     return docs
 
 

@@ -3,7 +3,8 @@
 --                     then, and whether the payee was added after that login;
 --   mules:            first-time senders paying in over the last 14 days, and how much went back out;
 --   ACH debits:       money pulled in by ACH debit in the last 5 days (still returnable);
---   credit draws:     money drawn on the line of credit in the last 72 hours.
+--   credit draws:     money drawn on the line of credit in the last 72 hours;
+--   launch controls:  account age, payee age, and the latest contact change, for instant payouts (ADR-021).
 with payments as (
     select * from {{ ref('feat_outbound_payments') }}
 ),
@@ -76,6 +77,17 @@ ach_pulls as (
     group by p.txn_id
 ),
 
+last_contact_change as (
+    select p.txn_id, max(e.event_time) as last_contact_change_at
+    from payments as p
+    join {{ ref('stg_events') }} as e
+        on  e.business_id = p.business_id
+        and e.event_type in ('email_changed', 'phone_changed')
+        and e.event_time <= p.txn_time
+        and e.event_time >  p.txn_time - interval 30 day
+    group by p.txn_id
+),
+
 line_draws as (
     select p.txn_id, sum(d.amount) as line_draws_prior_72h
     from payments as p
@@ -96,6 +108,12 @@ select
     p.payee_id,
     p.payee_type,
     p.is_first_payment_to_payee,
+    p.txn_type = 'instant_payout'                                                   as is_instant,
+    p.days_since_open,
+    p.days_since_payee_created,
+    p.days_since_bank_details_change,
+    p.checks_prior_72h,
+    date_diff('second', lc.last_contact_change_at, p.txn_time) / 3600.0            as hours_since_contact_change,
     -- Account takeover sequence
     n.new_device_login_at,
     date_diff('second', n.new_device_login_at, p.txn_time) / 3600.0                as hours_since_new_device,
@@ -121,3 +139,4 @@ left join contact_change as c using (txn_id)
 left join fan_in as f using (txn_id)
 left join ach_pulls as a using (txn_id)
 left join line_draws as ld using (txn_id)
+left join last_contact_change as lc using (txn_id)

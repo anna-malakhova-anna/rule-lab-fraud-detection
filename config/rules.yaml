@@ -4,6 +4,11 @@
 #                        R1 excludes payroll (ADR-009); R1-R5 keep Phase 1's cutoffs; R6-R8 the cutoffs Phase 2
 #                        tuned; R6 declines only strong links at young businesses (ADR-015); R9 runs throughout.
 #           challenger = proposed. Added only to the challenger rule set.
+#           vendor   = scored by an external data vendor (module D, ADR-022). Graded under each call strategy in
+#                        the vendor bake-off, never added to the champion or challenger directly.
+#           launch_control = a pre-send check on instant payouts (module C, ADR-021). Its action is `delay`: the payout
+#                        goes out the standard way, which gives the other rules time to act. Added only to the
+#                        launch_controls rule set.
 # threshold the cutoff the rule runs at. For champion rules it is fixed. For a challenger rule with tune: true
 #           it is only the starting point: the backtest picks the challenger's cutoff on the training months,
 #           using only the labels known by then (ADR-002, ADR-013).
@@ -179,3 +184,92 @@ rules:
     action: hold                     # hold the draw
     params:
       min_utilisation: 0.8
+
+  # ---- Module C: launch controls for instant payouts (ADR-021) ----
+  C1_instant_new_account:
+    status: launch_control
+    reason_code: INSTANT_NEW_ACCOUNT
+    rationale: A young account has no history to judge; it waits for standard payments until it has some.
+    applies_to: instant payouts
+    score: days since the account opened
+    comparator: "<="
+    threshold: 90
+    sweep: [30, 60, 90, 180, 365]
+    action: delay
+    params: {}
+
+  C2_instant_new_payee:
+    status: launch_control
+    reason_code: INSTANT_NEW_PAYEE
+    rationale: Cash-outs go to payees added or changed hours earlier; a cooling-off period gives the payment rules time.
+    applies_to: instant payouts
+    score: hours since the payee was added or its bank details last changed
+    comparator: "<="
+    threshold: 72
+    sweep: [12, 24, 48, 72, 168]
+    action: delay
+    params: {}
+
+  C3_instant_after_contact_change:
+    status: launch_control
+    reason_code: INSTANT_AFTER_CONTACT_CHANGE
+    rationale: Right after a new device or a change of email or phone is when a taken-over account pays out.
+    applies_to: instant payouts
+    score: hours since the last contact change or new-device login
+    comparator: "<="
+    threshold: 72
+    sweep: [12, 24, 48, 72, 168]
+    action: delay
+    params: {}
+
+  C4_instant_uncleared_funds:
+    status: launch_control
+    reason_code: INSTANT_UNCLEARED_FUNDS
+    rationale: Instant payouts must not spend money that can still come back (checks, ACH debits, fresh line draws).
+    applies_to: instant payouts
+    score: returnable money received in the last few days / the payout amount
+    comparator: ">="
+    threshold: 0.5
+    sweep: [0.25, 0.5, 1.0, 2.0, 4.0]
+    action: delay
+    params: {}
+
+  # ---- Module D: external vendors' scores, as rules (ADR-022). Vendors are invented. ----
+  V1_device_vendor:
+    status: vendor
+    reason_code: VENDOR_DEVICE_RISK
+    rationale: A device the vendor has seen behind fraud elsewhere, at onboarding or on a new-device login before a payment.
+    applies_to: applications; outbound payments within 7 days of a scored new-device login
+    score: Tallowmere device risk score (0-100)
+    comparator: ">="
+    threshold: 80
+    sweep: [50, 60, 70, 80, 90]
+    action: rfi                      # at onboarding
+    escalate: {action: hold, at: 0}  # on a payment (the candidate marks payments eligible)
+    params: {}
+
+  V2_contact_vendor:
+    status: vendor
+    reason_code: VENDOR_CONTACT_RISK
+    rationale: An email or phone the vendor rates risky, at onboarding or on a contact change before a payment.
+    applies_to: applications; outbound payments within 7 days of a scored contact change
+    score: Quenchwire email and phone risk score (0-100)
+    comparator: ">="
+    threshold: 80
+    sweep: [50, 60, 70, 80, 90]
+    action: rfi
+    escalate: {action: hold, at: 0}
+    params: {}
+
+  V3_registry_vendor:
+    status: vendor
+    reason_code: VENDOR_REGISTRY_FAIL
+    rationale: A business the registry can't find, or whose details don't match, is a common sign of a shell.
+    applies_to: applications
+    score: Larchstone verification (90 = not found or mismatch, 10 = verified)
+    binary_score: true               # pass/fail, so there is no cutoff to sweep
+    comparator: ">="
+    threshold: 50
+    sweep: [50]
+    action: rfi
+    params: {}

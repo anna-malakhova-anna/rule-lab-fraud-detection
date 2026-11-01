@@ -29,13 +29,19 @@ def main() -> None:
         return dt.date(d.year + y, mm + 1, 1)
 
     cap = bt["capacity"]
-    _write("cfg_window", ["window_start", "train_end", "window_end", "reviews_capacity_per_day", "bank_name"], [[
+    _write("cfg_window", ["window_start", "train_end", "window_end", "reviews_capacity_per_day", "bank_name",
+                          "instant_launch_date"], [[
         start, add_months(start, w["train_months"]), add_months(start, w["months"]),
-        cap["analysts"] * cap["reviews_per_analyst_day"], gen["bank_name"]]])
+        cap["analysts"] * cap["reviews_per_analyst_day"], gen["bank_name"], gen["instant_payouts"]["launch_date"]]])
     ops = bt["ops"]
     flat = {f"review_window_{k}": v for k, v in ops["review_window_business_days"].items()}
     flat.update({k: v for k, v in ops.items() if k != "review_window_business_days"})
     _write("cfg_ops", ["param", "value"], [[k, v] for k, v in flat.items()])
+    vend = load_yaml("vendors.yaml")
+    _write("cfg_vendors", ["vendor", "rule_id", "vendor_name", "kind", "cost_per_call", "latency_ms", "coverage"],
+           [[k, v["rule_id"], v["name"], v["kind"], v["cost_per_call"], v["latency_ms"], v["coverage"]]
+            for k, v in vend["vendors"].items()])
+    _write("cfg_latency_budget", ["decision_point", "budget_ms"], [[k, v] for k, v in vend["latency_budget_ms"].items()])
     mon = bt["monitoring"]
     _write("cfg_monitoring", ["baseline_weeks", "sigma", "min_count", "investigation_business_days", "precision_maturity_days"],
            [[mon["baseline_weeks"], mon["sigma"], mon["min_count"], mon["investigation_business_days"], mon["precision_maturity_days"]]])

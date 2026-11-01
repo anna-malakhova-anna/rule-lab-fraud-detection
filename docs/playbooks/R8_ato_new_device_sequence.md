@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | hours since the first login from a device never seen on this account <= 12 |
 | Why it exists | A new device, then a change to the email or phone on file, then a first payment to a payee added after that login, is the account-takeover sequence. |
-| Cases per business day (test months) | 0.1 |
+| Alerts per business day, rule alone (test months) | 0.1 |
 | Share that were fraud (test months) | 100.0% |
 <!-- playbook-facts:end -->
 

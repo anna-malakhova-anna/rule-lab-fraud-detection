@@ -21,7 +21,7 @@
 | Cases per business day | 85.9 | 88.5 |
 | Cases that lapse unreviewed | 1,228 | 1,388 |
 | Good customers held more than 24 hours | 491 | 542 |
-| Fraud $ prevented | $4.01M | $4.89M |
+| Fraud $ prevented | $3.87M | $4.73M |
 <!-- ops-queue:end -->
 
 ## Playbook changes

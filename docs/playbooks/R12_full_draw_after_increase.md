@@ -8,7 +8,7 @@
 | Action | hold |
 | Fires when | days since the limit was last raised <= 14 |
 | Why it exists | Drawing the line to its limit days after it was raised is the bust-out's signature. |
-| Cases per business day (test months) | 0.1 |
+| Alerts per business day, rule alone (test months) | 0.2 |
 | Share that were fraud (test months) | 100.0% |
 <!-- playbook-facts:end -->
 
