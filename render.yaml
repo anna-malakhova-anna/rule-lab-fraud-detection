@@ -1,0 +1,14 @@
+# Render Blueprint: the results site as a static site, served from the pre-built, committed `site/` folder
+# (make site). Synthetic data only. No build step on Render: the full build needs the generator and dbt, so
+# the site is built locally and committed.
+services:
+  - type: web
+    name: rule-lab
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./site
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
